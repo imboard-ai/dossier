@@ -1,6 +1,6 @@
 # Dossier: [Dossier Name]
 
-**Protocol Version**: 1.0 ([_PROTOCOL.md](./_PROTOCOL.md))
+**Protocol Version**: 1.0 ([PROTOCOL.md](../PROTOCOL.md))
 
 **Purpose**: [One sentence describing what this dossier accomplishes]
 
@@ -8,7 +8,7 @@
 
 ---
 
-*Before executing, optionally review `_PROTOCOL.md` for self-improvement protocol and execution guidelines.*
+*Before executing, optionally review [PROTOCOL.md](../PROTOCOL.md) for self-improvement protocol and execution guidelines.*
 
 ---
 
@@ -68,9 +68,9 @@
 [Clear, specific statement of the goal. What should be true after executing this dossier?]
 
 Example:
-- "Initialize a new project with MI6 structure, customized for the specific project type"
+- "Initialize a new project with standard structure, customized for the specific project type"
 - "Create linked worktrees across multiple repositories for parallel feature development"
-- "Generate a comprehensive task document following MI6 patterns"
+- "Generate a comprehensive task document following established patterns"
 
 ---
 
@@ -79,16 +79,16 @@ Example:
 [What must exist or be true before running this dossier?]
 
 Examples:
-- MI6 is installed and `$MI6_PATH` is set
+- Required tools/frameworks are installed
 - Current directory is a git repository
-- `.ai-project.json` exists and is valid
-- Node.js is installed (if needed for scripts)
+- Project configuration file exists and is valid
+- Runtime environment is configured (Node.js, Python, etc.)
 
 **Validation**: [How to check prerequisites are met]
 
 ```bash
 # Example validation commands
-echo $MI6_PATH  # Should show path
+which node      # Check Node.js is installed
 git status      # Should show repo info
 ```
 
@@ -327,9 +327,7 @@ my-project/
     "enabled": true,
     "autoCommit": true
   },
-  "mi6": {
-    "version": "v1"
-  }
+  "version": "1.0.0"
 }
 ```
 
@@ -360,8 +358,8 @@ my-project/
 
 [Special instructions for AI agents executing this dossier]
 
-- **File paths**: Always use `$MI6_PATH` for MI6 resources
-- **Relative paths**: Use `./ ` for project files
+- **File paths**: Use absolute paths or well-defined relative paths
+- **Relative paths**: Use `./` for project files
 - **Error handling**: If a step fails, explain what went wrong and suggest fixes
 - **User confirmation**: Ask before destructive operations (deleting files, etc.)
 - **Show progress**: Report what you're doing at each step
@@ -384,5 +382,5 @@ my-project/
 
 ---
 
-**🕵️ MI6 Dossier Template**
-*Use this template to create new dossiers for MI6 agentic automation*
+**🎯 Dossier Template**
+*Use this template to create new dossiers for LLM automation*
