@@ -126,6 +126,121 @@ Want to create an implementation? See [SPECIFICATION.md](./SPECIFICATION.md) for
 
 ---
 
+## 📚 Example Dossiers
+
+This repository includes comprehensive example dossiers demonstrating the standard across diverse domains:
+
+### 🔬 Data Science: ML Training Pipeline
+**[examples/data-science/train-ml-model.md](./examples/data-science/train-ml-model.md)**
+
+Train a machine learning model with proper validation, evaluation, and artifact management.
+
+**What it demonstrates**:
+- ✅ Computational workflows (not just deployment)
+- ✅ Data validation and quality checks
+- ✅ Python ecosystem (pandas, scikit-learn, numpy)
+- ✅ Iterative experimentation with metrics tracking
+- ✅ Artifact management (models, scalers, experiment logs)
+
+**Key features**:
+- Auto-detects classification vs regression
+- Handles missing values and categorical encoding
+- Generates performance metrics and feature importance
+- Creates reproducible experiment logs
+- Includes complete working Python code
+
+**Perfect for**: Data scientists, ML engineers, analytics teams
+
+---
+
+### 🗄️ Database: Schema Migration
+**[examples/database/migrate-schema.md](./examples/database/migrate-schema.md)**
+
+Execute database schema migrations with comprehensive safety checks and rollback capability.
+
+**What it demonstrates**:
+- ✅ High-risk stateful operations
+- ✅ ACID transaction workflows
+- ✅ Multiple database types (PostgreSQL, MySQL, MongoDB, SQLite)
+- ✅ Robust rollback procedures
+- ✅ Data integrity validation
+
+**Key features**:
+- Automatic pre-migration backup
+- Dry-run testing before production execution
+- Transaction-based migration (where supported)
+- Post-migration validation suite
+- Complete rollback scripts
+
+**Perfect for**: DevOps engineers, database administrators, backend developers
+
+---
+
+### ⚛️ Frontend Development: React Component Library
+**[examples/development/setup-react-library.md](./examples/development/setup-react-library.md)**
+
+Create a production-ready React component library with TypeScript, Storybook, and testing.
+
+**What it demonstrates**:
+- ✅ Development tooling setup (not operations)
+- ✅ NPM publishing workflow
+- ✅ Frontend ecosystem (React, Vite, Storybook)
+- ✅ Multi-tool configuration
+- ✅ Build optimization
+
+**Key features**:
+- TypeScript strict mode with generated type definitions
+- Vite bundler with multiple output formats (ESM, CJS)
+- Storybook for interactive documentation
+- Vitest + React Testing Library
+- Complete example components with tests and stories
+
+**Perfect for**: Frontend developers, UI/UX engineers, design system teams
+
+---
+
+### 🚀 DevOps: AWS Deployment
+**[examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md)**
+
+Deploy applications to AWS using Infrastructure as Code with validation and rollback.
+
+**What it demonstrates**:
+- ✅ Cloud infrastructure automation
+- ✅ Infrastructure as Code (Terraform/CloudFormation)
+- ✅ Deployment workflows
+- ✅ Environment management
+
+**Perfect for**: DevOps teams, cloud engineers, SREs
+
+---
+
+### Why These Examples Matter
+
+These dossiers prove the **universal applicability** of the dossier standard:
+
+| Domain | Example | Complexity | Risk Level |
+|--------|---------|-----------|------------|
+| **Data Science** | ML Training | Medium | Low (local) |
+| **Database** | Schema Migration | High | **Critical** |
+| **Frontend** | React Library | Medium | Low (dev tools) |
+| **DevOps** | AWS Deploy | High | High (infrastructure) |
+
+**Each example includes**:
+- ✅ Real, executable code (not placeholders)
+- ✅ Complete before/after examples
+- ✅ Comprehensive troubleshooting sections
+- ✅ Validation procedures
+- ✅ Context detection and decision trees
+- ✅ LLM-executable instructions
+
+**Domain diversity proves**:
+- Dossiers work for **data processing**, **infrastructure**, and **development**
+- Handle both **stateless** (ML training) and **stateful** (database) operations
+- Support **local** (React library) and **remote** (AWS) execution
+- Scale from **low-risk** (dev setup) to **critical** (database migration)
+
+---
+
 ## Dossiers vs Scripts
 
 Use **both** dossiers and traditional scripts - each for what they do best:
