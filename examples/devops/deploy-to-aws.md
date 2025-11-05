@@ -1,3 +1,200 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Deploy to AWS",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-05",
+  "objective": "Deploy application to AWS environment using Infrastructure as Code (Terraform or CloudFormation) with validation and rollback capability",
+  "category": ["devops", "deployment", "infrastructure"],
+  "tags": ["aws", "terraform", "cloudformation", "ecs", "lambda", "deployment", "infrastructure-as-code"],
+  "tools_required": [
+    {
+      "name": "aws-cli",
+      "version": ">=2.0.0",
+      "check_command": "aws --version",
+      "install_url": "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+    },
+    {
+      "name": "terraform",
+      "check_command": "terraform --version",
+      "install_url": "https://www.terraform.io/downloads"
+    },
+    {
+      "name": "git",
+      "check_command": "git --version"
+    }
+  ],
+  "risk_level": "high",
+  "estimated_duration": {
+    "min_minutes": 15,
+    "max_minutes": 60
+  },
+  "relationships": {
+    "preceded_by": [
+      {
+        "dossier": "setup-aws-infrastructure",
+        "condition": "optional",
+        "reason": "Initial infrastructure setup should be done before deployment"
+      }
+    ],
+    "followed_by": [
+      {
+        "dossier": "configure-monitoring",
+        "condition": "suggested",
+        "purpose": "Set up monitoring and alerting for deployed services"
+      },
+      {
+        "dossier": "database-migration",
+        "condition": "suggested",
+        "purpose": "Run database migrations if schema changes are needed"
+      }
+    ],
+    "alternatives": [
+      {
+        "dossier": "deploy-to-kubernetes",
+        "when_to_use": "When deploying to Kubernetes clusters instead of AWS-native services"
+      }
+    ]
+  },
+  "inputs": {
+    "required": [
+      {
+        "name": "environment",
+        "description": "Target deployment environment",
+        "type": "string",
+        "validation": "^(dev|development|staging|production)$",
+        "example": "staging"
+      },
+      {
+        "name": "aws_region",
+        "description": "AWS region for deployment",
+        "type": "string",
+        "validation": "^[a-z]{2}-[a-z]+-\\d$",
+        "example": "us-west-2"
+      }
+    ],
+    "optional": [
+      {
+        "name": "deployment_strategy",
+        "description": "Deployment strategy to use",
+        "type": "string",
+        "default": "rolling",
+        "example": "blue-green"
+      },
+      {
+        "name": "auto_approve",
+        "description": "Skip manual approval prompts",
+        "type": "boolean",
+        "default": false
+      }
+    ]
+  },
+  "outputs": {
+    "files": [
+      {
+        "path": "terraform.tfstate",
+        "description": "Terraform state file (if using Terraform)",
+        "required": false,
+        "format": "json"
+      },
+      {
+        "path": "deployment-${TIMESTAMP}.log",
+        "description": "Deployment execution log",
+        "required": true,
+        "format": "text"
+      }
+    ],
+    "configuration": [
+      {
+        "key": "service_endpoint",
+        "description": "HTTPS endpoint of deployed service",
+        "consumed_by": ["configure-monitoring", "run-integration-tests"],
+        "export_as": "env_var"
+      },
+      {
+        "key": "stack_name",
+        "description": "CloudFormation stack name or Terraform workspace",
+        "consumed_by": ["rollback-deployment"],
+        "export_as": "terraform_output"
+      }
+    ],
+    "state_changes": [
+      {
+        "description": "AWS resources created or updated (ECS services, Lambda functions, etc.)",
+        "affects": "Target AWS environment",
+        "reversible": true
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "rollback-${TIMESTAMP}.sh",
+        "purpose": "Automated rollback script for this deployment",
+        "type": "script"
+      }
+    ]
+  },
+  "coupling": {
+    "level": "Medium",
+    "details": "Requires AWS infrastructure (VPC, networking, IAM roles) but adapts to different IaC tools (Terraform or CloudFormation)"
+  },
+  "prerequisites": [
+    {
+      "description": "AWS CLI installed and configured",
+      "validation_command": "aws sts get-caller-identity",
+      "type": "tool"
+    },
+    {
+      "description": "Valid AWS credentials with deployment permissions",
+      "validation_command": "aws iam get-user",
+      "type": "permission"
+    },
+    {
+      "description": "Infrastructure as Code files present",
+      "validation_command": "test -d terraform/ || test -f cloudformation.yaml",
+      "type": "file"
+    },
+    {
+      "description": "Git repository is clean",
+      "validation_command": "git status --short",
+      "type": "environment"
+    }
+  ],
+  "validation": {
+    "success_criteria": [
+      "Infrastructure deployment completed successfully",
+      "Application is running and passing health checks",
+      "Service endpoint is accessible and returns expected response",
+      "No errors in application logs"
+    ],
+    "verification_commands": [
+      {
+        "command": "terraform show",
+        "expected": "Resources created without errors",
+        "description": "Verify Terraform state shows successful deployment"
+      },
+      {
+        "command": "aws ecs describe-services --cluster ${CLUSTER} --services ${SERVICE}",
+        "expected": "status: ACTIVE, runningCount equals desiredCount",
+        "description": "Verify ECS service is running correctly"
+      },
+      {
+        "command": "curl -I https://${SERVICE_ENDPOINT}/health",
+        "expected": "HTTP/1.1 200 OK",
+        "description": "Verify service health endpoint responds"
+      }
+    ]
+  },
+  "rollback": {
+    "supported": true,
+    "procedure": "Execute generated rollback script or use IaC tool to revert to previous state (terraform apply with previous config, or CloudFormation auto-rollback)",
+    "automated": true,
+    "backup_required": true
+  }
+}
+---
+
 # Dossier: Deploy to AWS
 
 **Version**: 1.0.0
