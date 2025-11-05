@@ -8,7 +8,7 @@
 
 ## Overview
 
-This protocol defines **standard execution guidelines** for all MI6 dossiers. Every dossier references this protocol to ensure consistent, safe, and continuously improving automation.
+This protocol defines **standard execution guidelines** for all dossiers. Every dossier references this protocol to ensure consistent, safe, and continuously improving automation.
 
 **Purpose**:
 - Provide meta-instructions that apply to ALL dossiers
@@ -153,7 +153,7 @@ This protocol defines **standard execution guidelines** for all MI6 dossiers. Ev
   Project Type: Multi-repo
   Repos: backend/ (Node.js), frontend/ (React)
   Git Status: Clean
-  Existing MI6: None
+  Existing Dossiers: None
 ```
 
 ### Decision Making
@@ -200,7 +200,7 @@ This protocol defines **standard execution guidelines** for all MI6 dossiers. Ev
 - 🚀 Start / launch
 - ⏸️ Pause / stash
 - 🎉 Complete / celebration
-- 🕵️ MI6 branding
+- 🎯 Dossier branding
 
 ### Progress Reporting
 
@@ -244,14 +244,14 @@ Step 2/5: Copying templates...
 **Before destructive operations**:
 ```bash
 # Backup files before overwriting
-cp file.json file.json.pre-mi6
+cp file.json file.json.backup
 
 # Create git backup branch
-git checkout -b backup-before-mi6
+git checkout -b backup-before-dossier
 git checkout -
 
 # Document backup location
-echo "✓ Backup created: file.json.pre-mi6"
+echo "✓ Backup created: file.json.backup"
 ```
 
 ### Confirm Destructive Operations
@@ -310,9 +310,9 @@ fi
 **Always explain how to undo**:
 ```
 If something goes wrong:
-  1. Restore from backup: cp file.json.pre-mi6 file.json
-  2. Or use git: git checkout backup-before-mi6
-  3. Or uninstall: Use project-uninstall.md dossier
+  1. Restore from backup: cp file.json.backup file.json
+  2. Or use git: git checkout backup-before-dossier
+  3. Or rollback: Use appropriate rollback procedures for your project
 ```
 
 ---
@@ -390,7 +390,7 @@ git status           # Criterion 3
 ### For AI Agents Executing Dossiers
 
 **You should**:
-- ✅ Read _PROTOCOL.md before first execution (understand guidelines)
+- ✅ Read PROTOCOL.md before first execution (understand guidelines)
 - ✅ Perform self-improvement analysis (unless user skips)
 - ✅ Show progress at each step
 - ✅ Validate prerequisites before proceeding
@@ -451,7 +451,7 @@ git status           # Criterion 3
 - Safety guidelines
 - LLM execution notes
 
-**Compatible dossiers**: All current MI6 dossiers
+**Compatible dossiers**: All dossiers v1.0
 
 ---
 
@@ -497,7 +497,7 @@ git status           # Criterion 3
 
 **When executing dossiers**:
 1. Check protocol version in dossier header
-2. Read corresponding `_PROTOCOL.md` version
+2. Read corresponding `PROTOCOL.md` version
 3. Follow all guidelines in this document
 4. Perform self-improvement analysis (unless skipped)
 5. Execute dossier-specific instructions
@@ -510,14 +510,14 @@ git status           # Criterion 3
 ### Contributing Improvements
 
 **To suggest protocol improvements**:
-1. Open issue on GitHub: `imboard-ai/mi6`
+1. Open issue on the dossier protocol repository
 2. Describe improvement and rationale
 3. Show impact on existing dossiers
 4. Propose version bump (minor vs major)
 
 **For breaking changes**:
 - Must increment to v2.0
-- Create `_PROTOCOL-v2.md`
+- Create `PROTOCOL-v2.md`
 - Document migration path
 - Maintain v1.0 for backwards compatibility
 
@@ -525,9 +525,9 @@ git status           # Criterion 3
 
 **Projects can create local protocol extensions**:
 ```markdown
-# project/.mi6/LOCAL_PROTOCOL.md
+# project/.dossier/LOCAL_PROTOCOL.md
 
-**Extends**: MI6 _PROTOCOL.md v1.0
+**Extends**: Dossier PROTOCOL.md v1.0
 
 **Additional guidelines for this project**:
 - [Project-specific rules]
@@ -537,7 +537,7 @@ git status           # Criterion 3
 
 Reference in project's dossiers:
 ```markdown
-**Protocol**: MI6 v1.0 + LOCAL v1.0
+**Protocol**: Dossier v1.0 + LOCAL v1.0
 ```
 
 ---
@@ -555,7 +555,7 @@ Reference in project's dossiers:
 ```
 [Reads project-init.md]
 [Sees: Protocol Version 1.0]
-[Reads _PROTOCOL.md]
+[Reads PROTOCOL.md]
 [Performs self-improvement analysis]
 
 🔄 Dossier Improvement Suggestion
@@ -697,8 +697,8 @@ What would you like to do?
 
 ---
 
-**🕵️ Dossier Execution Protocol v1.0**
+**🎯 Dossier Execution Protocol v1.0**
 
 > "Structure your agents. Not your scripts."
 
-*This protocol ensures MI6 dossiers are safe, consistent, and continuously improving.*
+*This protocol ensures dossiers are safe, consistent, and continuously improving.*

@@ -1,5 +1,7 @@
 # MI6 Dossier Registry
 
+> **Note**: This is an example implementation from the [MI6 project](https://github.com/imboard-ai/mi6), showing how a specific dossier implementation organizes and documents its dossiers. Your implementation may use a different structure.
+
 Complete catalog of all MI6 dossiers with relationships, outputs, and navigation maps.
 
 ---
