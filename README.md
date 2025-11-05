@@ -406,6 +406,164 @@ Common issues and how to resolve them
 
 ---
 
+## 🔬 Dossier Schema (v1.0.0)
+
+**New in v1.0.0**: Dossiers now support **structured JSON metadata** via frontmatter, providing deterministic validation and tooling foundation.
+
+### The Problem: Inconsistency & Ambiguity
+
+Without a schema, LLMs interpret Dossiers based on training. This creates brittleness:
+
+| **Without Schema** | **With Schema** |
+|-------------------|-----------------|
+| ❌ Ambiguous - LLM must infer metadata | ✅ Deterministic - explicit machine-readable structure |
+| ❌ Brittle - model updates can break execution | ✅ Robust - validated before execution |
+| ❌ Isolated - hard to search/categorize programmatically | ✅ Integrated - tooling-ready (CLI, IDE, registries) |
+| ❌ Unpredictable costs - unknown tool requirements | ✅ Predictable - know tools/deps before execution |
+
+### What the Schema Provides
+
+1. **Deterministic Parsing**: Extract metadata without LLM interpretation
+2. **Fast Validation**: Catch errors before expensive LLM execution
+3. **Tooling Foundation**: Enable CLI tools, IDEs, registries, and automation
+4. **Searchability**: Discover Dossiers by category, tags, tools, dependencies
+5. **Professional Credibility**: Enterprise-ready automation standard
+
+### Schema Format
+
+Dossiers can include JSON frontmatter at the top of the file:
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Deploy to AWS",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "objective": "Deploy application to AWS using Infrastructure as Code",
+  "category": ["devops", "deployment"],
+  "tags": ["aws", "terraform", "ecs"],
+  "tools_required": [
+    {
+      "name": "terraform",
+      "version": ">=1.0.0",
+      "check_command": "terraform --version"
+    }
+  ],
+  "risk_level": "high",
+  "relationships": {
+    "preceded_by": [
+      {
+        "dossier": "setup-aws-infrastructure",
+        "condition": "required",
+        "reason": "Infrastructure must exist before deployment"
+      }
+    ]
+  },
+  "inputs": {
+    "required": [
+      {
+        "name": "environment",
+        "description": "Target environment (dev/staging/production)",
+        "type": "string",
+        "validation": "^(dev|staging|production)$"
+      }
+    ]
+  }
+}
+---
+
+# Dossier: Deploy to AWS
+
+[Rest of markdown content...]
+```
+
+### Key Schema Features
+
+**Required Fields**:
+- `dossier_schema_version`: Schema version (currently `"1.0.0"`)
+- `title`: Dossier name
+- `version`: Semantic version
+- `protocol_version`: Protocol compliance version
+- `status`: Lifecycle status (`Draft`, `Stable`, `Deprecated`, `Experimental`)
+- `objective`: Clear, measurable goal statement
+
+**Organization & Discovery**:
+- `category`: Primary categories (devops, database, development, etc.)
+- `tags`: Free-form tags for searchability
+- `tools_required`: List of required CLI tools with versions
+
+**Relationships**:
+- `preceded_by`: Dossiers that should run before this one
+- `followed_by`: Dossiers that should run after
+- `alternatives`: Alternative approaches for similar goals
+- `conflicts_with`: Incompatible Dossiers
+- `can_run_parallel_with`: Dossiers that can execute simultaneously
+
+**Inputs & Outputs**:
+- `inputs.required`: Required parameters with validation
+- `inputs.optional`: Optional parameters with defaults
+- `outputs.files`: Files created/modified
+- `outputs.configuration`: Configuration values produced
+- `outputs.artifacts`: Generated scripts, logs, reports
+
+**Validation & Safety**:
+- `risk_level`: Risk assessment (`low`, `medium`, `high`, `critical`)
+- `prerequisites`: Requirements that must be met
+- `validation.success_criteria`: Verifiable success conditions
+- `rollback`: Rollback capability information
+
+### Validation Tools
+
+Validate Dossiers programmatically before execution:
+
+**Node.js**:
+```bash
+cd examples/validation
+npm install ajv ajv-formats
+node validate-dossier.js ../devops/deploy-to-aws.md
+```
+
+**Python**:
+```bash
+pip install jsonschema
+python validate-dossier.py ../devops/deploy-to-aws.md
+```
+
+**Output**:
+```
+🔍 Validating: ../devops/deploy-to-aws.md
+
+✓ Frontmatter extracted successfully
+  Title: Deploy to AWS
+  Version: 1.0.0
+  Status: Stable
+
+✅ VALID - Dossier schema is compliant
+```
+
+### Backward Compatibility
+
+**Important**: Dossiers without schema frontmatter remain valid and can be executed by LLM agents. The schema is an **enhancement**, not a breaking change.
+
+- ✅ **Legacy Dossiers**: Pure markdown Dossiers still work
+- ✅ **Gradual Adoption**: Add schema to new Dossiers first
+- ✅ **Dual Format**: Can keep both JSON frontmatter and markdown metadata during transition
+
+### Complete Documentation
+
+- **[SCHEMA.md](./SCHEMA.md)** - Complete schema specification
+- **[dossier-schema.json](./dossier-schema.json)** - JSON Schema definition
+- **[examples/validation/](./examples/validation/)** - Validation tools and examples
+- **[templates/dossier-template.md](./templates/dossier-template.md)** - Updated template with schema
+
+### Example with Schema
+
+See **[examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md)** for a complete example Dossier with schema frontmatter.
+
+---
+
 ## Creating Custom Dossiers
 
 ### 1. Use the Template
@@ -664,8 +822,11 @@ This is a **community-driven effort** to make LLM automation truly accessible. H
 - [QUICK_START.md](./QUICK_START.md) - Get started in 5 minutes
 - [PROTOCOL.md](./PROTOCOL.md) - Dossier execution protocol
 - [SPECIFICATION.md](./SPECIFICATION.md) - Formal dossier specification
+- [SCHEMA.md](./SCHEMA.md) - Dossier schema specification (v1.0.0)
+- [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
 - [mcp-server/](./mcp-server/) - MCP Server for frictionless integration
 - [examples/](./examples/) - Example dossier implementations
+- [examples/validation/](./examples/validation/) - Schema validation tools
 - [Sample Implementation](./examples/sample-implementation/) - Example of organizing dossiers
 - [MI6](https://github.com/imboard-ai/mi6) - Community implementation example
 

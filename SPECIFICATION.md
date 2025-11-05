@@ -233,6 +233,66 @@ Dossiers **MAY** include additional sections as needed:
 - **Rollback**: How to undo changes
 - **FAQ**: Frequently asked questions
 
+### 3.4 Schema Frontmatter (RECOMMENDED)
+
+As of Dossier Specification v1.0.0, dossiers **SHOULD** include structured metadata using JSON frontmatter:
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Deploy Application to AWS",
+  "version": "1.2.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "objective": "Deploy a containerized application to AWS ECS",
+  "category": ["devops", "deployment"],
+  "tags": ["aws", "ecs", "docker"],
+  "tools_required": [
+    {
+      "name": "terraform",
+      "version": ">=1.0.0",
+      "check_command": "terraform --version"
+    }
+  ],
+  "relationships": {
+    "preceded_by": [
+      {
+        "dossier": "setup-aws-infrastructure",
+        "condition": "required",
+        "reason": "Infrastructure must exist before deployment"
+      }
+    ]
+  }
+}
+---
+
+# Dossier: Deploy Application to AWS
+[... rest of markdown content ...]
+```
+
+**Purpose**: The schema frontmatter provides:
+- **Deterministic parsing**: Machine-readable metadata without LLM interpretation
+- **Fast validation**: Schema validation before expensive LLM execution
+- **Tooling foundation**: Enables CLI tools, IDEs, registries, and automation
+- **Searchability**: Programmatic discovery by category, tags, tools, dependencies
+- **Predictable costs**: Know required tools and dependencies before execution
+
+**Format Requirements**:
+- Placed at the **very top** of the file (before any markdown content)
+- Delimited by `---dossier` and `---`
+- Valid JSON format (validated against `dossier-schema.json`)
+- Must include required fields: `dossier_schema_version`, `title`, `version`, `protocol_version`, `status`, `objective`
+
+**Complete Documentation**: See [SCHEMA.md](./SCHEMA.md) for:
+- Complete field reference
+- Validation rules
+- Examples
+- Migration guide from pure Markdown dossiers
+- Best practices
+
+**Backward Compatibility**: Dossiers without schema frontmatter remain valid and can be executed by LLM agents. The schema is an enhancement, not a breaking change.
+
 ---
 
 ## 4. Protocol Compliance
@@ -567,14 +627,23 @@ Projects **MAY** extend protocol locally (see [PROTOCOL.md](./PROTOCOL.md) § Cu
 - Versioning standards
 - Implementation requirements
 - Validation criteria
+- **Schema frontmatter support** (§3.4):
+  - JSON-based metadata frontmatter
+  - Machine-readable dossier metadata
+  - Deterministic parsing and validation
+  - Tooling foundation for registries and CLI
+  - Complete schema specification in SCHEMA.md
+  - JSON Schema definition (dossier-schema.json)
 
 ---
 
 ## 14. References
 
 - [PROTOCOL.md](./PROTOCOL.md) - Dossier Execution Protocol
+- [SCHEMA.md](./SCHEMA.md) - Dossier Schema Specification (JSON frontmatter)
 - [README.md](./README.md) - Introduction to dossiers
 - [examples/](./examples/) - Example implementations
+- [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
 
 ---
 
