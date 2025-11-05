@@ -8,38 +8,128 @@ These dossiers showcase:
 - ✅ **Real LLM value** - Analysis that can't be done without deep code understanding
 - ✅ **Atomic & composable** - Small, focused dossiers that can be combined
 - ✅ **Dogfooding** - Used on Dossier itself to improve the project
-- ✅ **Reusable** - Run on any project to get insights
+- ✅ **Reusable** - Run on any Git project to get insights
 
-## Quick Start
+---
 
-### Try a Fast One (30-60 seconds)
+## How to Run These Dossiers
 
-Check if your README matches reality:
-```bash
-dossier run examples/git-project-review/atomic/readme-reality-check.dossier
+### Current: Ask Your LLM (Works Today) ⭐
+
+You're already using an LLM assistant (Claude Code, Cursor, ChatGPT, etc.). Just ask it to execute the dossier!
+
+#### On Your Local Project:
+```
+Analyze my project using the readme-reality-check dossier from:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
 ```
 
-### Meta: Explore Dossier Itself
-
-Check if a schema feature is supported:
-```bash
-dossier run examples/git-project-review/atomic/schema-capability-check.dossier \
-  --var capability="Does the schema support referencing other dossier files?"
+#### On Any GitHub Project:
+```
+Analyze https://github.com/imboard-ai/mi6 using the onboarding-friction dossier from:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.dossier
 ```
 
-### Assess Onboarding Experience (45-90 seconds)
+#### With Variables:
+```
+Analyze this codebase using the schema-capability-check dossier from:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.dossier
 
-See what confuses new contributors:
-```bash
-dossier run examples/git-project-review/atomic/onboarding-friction.dossier
+Use this variable:
+- capability: "Does the schema support referencing other dossier files?"
 ```
 
-### Find Inconsistent Patterns (60-90 seconds)
+Your LLM will:
+1. Fetch the dossier
+2. Read the instructions
+3. Analyze your project
+4. Provide structured output
 
-Identify architectural drift:
+---
+
+### Future Vision: CLI Tool (Aspirational)
+
+The ideal UX would be:
+
 ```bash
-dossier run examples/git-project-review/atomic/architecture-patterns.dossier
+# From registry
+dossier run registry.dossier.ai/coding/readme-reality-check \
+  --project https://github.com/imboard-ai/mi6
+
+# Local dossier, remote project
+dossier run ./atomic/readme-reality-check.dossier \
+  --project https://github.com/yourorg/yourproject
+
+# Local dossier, local project
+dossier run ./atomic/onboarding-friction.dossier \
+  --project .
+
+# With variables
+dossier run ./atomic/schema-capability-check.dossier \
+  --var capability="composition support"
 ```
+
+**Status**: CLI tool not yet implemented. Contributions welcome!
+
+---
+
+## Quick Examples
+
+### 1. Check README Accuracy (~30-60s)
+
+**What it does**: Compares README claims vs actual implementation
+
+**Run it**:
+```
+Hey Claude, analyze this project using:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+```
+
+**Output**: Promises kept ✅, promises broken ❌, undocumented features 🎁
+
+---
+
+### 2. Find Onboarding Friction (~45-90s)
+
+**What it does**: Identifies pain points for new contributors
+
+**Run it**:
+```
+Analyze https://github.com/yourproject using the onboarding-friction dossier:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.dossier
+```
+
+**Output**: Friction score, blockers, confusion points, quick wins
+
+---
+
+### 3. Check Architecture Consistency (~60-90s)
+
+**What it does**: Finds inconsistent patterns and duplication
+
+**Run it**:
+```
+Use the architecture-patterns dossier on my project:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/architecture-patterns.dossier
+```
+
+**Output**: Pattern inventory, inconsistencies, duplication hotspots
+
+---
+
+### 4. Meta: Explore Capabilities (~1-2min)
+
+**What it does**: Answers "does the codebase support X?"
+
+**Run it**:
+```
+Use this dossier to check if the schema supports composition:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.dossier
+
+Variable: "Does the schema support referencing other dossier files?"
+```
+
+**Output**: Yes/No/Partial answer with code evidence
 
 ## Available Atomic Dossiers
 
@@ -68,9 +158,39 @@ dossier run examples/git-project-review/atomic/architecture-patterns.dossier
 - Find common vulnerability patterns
 - Check input validation
 
+---
+
+## Tips for Running
+
+### Scope Your Analysis
+For large repos, you can focus on specific areas:
+```
+Analyze only the /src directory using the architecture-patterns dossier,
+with focus on error handling patterns
+```
+
+### Combine Multiple Analyses
+Run several dossiers in sequence:
+```
+Run these 3 dossiers on my project:
+1. readme-reality-check
+2. onboarding-friction
+3. architecture-patterns
+
+URLs: [paste all 3 GitHub raw URLs]
+```
+
+### Variable Usage
+Many dossiers accept variables for customization:
+- `project_path`: Focus on specific directory
+- `focus_area`: Narrow the analysis scope
+- `capability`: For schema-capability-check queries
+
+---
+
 ## Composition (Future)
 
-Once the schema supports it, we'll add:
+Once the schema supports dossier composition, we'll add:
 ```
 composed/
 ├── quick-health.dossier      # 2-3 fast checks (~2min)
@@ -78,31 +198,7 @@ composed/
 └── custom-audit.dossier      # Interactive selection
 ```
 
-Usage will look like:
-```bash
-# Quick combo
-dossier run composed/quick-health.dossier
-
-# Deep dive
-dossier run composed/comprehensive.dossier
-
-# Interactive
-dossier run composed/custom-audit.dossier
-```
-
-## Tips
-
-**Faster Analysis:**
-Use `--var project_path=./src` to limit scope
-
-**On Large Repos:**
-Start with atomic dossiers, don't run comprehensive analysis
-
-**Custom Focus:**
-Many dossiers accept a `focus_area` variable:
-```bash
-dossier run atomic/onboarding-friction.dossier --var focus_area="setup"
-```
+These will reference the atomic dossiers and run them as a coordinated suite.
 
 ## Output Format
 
@@ -114,14 +210,16 @@ All dossiers output structured markdown with:
 
 ## Dogfooding
 
-These dossiers are actively used on the Dossier project itself:
-```bash
-# Run on Dossier repo
-cd /path/to/dossier
-dossier run examples/git-project-review/atomic/readme-reality-check.dossier
+These dossiers are actively used on the Dossier project itself! Try running them:
 
-# See what needs improvement!
 ```
+Analyze the Dossier project itself using:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+
+Target: https://github.com/imboard-ai/dossier
+```
+
+**Meta insight**: Using a dossier to analyze the dossier project = perfect dogfooding! 🐕
 
 ## Contributing
 

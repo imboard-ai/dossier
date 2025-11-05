@@ -303,6 +303,40 @@ Deploy applications to AWS using Infrastructure as Code with validation and roll
 
 ---
 
+### 🔍 Git Project Review: LLM-Powered Analysis
+**[examples/git-project-review/](./examples/git-project-review/)**
+
+Atomic dossiers that analyze Git projects to surface insights requiring deep code understanding.
+
+**What it demonstrates**:
+- ✅ **Real LLM value** - Analysis impossible without understanding context
+- ✅ **Atomic & composable** - Small, focused dossiers as building blocks
+- ✅ **Dogfooding** - Can be run on the Dossier project itself
+- ✅ **Universal utility** - Works on any Git project
+
+**Available dossiers**:
+- **readme-reality-check** (~30-60s) - Compares README claims vs actual code
+- **onboarding-friction** (~45-90s) - Identifies new contributor pain points
+- **architecture-patterns** (~60-90s) - Finds inconsistent patterns and duplication
+- **schema-capability-check** (~1-2min) - Meta-tool to explore if features exist
+
+**How to run** (works today):
+```
+Analyze https://github.com/yourorg/yourproject using:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+```
+
+Your LLM fetches the dossier, analyzes the project, and provides structured output with:
+- Specific findings with file:line references
+- Evidence-based insights (not speculation)
+- Actionable recommendations
+
+**Perfect for**: Maintainers, contributors, auditors analyzing any codebase
+
+**Future vision**: Once composition is supported, these atomics combine into comprehensive audit suites.
+
+---
+
 ### Why These Examples Matter
 
 These dossiers prove the **universal applicability** of the dossier standard:
@@ -313,6 +347,7 @@ These dossiers prove the **universal applicability** of the dossier standard:
 | **Database** | Schema Migration | High | **Critical** |
 | **Frontend** | React Library | Medium | Low (dev tools) |
 | **DevOps** | AWS Deploy | High | High (infrastructure) |
+| **Code Analysis** | Git Project Review | Low-Medium | None (read-only) |
 
 **Each example includes**:
 - ✅ Real, executable code (not placeholders)
@@ -323,10 +358,11 @@ These dossiers prove the **universal applicability** of the dossier standard:
 - ✅ LLM-executable instructions
 
 **Domain diversity proves**:
-- Dossiers work for **data processing**, **infrastructure**, and **development**
+- Dossiers work for **data processing**, **infrastructure**, **development**, and **analysis**
 - Handle both **stateless** (ML training) and **stateful** (database) operations
 - Support **local** (React library) and **remote** (AWS) execution
-- Scale from **low-risk** (dev setup) to **critical** (database migration)
+- Scale from **no-risk** (read-only analysis) to **critical** (database migration)
+- Demonstrate **composability** (atomic analysis building blocks)
 
 ---
 
