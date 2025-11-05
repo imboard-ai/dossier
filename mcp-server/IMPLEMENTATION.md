@@ -728,6 +728,53 @@ logger.error('Failed to parse dossier:', error);
 
 ---
 
+### 2025-11-05 - Phase 1 & 2: Core Parsing Implementation
+
+**Completed**:
+- ✅ Created comprehensive type definitions (dossier, registry, errors)
+- ✅ Implemented FileScanner for discovering dossier files
+  - Glob-based file discovery with recursive search
+  - Smart filtering for dossier-like files
+  - Ignores node_modules, dist, build directories
+- ✅ Implemented DossierParser with full section extraction
+  - Metadata parsing (name, version, protocol, status)
+  - Semver validation
+  - All section types supported (objective, prerequisites, actions, validation, etc.)
+  - Smart section extraction using H2 headers
+  - Required section validation
+- ✅ Created test fixtures (valid and invalid dossiers)
+- ✅ Wrote comprehensive test suite (33 tests, all passing)
+  - 19 DossierParser tests covering metadata, sections, validation, edge cases
+  - 12 FileScanner tests covering discovery, filtering, patterns
+  - 2 infrastructure tests
+- ✅ Added glob dependency to package.json
+- ✅ Fixed TypeScript type errors
+- ✅ All tests passing (33/33) ✅
+- ✅ Build successful with type declarations
+
+**Status**: Phase 1 Complete ✅ | Phase 2: 60% complete
+
+**Test Coverage**: 33 tests, 100% passing
+
+**Next Steps**:
+- Phase 2 remaining: PathResolver utility
+- Phase 3: Implement tools (list_dossiers, read_dossier)
+
+**Notes**:
+- Parser handles Windows line endings, multiple spaces, code blocks
+- Empty sections correctly return undefined
+- Strong type safety throughout with strict TypeScript
+- Test fixtures can be reused for integration tests
+- Ready to implement MCP tools using these parsers
+
+**Technical Decisions**:
+- Used glob v10 (Promise-based API) for file scanning
+- Parser uses regex for section extraction (simple, effective)
+- Validates required sections: objective, prerequisites, actions, validation
+- Metadata validation includes semver format checking
+
+---
+
 ### [Template for Future Entries]
 
 ### YYYY-MM-DD - [Milestone Title]
