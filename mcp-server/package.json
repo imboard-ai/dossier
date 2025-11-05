@@ -1,6 +1,6 @@
 {
   "name": "@dossier/mcp-server",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Model Context Protocol server for dossier automation - enables frictionless LLM-driven workflows",
   "main": "dist/index.js",
   "bin": {
