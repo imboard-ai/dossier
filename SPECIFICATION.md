@@ -538,7 +538,7 @@ See [examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md) for a
 Implementations **MAY** add custom sections prefixed with `X-`:
 
 ```markdown
-## X-MI6-Specific-Feature
+## X-MyProject-Custom-Section
 
 [Implementation-specific content]
 ```

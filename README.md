@@ -119,7 +119,8 @@ Dossiers can be created for any automation workflow. Here are common categories:
 
 The dossier standard is designed to be implementation-agnostic. Projects can adopt dossiers in various ways:
 
-- **[MI6](https://github.com/imboard-ai/mi6)** - AI-native project automation framework (reference implementation)
+- **[Sample Implementation](./examples/sample-implementation/)** - Example showing how to organize and document your dossiers
+- **[MI6](https://github.com/imboard-ai/mi6)** - An AI-native project automation framework (early adopter)
 - **Your project** - Create your own dossier collection for your specific workflows
 
 Want to create an implementation? See [SPECIFICATION.md](./SPECIFICATION.md) for the formal standard.
@@ -342,6 +343,65 @@ Share useful dossiers! Contribute to dossier implementations or create your own 
 
 ---
 
+## Organizing Multiple Dossiers
+
+As your dossier collection grows, organization becomes important. A **dossier registry** helps document relationships, workflows, and navigation paths.
+
+### Why Use a Registry?
+
+When you have multiple dossiers, a registry provides:
+- **Quick reference** - Summary table of all dossiers
+- **Journey mapping** - Common workflow paths (e.g., greenfield vs brownfield)
+- **Relationship documentation** - Which dossiers depend on or complement each other
+- **Navigation guidance** - Help users find the right dossier for their needs
+- **Output tracking** - What each dossier produces and what consumes it
+
+### Registry Pattern
+
+A dossier registry typically includes:
+
+1. **Quick Reference Table**
+   - List all dossiers with version, purpose, and coupling level
+   - Helps users scan available automation
+
+2. **Journey Maps**
+   - Group dossiers into common workflows
+   - Show sequential paths (e.g., "New Project: init → setup → deploy")
+   - Visualize with mermaid diagrams
+
+3. **Relationship Matrix**
+   - Document dependencies between dossiers
+   - Identify sequential, suggested, or conflicting relationships
+   - Note coupling levels (loose, medium, tight)
+
+4. **Output Matrix**
+   - Track what files/artifacts each dossier creates
+   - Document which other dossiers consume those outputs
+   - Helps understand data flow
+
+5. **Navigation Guide**
+   - User-centric paths ("I want to..." → recommended dossiers)
+   - Makes discovery easier for both humans and LLMs
+
+### Example Registry
+
+See **[examples/sample-implementation/dossiers-registry.md](./examples/sample-implementation/dossiers-registry.md)** for a complete example showing:
+- Categorization (Setup, Development, Maintenance)
+- Journey mapping (Greenfield vs Brownfield paths)
+- Relationship and output matrices
+- Coupling level classification
+- User-centric navigation
+
+### When to Create a Registry
+
+- **3+ dossiers**: Consider a simple list
+- **5+ dossiers**: Add categorization and basic relationships
+- **10+ dossiers**: Full registry with journeys and matrices
+
+A well-organized registry makes your dossier collection more discoverable and helps LLMs understand how to chain multiple dossiers together intelligently.
+
+---
+
 ## Best Practices
 
 ### ✅ Do:
@@ -476,7 +536,8 @@ If you don't have an LLM agent:
 - [PROTOCOL.md](./PROTOCOL.md) - Dossier execution protocol
 - [SPECIFICATION.md](./SPECIFICATION.md) - Formal dossier specification
 - [examples/](./examples/) - Example dossier implementations
-- [MI6](https://github.com/imboard-ai/mi6) - Reference implementation
+- [Sample Implementation](./examples/sample-implementation/) - Example of organizing dossiers
+- [MI6](https://github.com/imboard-ai/mi6) - Community implementation example
 
 ---
 
