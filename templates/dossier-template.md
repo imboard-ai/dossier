@@ -1,3 +1,158 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "[Dossier Name]",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Draft",
+  "last_updated": "YYYY-MM-DD",
+  "objective": "[One clear sentence describing what this dossier accomplishes, measurable and specific]",
+  "category": ["[primary-category]", "[secondary-category]"],
+  "tags": ["[tag1]", "[tag2]", "[tag3]"],
+  "tools_required": [
+    {
+      "name": "[tool-name]",
+      "version": "[>=version]",
+      "check_command": "[tool-name] --version",
+      "install_url": "https://example.com/install"
+    }
+  ],
+  "risk_level": "low",
+  "estimated_duration": {
+    "min_minutes": 5,
+    "max_minutes": 15
+  },
+  "relationships": {
+    "preceded_by": [
+      {
+        "dossier": "[preceding-dossier-name]",
+        "condition": "optional",
+        "reason": "[Why this prerequisite exists]"
+      }
+    ],
+    "followed_by": [
+      {
+        "dossier": "[following-dossier-name]",
+        "condition": "suggested",
+        "purpose": "[Purpose of follow-up]"
+      }
+    ],
+    "alternatives": [
+      {
+        "dossier": "[alternative-dossier-name]",
+        "when_to_use": "[When to use the alternative]"
+      }
+    ],
+    "conflicts_with": [
+      {
+        "dossier": "[conflicting-dossier-name]",
+        "reason": "[Why they conflict]"
+      }
+    ],
+    "can_run_parallel_with": ["[parallel-dossier-1]", "[parallel-dossier-2]"]
+  },
+  "inputs": {
+    "required": [
+      {
+        "name": "[input-name]",
+        "description": "[Description of required input]",
+        "type": "string",
+        "validation": "[regex or validation rules]",
+        "example": "[example value]"
+      }
+    ],
+    "optional": [
+      {
+        "name": "[optional-input-name]",
+        "description": "[Description of optional input]",
+        "type": "string",
+        "default": "[default value]",
+        "example": "[example value]"
+      }
+    ],
+    "from_dossiers": [
+      {
+        "source_dossier": "[source-dossier-name]",
+        "output_name": "[output-from-source]",
+        "usage": "[How this input is used]"
+      }
+    ]
+  },
+  "outputs": {
+    "files": [
+      {
+        "path": "[path/to/file]",
+        "description": "[Description of file]",
+        "required": true,
+        "format": "json"
+      }
+    ],
+    "configuration": [
+      {
+        "key": "[config-key]",
+        "description": "[Description of configuration]",
+        "consumed_by": ["[consumer-dossier-1]"],
+        "export_as": "env_var"
+      }
+    ],
+    "state_changes": [
+      {
+        "description": "[Description of state change]",
+        "affects": "[What is affected]",
+        "reversible": true
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "[artifact-path]",
+        "purpose": "[Purpose of artifact]",
+        "type": "script"
+      }
+    ]
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "[Explanation of coupling level and dependencies]"
+  },
+  "prerequisites": [
+    {
+      "description": "[Description of prerequisite]",
+      "validation_command": "[command to validate]",
+      "type": "tool"
+    }
+  ],
+  "validation": {
+    "success_criteria": [
+      "[Criterion 1: verifiable and measurable]",
+      "[Criterion 2: specific and clear]"
+    ],
+    "verification_commands": [
+      {
+        "command": "[verification command]",
+        "expected": "[expected result]",
+        "description": "[What this verifies]"
+      }
+    ]
+  },
+  "rollback": {
+    "supported": true,
+    "procedure": "[Description of rollback procedure]",
+    "automated": false,
+    "backup_required": false
+  },
+  "authors": [
+    {
+      "name": "[Your Name]",
+      "email": "[your.email@example.com]"
+    }
+  ],
+  "license": "MIT",
+  "custom": {
+    "note": "Add any custom fields here for your implementation"
+  }
+}
+---
+
 # Dossier: [Dossier Name]
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../PROTOCOL.md))
