@@ -1,0 +1,42 @@
+Business Source License 1.1
+
+Parameters
+Licensor:           ImBoard.ai
+Licensed Work:      MI6
+The Licensed Work is (c) 2025 ImBoard.ai
+Additional Use Grant: You may make use of the Licensed Work, with or without modification,
+                     for any purpose other than a Production Use.
+Change Date:        2028-10-01
+Change License:     Apache License, Version 2.0
+
+For purposes of this license, “Production Use” means use of the Licensed Work, or an
+instance of the Licensed Work, in a commercial offering, service, or hosted environment
+to third parties, including but not limited to offering the Licensed Work as a managed,
+cloud, or SaaS product.
+
+License Terms
+The Licensor hereby grants you the right to copy, modify, create derivative works,
+redistribute, and make non-production use of the Licensed Work. 
+
+The Licensor may make an Additional Use Grant permitting limited production use.  
+If no Additional Use Grant is provided, any Production Use is not permitted under this license.
+
+Effective on the Change Date, the Licensed Work will be automatically made available
+under the Change License, as specified above.
+
+Before the Change Date, you may use this Licensed Work only under the terms of the
+Business Source License 1.1.
+
+This license does not grant you any trademark rights.
+
+You must include a copy of this license with every copy of the Licensed Work you
+distribute or make available. You must also include a notice stating that the Licensed
+Work is governed by this license and that use of the Licensed Work in Production is not
+permitted before the Change Date.
+
+THE LICENSED WORK IS PROVIDED ON AN “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTIES OR
+CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+
+For the full text of the Business Source License 1.1, see:
+https://mariadb.com/bsl11/
