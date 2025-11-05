@@ -1,16 +1,16 @@
-# MI6 Dossiers: Agentic Automation
+# Dossier: Universal LLM Automation Standard
 
-**Dossiers** are intelligent instruction sets that leverage LLM agents to automate complex MI6 workflows.
+**Dossiers** are intelligent instruction sets that leverage LLM agents to automate complex workflows with adaptability and continuous improvement.
 
 ---
 
 ## What Are Dossiers?
 
-Instead of writing complex scripts that try to handle every edge case, MI6 dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
+Instead of writing complex scripts that try to handle every edge case, dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
 
 ### The Concept
 
-MI6 users **already have access to LLMs** - that's the whole point of this framework! So why write brittle shell scripts when we can provide structured guidance for intelligent agents?
+Modern developers **already have access to LLMs** in their workflows! So why write brittle shell scripts when we can provide structured guidance for intelligent agents?
 
 **Traditional Approach** (brittle):
 ```bash
@@ -31,7 +31,7 @@ MI6 users **already have access to LLMs** - that's the whole point of this frame
 
 ## 🔄 Self-Improving Dossiers
 
-MI6 dossiers follow the **Dossier Execution Protocol** (`_PROTOCOL.md`) which includes a **self-improvement system**.
+Dossiers follow the **Dossier Execution Protocol** ([PROTOCOL.md](./PROTOCOL.md)) which includes a **self-improvement system**.
 
 ### How It Works
 
@@ -59,7 +59,7 @@ LLM: ✓ Enhanced dossier with Python support
 
 **Protocol Version**: Each dossier specifies which protocol version it follows (e.g., v1.0)
 
-📚 **Full protocol**: [_PROTOCOL.md](./_PROTOCOL.md)
+📚 **Full protocol**: [PROTOCOL.md](./PROTOCOL.md)
 
 ---
 
@@ -70,62 +70,65 @@ LLM: ✓ Enhanced dossier with Python support
 Just tell your AI assistant:
 
 ```
-"Use the MI6 project-init dossier to set up this directory"
+"Use the project-init dossier to set up this directory"
 ```
 
-The AI knows to look in `$MI6_PATH/dossiers/` and follow the instructions.
+The AI will follow the dossier instructions from your project's dossier directory.
 
 ### Method 2: Explicit Reference
 
 ```
-"Follow the instructions in $MI6_PATH/dossiers/project-init.md
+"Follow the instructions in dossiers/project-init.md
 to initialize this project"
 ```
 
 ### Method 3: Copy-Paste (Always Works)
 
-1. Open dossier file: `cat $MI6_PATH/dossiers/project-init.md`
+1. Open dossier file: `cat dossiers/project-init.md`
 2. Copy content
 3. Paste into AI chat
 4. AI executes the instructions
 
 ---
 
-## Available Dossiers
+## Example Dossier Types
 
-### Citizen Journey Dossiers
+Dossiers can be created for any automation workflow. Here are common categories:
 
-**For new projects (greenfield)**:
-| Dossier | Purpose | When to Use |
-|---------|---------|-------------|
-| **greenfield-start.md** | Start brand new project from zero | Absolute beginning - no directory yet |
-| **project-init.md** | Initialize MI6 structure | After directory/repos created |
-| **dependency-install.md** | Install all dependencies | After MI6 initialization |
-| **first-dev-session.md** | First productive dev session | Ready to start coding |
+### Project Setup Dossiers
+- **project-init** - Initialize project structure
+- **dependency-install** - Install dependencies
+- **environment-setup** - Configure development environment
 
-**For existing projects (brownfield)**:
-| Dossier | Purpose | When to Use |
-|---------|---------|-------------|
-| **brownfield-adoption.md** | Add MI6 to existing project safely | Have existing code, want MI6 benefits |
-| **project-uninstall.md** | Remove MI6 if adoption fails | MI6 didn't work out, need clean removal |
+### Development Workflow Dossiers
+- **feature-start** - Begin new feature development
+- **code-review** - Automated code review checklist
+- **test-setup** - Configure testing framework
 
-### Feature Dossiers
+### DevOps Dossiers
+- **deployment** - Deploy to production/staging
+- **backup** - Create backups
+- **monitoring-setup** - Configure monitoring
 
-| Dossier | Purpose | When to Use |
-|---------|---------|-------------|
-| **worktree-multi-repo.md** | Set up multi-repo worktrees | Working on features across multiple repos |
-| **worktree-cleanup.md** | Remove worktrees safely | Completing/abandoning feature work |
-| **task-create.md** | Create new task document | Starting new work that needs documentation |
+### Maintenance Dossiers
+- **cleanup** - Remove temporary files/structures
+- **migration** - Data or code migrations
+- **rollback** - Revert changes safely
 
-### Community Dossiers
+## Implementations
 
-Coming soon! See [CONTRIBUTING.md](../CONTRIBUTING.md) for how to contribute dossiers.
+The dossier standard is designed to be implementation-agnostic. Projects can adopt dossiers in various ways:
+
+- **[MI6](https://github.com/imboard-ai/mi6)** - AI-native project automation framework (reference implementation)
+- **Your project** - Create your own dossier collection for your specific workflows
+
+Want to create an implementation? See [SPECIFICATION.md](./SPECIFICATION.md) for the formal standard.
 
 ---
 
 ## Dossiers vs Scripts
 
-MI6 uses **both** dossiers and traditional scripts - each for what they do best:
+Use **both** dossiers and traditional scripts - each for what they do best:
 
 ### Use Dossiers When:
 - ✅ Context awareness needed (detect project structure)
@@ -143,10 +146,10 @@ MI6 uses **both** dossiers and traditional scripts - each for what they do best:
 
 | Task | Approach | Why |
 |------|----------|-----|
-| Set MI6_PATH | Script ✅ | Simple, deterministic |
+| Set ENV variable | Script ✅ | Simple, deterministic |
 | **Initialize project** | **Dossier** ✅ | Needs to understand project |
-| Benchmark git | Script ✅ | Fixed commands |
-| **Create worktrees** | **Dossier** ✅ | Needs repo detection |
+| Run benchmarks | Script ✅ | Fixed commands |
+| **Setup development** | **Dossier** ✅ | Needs context detection |
 | Validate config | Script ✅ | Schema checking |
 | **Generate config** | **Dossier** ✅ | Needs intelligence |
 
@@ -206,8 +209,8 @@ Common issues and how to resolve them
 Start with the dossier template:
 
 ```bash
-cp $MI6_PATH/dossiers/templates/dossier-template.md \
-   $MI6_PATH/dossiers/my-custom-dossier.md
+cp templates/dossier-template.md \
+   dossiers/my-custom-dossier.md
 ```
 
 ### 2. Follow the Format
@@ -218,9 +221,9 @@ Fill in all sections. Be specific and clear. The LLM will follow your instructio
 
 Try your dossier with an AI assistant. Refine based on results.
 
-### 4. Contribute Back
+### 4. Share with Community
 
-Share useful dossiers! See [CONTRIBUTING.md](../CONTRIBUTING.md).
+Share useful dossiers! Contribute to dossier implementations or create your own collection.
 
 ---
 
@@ -237,59 +240,62 @@ Share useful dossiers! See [CONTRIBUTING.md](../CONTRIBUTING.md).
 - **Assume context**: Explicitly state what to check
 - **Skip validation**: Always verify the outcome
 - **Be vague**: "Set up the project" → too broad
-- **Hardcode paths**: Use `$MI6_PATH` and relative paths
+- **Hardcode paths**: Use relative paths or configurable variables
 - **Require specific LLM**: Should work with any AI
 
 ---
 
 ## Examples
 
-### Example 1: Quick Project Setup
+### Example 1: AWS Deployment
 
 ```
-User: "I have a Node.js backend and React frontend.
-       Use MI6 project-init to set this up."
+User: "Deploy to AWS staging using the deploy-to-aws dossier"
+
+AI: (Follows deploy-to-aws.md dossier)
+    ✓ Detected: AWS credentials configured
+    ✓ Found: terraform/ configuration
+    ✓ Validated: Staging environment exists
+    ✓ Running: terraform plan
+    ✓ Confirmed: Changes look safe
+    ✓ Executing: terraform apply
+    ✓ Verified: Deployment successful
+    ✓ Output: Staging URL: https://staging.example.com
+
+    "Deployment complete! Staging is live."
+```
+
+### Example 2: Project Setup
+
+```
+User: "Initialize this Node.js project using project-init dossier"
 
 AI: (Follows project-init.md dossier)
-    ✓ Detected: Multi-repo structure
-    ✓ Found: backend/ (Node.js), frontend/ (React)
-    ✓ Created: .ai-project.json with 2 repos
-    ✓ Copied: All templates
-    ✓ Customized: AI_GUIDE.md with npm commands
-    ✓ Set up: .aicontextignore for Node/React
-    ✓ Created: Task structure
+    ✓ Detected: Node.js project (package.json found)
+    ✓ Analyzed: Dependencies and scripts
+    ✓ Created: Development environment config
+    ✓ Set up: .gitignore with Node.js patterns
     ✓ Initialized: Git repository
+    ✓ Created: README.md template
 
-    "Project initialized! Ready to use MI6."
+    "Project initialized! Ready for development."
 ```
 
-### Example 2: Worktree Setup
+### Example 3: Database Migration
 
 ```
-User: "Create worktrees for feature-x using the worktree dossier"
+User: "Run the database migration dossier for the user table changes"
 
-AI: (Follows worktree-multi-repo.md dossier)
-    ✓ Read: .ai-project.json (found 2 repos)
-    ✓ Created: .worktrees/feature-x/backend/ on branch feature-x
-    ✓ Created: .worktrees/feature-x/frontend/ on branch feature-x
-    ✓ Verified: Both branches created successfully
+AI: (Follows db-migration.md dossier)
+    ✓ Detected: PostgreSQL database
+    ✓ Validated: Connection to database
+    ✓ Created: Backup of current schema
+    ✓ Generated: Migration script
+    ✓ Reviewed: Changes with user
+    ✓ Applied: Migration successfully
+    ✓ Verified: Data integrity maintained
 
-    "Worktrees ready! Work in .worktrees/feature-x/"
-```
-
-### Example 3: Task Creation
-
-```
-User: "Use task-create dossier to make a task for
-       implementing dark mode"
-
-AI: (Follows task-create.md dossier)
-    ✓ Generated: DARK_MODE_IMPLEMENTATION.md
-    ✓ Added: Requirements and acceptance criteria
-    ✓ Created: In tasks/planned/
-    ✓ Suggested: Next step is 'npm run task:start DARK_MODE'
-
-    "Task created! Start with: npm run task:start DARK_MODE"
+    "Migration complete! Backup saved to backups/schema-2025-11-05.sql"
 ```
 
 ---
@@ -343,28 +349,36 @@ Anyone can write a dossier - no shell scripting expertise required.
 ### "I don't have access to an LLM"
 
 If you don't have an LLM agent:
-- Use traditional MI6 scripts (setup-env.sh, task-manager.js, etc.)
-- Dossiers are optional enhancements, not requirements
-- Many tasks can be done manually following docs
+- Dossiers can still serve as excellent documentation
+- Follow dossier steps manually
+- Use traditional automation scripts alongside dossiers
+- Dossiers provide clear workflow documentation even without AI execution
 
 ---
 
 ## See Also
 
-- [Dossier System Guide](../docs/dossier-system.md) - Comprehensive documentation
-- [Dossier Template](./templates/dossier-template.md) - Create custom dossiers
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribute dossiers
-- [MI6 Workflows](../workflows/) - Traditional documentation
+- [PROTOCOL.md](./PROTOCOL.md) - Dossier execution protocol
+- [SPECIFICATION.md](./SPECIFICATION.md) - Formal dossier specification
+- [examples/](./examples/) - Example dossier implementations
+- [MI6](https://github.com/imboard-ai/mi6) - Reference implementation
 
 ---
 
 ## Philosophy
 
-> "Agents need structure. MI6 provides it."
+> "Agents need structure. Dossiers provide it."
 
 Dossiers embody this philosophy - they give AI agents clear structure and guidance, enabling them to intelligently automate complex workflows that would be brittle to script.
 
+**The dossier standard** enables:
+- **Adaptability**: LLMs understand context and adjust behavior
+- **Maintainability**: Markdown documentation instead of complex scripts
+- **Collaboration**: Clear, readable instructions anyone can contribute to
+- **Continuous improvement**: Self-improving through the protocol
+- **Universal adoption**: Any project, any workflow, any implementation
+
 ---
 
-**🕵️ MI6 Agentic Automation**
-*Simpler than scripts. More powerful than manual.*
+**🎯 Dossier: Universal LLM Automation Standard**
+*Structure your agents. Not your scripts.*
