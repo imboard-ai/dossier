@@ -1,8 +1,8 @@
-# MI6 Dossier Registry
+# Sample Dossier Registry
 
-> **Note**: This is an example implementation from the [MI6 project](https://github.com/imboard-ai/mi6), showing how a specific dossier implementation organizes and documents its dossiers. Your implementation may use a different structure.
+> **Note**: This is an example of how a dossier implementation might organize and document its dossiers. This shows organizational patterns, relationship mapping, and navigation structures. Your implementation may use a different structure based on your needs.
 
-Complete catalog of all MI6 dossiers with relationships, outputs, and navigation maps.
+Complete catalog of all project dossiers with relationships, outputs, and navigation maps.
 
 ---
 
@@ -11,14 +11,14 @@ Complete catalog of all MI6 dossiers with relationships, outputs, and navigation
 | Dossier | Version | Purpose | Journey | Coupling |
 |---------|---------|---------|---------|----------|
 | [greenfield-start](./greenfield-start.md) | 1.0.0 | Start new project from zero | Greenfield | Loose |
-| [project-init](./project-init.md) | 1.0.0 | Initialize MI6 structure | Both | Medium |
-| [brownfield-adoption](./brownfield-adoption.md) | 1.0.0 | Add MI6 to existing project | Brownfield | Medium |
+| [project-init](./project-init.md) | 1.0.0 | Initialize project structure | Both | Medium |
+| [brownfield-adoption](./brownfield-adoption.md) | 1.0.0 | Add dossiers to existing project | Brownfield | Medium |
 | [dependency-install](./dependency-install.md) | 1.0.0 | Install all dependencies | Both | Loose |
 | [first-dev-session](./first-dev-session.md) | 1.0.0 | First productive session | Both | Loose |
 | [worktree-multi-repo](./worktree-multi-repo.md) | 1.0.0 | Create multi-repo worktrees | Feature | Medium |
 | [worktree-cleanup](./worktree-cleanup.md) | 1.0.0 | Remove worktrees | Feature | Medium |
 | [task-create](./task-create.md) | 1.0.0 | Generate task documents | Feature | Loose |
-| [project-uninstall](./project-uninstall.md) | 1.0.0 | Remove MI6 safely | Maintenance | Medium |
+| [project-uninstall](./project-uninstall.md) | 1.0.0 | Remove dossier system safely | Maintenance | Medium |
 
 ---
 
@@ -30,7 +30,7 @@ Complete catalog of all MI6 dossiers with relationships, outputs, and navigation
 
 ```mermaid
 graph LR
-    A[greenfield-start<br/>Create directory] --> B[project-init<br/>MI6 setup]
+    A[greenfield-start<br/>Create directory] --> B[project-init<br/>Project setup]
     B --> C[dependency-install<br/>Install deps]
     C --> D[first-dev-session<br/>Start coding]
 
@@ -42,7 +42,7 @@ graph LR
 
 **Steps**:
 1. **greenfield-start**: Create project directory, init git
-2. **project-init**: Add MI6 templates, customize for project
+2. **project-init**: Add dossier templates, customize for project
 3. **dependency-install**: Install npm/pip/cargo dependencies
 4. **first-dev-session**: Create first task, start developing
 
@@ -52,7 +52,7 @@ graph LR
 
 ### Brownfield Journey (Existing Projects)
 
-**Path**: Existing → MI6-Enhanced in 2-3 steps
+**Path**: Existing → Dossier-Enhanced in 2-3 steps
 
 ```mermaid
 graph LR
@@ -66,7 +66,7 @@ graph LR
 
 **Steps**:
 1. **brownfield-adoption**: Backup, plan integration, merge strategy
-2. **project-init**: Add MI6 files (merge with existing)
+2. **project-init**: Add dossier files (merge with existing)
 3. **dependency-install**: Optional if deps already installed
 
 **Time to enhanced**: < 20 minutes
@@ -131,7 +131,7 @@ graph LR
 | dependency-install | node_modules/, lock files | first-dev-session |
 | worktree-multi-repo | .worktrees/[feature]/ | worktree-cleanup |
 | task-create | Task .md file | task manager scripts |
-| project-uninstall | Removed MI6 files, archives | N/A (terminal) |
+| project-uninstall | Removed dossier files, archives | N/A (terminal) |
 
 ###Configuration Flow
 
@@ -151,11 +151,11 @@ graph TD
 
 ### Setup & Initialization
 - **greenfield-start** - Brand new projects
-- **project-init** - Core MI6 setup
+- **project-init** - Core dossier setup
 - **brownfield-adoption** - Existing projects
 - **dependency-install** - Package installation
 
-**Purpose**: Get projects MI6-ready
+**Purpose**: Get projects dossier-ready
 
 ### Development Workflows
 - **first-dev-session** - Onboarding walkthrough
@@ -166,7 +166,7 @@ graph TD
 **Purpose**: Day-to-day development operations
 
 ### Maintenance & Utilities
-- **project-uninstall** - Remove MI6
+- **project-uninstall** - Remove dossier system
 
 **Purpose**: Lifecycle management
 
@@ -194,7 +194,7 @@ graph TD
 ### Tight Coupling (Interdependent)
 - None currently
 
-**Note**: MI6 deliberately avoids tight coupling for flexibility
+**Note**: This implementation deliberately avoids tight coupling for flexibility
 
 ---
 
@@ -206,7 +206,7 @@ graph TD
 
 ### Terminal Nodes (Nothing follows)
 - first-dev-session (user continues development)
-- project-uninstall (MI6 removed)
+- project-uninstall (dossier system removed)
 - worktree-cleanup (worktree removed)
 
 ### Middleware (Part of chains)
@@ -229,7 +229,7 @@ graph TD
 ### I want to create a task
 **Path**: task-create → task:start (script)
 
-### MI6 didn't work for me
+### The dossier system didn't work for me
 **Path**: project-uninstall
 
 ---
@@ -238,9 +238,9 @@ graph TD
 
 - [Dossiers README](./README.md) - How to use dossiers
 - [Protocol](./PROTOCOL.md) - Execution guidelines
-- [Main README](../README.md) - MI6 overview
+- [Main README](../README.md) - Project overview
 
 ---
 
-**🕵️ MI6 Dossier Registry v1.0**
-*Complete catalog of intelligent automation workflows*
+**📋 Sample Dossier Registry v1.0**
+*Example of organizing and documenting dossier workflows*
