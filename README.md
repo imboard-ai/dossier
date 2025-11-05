@@ -2,6 +2,8 @@
 
 **Dossiers** are intelligent instruction sets that leverage LLM agents to automate complex workflows with adaptability and continuous improvement.
 
+> **🚀 New here?** Jump to [QUICK_START.md](./QUICK_START.md) for a 5-minute guide!
+
 ---
 
 ## What Are Dossiers?
@@ -65,29 +67,115 @@ LLM: ✓ Enhanced dossier with Python support
 
 ## How to Use Dossiers
 
-### Method 1: Natural Language (Easiest)
+> **🎯 New User?** See [QUICK_START.md](./QUICK_START.md) for a complete beginner's guide with examples!
+>
+> **Quick Start**: Most LLMs don't know about dossiers yet. Choose your path below based on your tools.
 
-Just tell your AI assistant:
+### Prerequisites
+
+To use dossiers with an AI assistant, you need **ONE** of:
+- ✅ **AI with file access** (Claude Code, Cursor, Aider, etc.)
+- ✅ **MCP-compatible tool** with dossier MCP server (see below)
+- ✅ **Ability to copy-paste** (works with any LLM)
+
+---
+
+### Method 1: AI Tools with File Access (Recommended)
+
+**For Claude Code, Cursor, Aider, Continue, etc.**
+
+These tools can already read files, so just provide context:
 
 ```
-"Use the project-init dossier to set up this directory"
+"I want to use the dossier automation system. First, read and
+understand these files:
+- README.md (dossier concept)
+- examples/devops/deploy-to-aws.md (example dossier)
+
+Then help me execute the project-init dossier from the dossiers/
+directory to initialize this project."
 ```
 
-The AI will follow the dossier instructions from your project's dossier directory.
+The AI will:
+1. Learn what dossiers are from the README
+2. See an example dossier structure
+3. Find and execute your requested dossier
 
-### Method 2: Explicit Reference
+---
+
+### Method 2: MCP Server (Frictionless for Claude Desktop)
+
+**🚀 Coming Soon**: Install the dossier MCP server to enable true natural language:
+
+```bash
+# Install MCP server (upcoming)
+npx @dossier/mcp-server install
+
+# Then just say:
+"Use the project-init dossier"
+```
+
+The MCP server provides:
+- 📂 Automatic dossier discovery
+- 📖 Built-in dossier concept documentation
+- 🔍 Registry and relationship awareness
+- ✅ Validation and compliance checking
+
+**Status**: MCP server in development. See [mcp-server/](./mcp-server/) for progress.
+
+---
+
+### Method 3: Copy-Paste (Universal - Works Everywhere)
+
+**For ChatGPT, Claude.ai, Gemini, or any LLM:**
+
+#### Quick Start Template
+
+Copy and paste this template to any LLM:
 
 ```
-"Follow the instructions in dossiers/project-init.md
-to initialize this project"
+I'm using the "dossier" automation system. Dossiers are structured
+instructions for AI agents to execute complex workflows intelligently.
+
+Here's the dossier I want you to execute:
+
+[PASTE DOSSIER CONTENT HERE]
+
+Please:
+1. Read and understand the dossier structure
+2. Validate prerequisites
+3. Gather the context specified
+4. Execute the actions step-by-step
+5. Validate success criteria
+6. Report the outcome
+
+Start by confirming you understand the objective and prerequisites.
 ```
 
-### Method 3: Copy-Paste (Always Works)
+#### Example Usage
 
-1. Open dossier file: `cat dossiers/project-init.md`
-2. Copy content
-3. Paste into AI chat
-4. AI executes the instructions
+1. **Get dossier content**:
+   ```bash
+   cat dossiers/project-init.md
+   ```
+
+2. **Copy the output**
+
+3. **Paste into LLM** with the template above
+
+4. **AI executes** the instructions adaptively
+
+---
+
+### Method 4: Explicit File Reference (AI with File Access)
+
+**For tools that can read files directly:**
+
+```
+"Read and execute the dossier at dossiers/project-init.md
+to initialize this project. The dossier follows the standard
+defined in SPECIFICATION.md."
+```
 
 ---
 
@@ -531,10 +619,52 @@ If you don't have an LLM agent:
 
 ---
 
+## 🚀 MCP Server (Frictionless Integration)
+
+The **Dossier MCP Server** is in development to make dossier usage truly frictionless with Model Context Protocol integration.
+
+### What It Enables
+
+With the MCP server installed, Claude Desktop (and other MCP-compatible tools) can:
+- 📂 **Auto-discover** available dossiers in your project
+- 📖 **Understand** the dossier concept automatically
+- 🔍 **Navigate** dossier registries and relationships
+- ✅ **Execute** dossiers following the standard protocol
+
+### Vision
+
+```
+# Instead of explaining and copy-pasting...
+User: "Use the project-init dossier"
+
+# The AI just works!
+AI: *Discovers dossiers via MCP*
+    *Understands concept from resources*
+    *Reads and executes*
+    "Executing project-init dossier v1.0.0..."
+```
+
+### Status & Contributing
+
+- **Specification**: ✅ Complete
+- **Implementation**: 🚧 In Progress
+- **Contributors**: Welcome!
+
+See [mcp-server/](./mcp-server/) for:
+- Full API specification
+- Development roadmap
+- How to contribute
+
+This is a **community-driven effort** to make LLM automation truly accessible. Help us build the future of AI-powered development workflows!
+
+---
+
 ## See Also
 
+- [QUICK_START.md](./QUICK_START.md) - Get started in 5 minutes
 - [PROTOCOL.md](./PROTOCOL.md) - Dossier execution protocol
 - [SPECIFICATION.md](./SPECIFICATION.md) - Formal dossier specification
+- [mcp-server/](./mcp-server/) - MCP Server for frictionless integration
 - [examples/](./examples/) - Example dossier implementations
 - [Sample Implementation](./examples/sample-implementation/) - Example of organizing dossiers
 - [MI6](https://github.com/imboard-ai/mi6) - Community implementation example
