@@ -1,0 +1,413 @@
+#!/usr/bin/env node
+
+/**
+ * Dossier Verification Tool
+ *
+ * Verifies the integrity (checksum) and authenticity (signature) of a dossier.
+ *
+ * Usage:
+ *   node tools/verify-dossier.js <dossier-file> [--trusted-keys <file>]
+ *
+ * Example:
+ *   node tools/verify-dossier.js examples/devops/deploy-to-aws.md
+ *   node tools/verify-dossier.js examples/devops/deploy-to-aws.md --trusted-keys ~/.dossier/trusted-keys.txt
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { execSync } = require('child_process');
+const os = require('os');
+
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+
+  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+    console.log(`
+Dossier Verification Tool
+
+Usage:
+  node tools/verify-dossier.js <dossier-file> [options]
+
+Options:
+  --trusted-keys <file>  Path to trusted keys file (default: ~/.dossier/trusted-keys.txt)
+  --json                 Output result as JSON
+  --help, -h             Show this help message
+
+Example:
+  node tools/verify-dossier.js examples/devops/deploy-to-aws.md
+  node tools/verify-dossier.js examples/devops/deploy-to-aws.md --trusted-keys ./my-keys.txt
+`);
+    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+  }
+
+  const dossierFile = args[0];
+  const trustedKeysIndex = args.indexOf('--trusted-keys');
+  const jsonOutput = args.includes('--json');
+
+  const defaultTrustedKeys = path.join(os.homedir(), '.dossier', 'trusted-keys.txt');
+
+  return {
+    dossierFile,
+    trustedKeysFile: trustedKeysIndex !== -1 ? args[trustedKeysIndex + 1] : defaultTrustedKeys,
+    jsonOutput
+  };
+}
+
+// Extract frontmatter and body from dossier
+function parseDossier(content) {
+  const frontmatterRegex = /^---dossier\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/m;
+  const match = content.match(frontmatterRegex);
+
+  if (!match) {
+    throw new Error('Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]');
+  }
+
+  const frontmatterJson = match[1];
+  const body = match[2];
+
+  let frontmatter;
+  try {
+    frontmatter = JSON.parse(frontmatterJson);
+  } catch (err) {
+    throw new Error(`Failed to parse frontmatter JSON: ${err.message}`);
+  }
+
+  return { frontmatter, body };
+}
+
+// Calculate SHA256 hash of body
+function calculateChecksum(body) {
+  return crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+}
+
+// Load trusted keys
+function loadTrustedKeys(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return new Map();
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  const keys = new Map();
+
+  content.split('\n').forEach((line, lineNum) => {
+    line = line.trim();
+    if (!line || line.startsWith('#')) return;
+
+    const parts = line.split(/\s+/);
+    if (parts.length >= 2) {
+      const publicKey = parts[0];
+      const keyId = parts.slice(1).join(' ');
+      keys.set(publicKey, keyId);
+    }
+  });
+
+  return keys;
+}
+
+// Verify signature with minisign
+function verifyWithMinisign(content, signature, publicKey) {
+  // Check if minisign is installed
+  try {
+    execSync('which minisign', { stdio: 'ignore' });
+  } catch (err) {
+    throw new Error('minisign not found. Install it with: brew install minisign (macOS) or apt-get install minisign (Linux)');
+  }
+
+  // Create temporary files
+  const tempContent = '/tmp/dossier-verify-content-' + Date.now() + '.txt';
+  const tempSig = '/tmp/dossier-verify-sig-' + Date.now() + '.minisig';
+  const tempPubKey = '/tmp/dossier-verify-key-' + Date.now() + '.pub';
+
+  fs.writeFileSync(tempContent, content, 'utf8');
+  fs.writeFileSync(tempSig, signature, 'utf8');
+  // Minisign public key file format
+  fs.writeFileSync(tempPubKey, `untrusted comment: dossier verification\n${publicKey}\n`, 'utf8');
+
+  try {
+    // Verify with minisign
+    execSync(`minisign -V -p "${tempPubKey}" -m "${tempContent}" -x "${tempSig}"`, {
+      stdio: 'pipe'
+    });
+
+    // Clean up
+    fs.unlinkSync(tempContent);
+    fs.unlinkSync(tempSig);
+    fs.unlinkSync(tempPubKey);
+
+    return true;
+  } catch (err) {
+    // Clean up on error
+    if (fs.existsSync(tempContent)) fs.unlinkSync(tempContent);
+    if (fs.existsSync(tempSig)) fs.unlinkSync(tempSig);
+    if (fs.existsSync(tempPubKey)) fs.unlinkSync(tempPubKey);
+
+    return false;
+  }
+}
+
+// Main verification function
+function verifyDossier(dossierFile, trustedKeysFile) {
+  const result = {
+    dossierFile,
+    integrity: {
+      status: 'unknown',
+      message: ''
+    },
+    authenticity: {
+      status: 'unknown',
+      message: '',
+      signer: null,
+      keyId: null,
+      isTrusted: false
+    },
+    riskAssessment: {
+      riskLevel: null,
+      riskFactors: [],
+      destructiveOperations: [],
+      requiresApproval: null
+    },
+    recommendation: 'UNKNOWN',
+    errors: []
+  };
+
+  // Read dossier
+  if (!fs.existsSync(dossierFile)) {
+    result.errors.push(`File not found: ${dossierFile}`);
+    result.recommendation = 'BLOCK';
+    return result;
+  }
+
+  const content = fs.readFileSync(dossierFile, 'utf8');
+
+  // Parse dossier
+  let parsed;
+  try {
+    parsed = parseDossier(content);
+  } catch (err) {
+    result.errors.push(`Parse error: ${err.message}`);
+    result.recommendation = 'BLOCK';
+    return result;
+  }
+
+  const { frontmatter, body } = parsed;
+
+  // 1. INTEGRITY CHECK (checksum)
+  if (!frontmatter.checksum) {
+    result.integrity.status = 'missing';
+    result.integrity.message = 'No checksum found in dossier';
+    result.errors.push('Missing checksum - cannot verify integrity');
+    result.recommendation = 'BLOCK';
+  } else {
+    const actualHash = calculateChecksum(body);
+    const expectedHash = frontmatter.checksum.hash;
+
+    if (actualHash === expectedHash) {
+      result.integrity.status = 'valid';
+      result.integrity.message = 'Checksum matches - content has not been tampered with';
+      result.integrity.expectedHash = expectedHash;
+      result.integrity.actualHash = actualHash;
+    } else {
+      result.integrity.status = 'invalid';
+      result.integrity.message = 'CHECKSUM MISMATCH - dossier has been tampered with!';
+      result.integrity.expectedHash = expectedHash;
+      result.integrity.actualHash = actualHash;
+      result.errors.push('Checksum verification FAILED - do not execute!');
+      result.recommendation = 'BLOCK';
+    }
+  }
+
+  // 2. AUTHENTICITY CHECK (signature)
+  if (!frontmatter.signature) {
+    result.authenticity.status = 'unsigned';
+    result.authenticity.message = 'No signature found - authenticity cannot be verified';
+  } else {
+    const sig = frontmatter.signature;
+    result.authenticity.signer = sig.signed_by || 'Unknown';
+    result.authenticity.keyId = sig.key_id || 'Unknown';
+
+    // Load trusted keys
+    const trustedKeys = loadTrustedKeys(trustedKeysFile);
+
+    // Check if key is trusted
+    if (trustedKeys.has(sig.public_key)) {
+      result.authenticity.isTrusted = true;
+      result.authenticity.trustedAs = trustedKeys.get(sig.public_key);
+    }
+
+    // Verify signature
+    try {
+      const isValid = verifyWithMinisign(body, sig.signature, sig.public_key);
+
+      if (isValid) {
+        if (result.authenticity.isTrusted) {
+          result.authenticity.status = 'verified';
+          result.authenticity.message = `Verified signature from trusted source: ${result.authenticity.trustedAs}`;
+        } else {
+          result.authenticity.status = 'signed_unknown';
+          result.authenticity.message = `Valid signature but key is not in trusted list`;
+        }
+      } else {
+        result.authenticity.status = 'invalid';
+        result.authenticity.message = 'SIGNATURE VERIFICATION FAILED';
+        result.errors.push('Signature verification FAILED - do not execute!');
+        result.recommendation = 'BLOCK';
+      }
+    } catch (err) {
+      result.authenticity.status = 'error';
+      result.authenticity.message = `Verification error: ${err.message}`;
+      result.errors.push(`Signature verification error: ${err.message}`);
+    }
+  }
+
+  // 3. RISK ASSESSMENT
+  result.riskAssessment.riskLevel = frontmatter.risk_level || 'unknown';
+  result.riskAssessment.riskFactors = frontmatter.risk_factors || [];
+  result.riskAssessment.destructiveOperations = frontmatter.destructive_operations || [];
+  result.riskAssessment.requiresApproval = frontmatter.requires_approval !== false; // default true
+
+  // 4. RECOMMENDATION
+  if (result.recommendation === 'UNKNOWN') {
+    if (result.integrity.status === 'invalid' || result.authenticity.status === 'invalid') {
+      result.recommendation = 'BLOCK';
+    } else if (result.authenticity.status === 'verified' && result.riskAssessment.riskLevel === 'low') {
+      result.recommendation = 'ALLOW';
+    } else if (result.authenticity.status === 'unsigned' || result.authenticity.status === 'signed_unknown') {
+      result.recommendation = 'WARN';
+    } else if (result.riskAssessment.riskLevel === 'high' || result.riskAssessment.riskLevel === 'critical') {
+      result.recommendation = 'WARN';
+    } else {
+      result.recommendation = 'WARN';
+    }
+  }
+
+  return result;
+}
+
+// Pretty print results
+function printResults(result) {
+  console.log('\n🔍 Dossier Verification Report\n');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`File: ${result.dossierFile}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  // Integrity
+  console.log('📊 INTEGRITY CHECK (Checksum)');
+  const integrityIcon = result.integrity.status === 'valid' ? '✅' :
+                        result.integrity.status === 'invalid' ? '❌' : '⚠️';
+  console.log(`   ${integrityIcon} Status: ${result.integrity.status.toUpperCase()}`);
+  console.log(`   ${result.integrity.message}`);
+  if (result.integrity.expectedHash) {
+    console.log(`   Expected: ${result.integrity.expectedHash}`);
+    console.log(`   Actual:   ${result.integrity.actualHash}`);
+  }
+  console.log();
+
+  // Authenticity
+  console.log('🔐 AUTHENTICITY CHECK (Signature)');
+  const authIcon = result.authenticity.status === 'verified' ? '✅' :
+                   result.authenticity.status === 'signed_unknown' ? '⚠️' :
+                   result.authenticity.status === 'unsigned' ? '⚠️' : '❌';
+  console.log(`   ${authIcon} Status: ${result.authenticity.status.toUpperCase()}`);
+  console.log(`   ${result.authenticity.message}`);
+  if (result.authenticity.signer) {
+    console.log(`   Signer: ${result.authenticity.signer}`);
+    console.log(`   Key ID: ${result.authenticity.keyId}`);
+    console.log(`   Trusted: ${result.authenticity.isTrusted ? 'YES' : 'NO'}`);
+  }
+  console.log();
+
+  // Risk Assessment
+  console.log('⚠️  RISK ASSESSMENT');
+  const riskIcon = result.riskAssessment.riskLevel === 'low' ? '🟢' :
+                   result.riskAssessment.riskLevel === 'medium' ? '🟡' :
+                   result.riskAssessment.riskLevel === 'high' ? '🟠' :
+                   result.riskAssessment.riskLevel === 'critical' ? '🔴' : '⚪';
+  console.log(`   ${riskIcon} Risk Level: ${(result.riskAssessment.riskLevel || 'UNKNOWN').toUpperCase()}`);
+  if (result.riskAssessment.riskFactors.length > 0) {
+    console.log('   Risk Factors:');
+    result.riskAssessment.riskFactors.forEach(factor => {
+      console.log(`     • ${factor}`);
+    });
+  }
+  if (result.riskAssessment.destructiveOperations.length > 0) {
+    console.log('   Destructive Operations:');
+    result.riskAssessment.destructiveOperations.forEach(op => {
+      console.log(`     • ${op}`);
+    });
+  }
+  console.log(`   Requires Approval: ${result.riskAssessment.requiresApproval ? 'YES' : 'NO'}`);
+  console.log();
+
+  // Errors
+  if (result.errors.length > 0) {
+    console.log('❌ ERRORS');
+    result.errors.forEach(err => {
+      console.log(`   • ${err}`);
+    });
+    console.log();
+  }
+
+  // Recommendation
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const recIcon = result.recommendation === 'ALLOW' ? '✅' :
+                  result.recommendation === 'WARN' ? '⚠️' : '❌';
+  console.log(`${recIcon} RECOMMENDATION: ${result.recommendation}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  if (result.recommendation === 'ALLOW') {
+    console.log('This dossier passed all security checks and can be executed safely.');
+  } else if (result.recommendation === 'WARN') {
+    console.log('⚠️  WARNING: This dossier should be reviewed before execution.');
+    console.log('Reasons:');
+    if (result.authenticity.status === 'unsigned') {
+      console.log('  • Dossier is not signed (cannot verify author)');
+    }
+    if (result.authenticity.status === 'signed_unknown') {
+      console.log('  • Signature is valid but signer is not in your trusted keys list');
+    }
+    if (result.riskAssessment.riskLevel === 'high' || result.riskAssessment.riskLevel === 'critical') {
+      console.log(`  • High risk level: ${result.riskAssessment.riskLevel}`);
+    }
+    console.log('\nOnly execute if you trust the source!');
+  } else {
+    console.log('❌ BLOCKED: This dossier has FAILED security checks.');
+    console.log('DO NOT EXECUTE until issues are resolved!');
+  }
+  console.log();
+}
+
+// Main
+function main() {
+  const options = parseArgs();
+
+  const result = verifyDossier(options.dossierFile, options.trustedKeysFile);
+
+  if (options.jsonOutput) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    printResults(result);
+  }
+
+  // Exit code based on recommendation
+  if (result.recommendation === 'BLOCK') {
+    process.exit(1);
+  } else if (result.recommendation === 'WARN') {
+    process.exit(2);
+  } else {
+    process.exit(0);
+  }
+}
+
+// Run
+if (require.main === module) {
+  try {
+    main();
+  } catch (err) {
+    console.error(`\nFatal error: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+module.exports = { parseDossier, calculateChecksum, verifyDossier, loadTrustedKeys };
