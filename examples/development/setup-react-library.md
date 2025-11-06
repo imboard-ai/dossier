@@ -1,3 +1,42 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Setup React Component Library",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-05",
+  "objective": "Create a production-ready React component library with TypeScript, Storybook, testing, and NPM publishing configuration",
+  "category": ["development", "setup"],
+  "tags": ["react", "typescript", "component-library", "storybook", "vite", "npm", "testing"],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "risk_level": "medium",
+  "risk_factors": [
+    "modifies_files",
+    "executes_external_code",
+    "network_access"
+  ],
+  "requires_approval": false,
+  "destructive_operations": [
+    "Creates new files and directories in current directory",
+    "Installs NPM dependencies (~300MB in node_modules)",
+    "Initializes git repository (if not already initialized)",
+    "Downloads and executes package installation scripts"
+  ],
+  "estimated_duration": {
+    "min_minutes": 10,
+    "max_minutes": 30
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "Creates self-contained library project. No dependencies on external systems except NPM registry for package installation."
+  }
+}
+---
+
 # Dossier: Setup React Component Library
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))

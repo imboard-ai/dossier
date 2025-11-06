@@ -1,3 +1,43 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Database Schema Migration",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-05",
+  "objective": "Execute database schema migrations with comprehensive safety checks, automatic backups, and rollback capability for production-grade reliability",
+  "category": ["database", "migration", "maintenance"],
+  "tags": ["database", "migration", "sql", "postgresql", "mysql", "schema", "rollback"],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "risk_level": "critical",
+  "risk_factors": [
+    "database_operations",
+    "requires_credentials",
+    "modifies_files"
+  ],
+  "requires_approval": true,
+  "destructive_operations": [
+    "Modifies database schema (adds/removes/alters tables, columns, indexes, constraints)",
+    "May transform or migrate existing data",
+    "Acquires exclusive schema locks (blocks other operations)",
+    "Can cause data loss if migration script has errors",
+    "May impact application availability during migration"
+  ],
+  "estimated_duration": {
+    "min_minutes": 5,
+    "max_minutes": 120
+  },
+  "coupling": {
+    "level": "Tight",
+    "details": "Directly modifies database state. All applications depending on this database are tightly coupled to the schema."
+  }
+}
+---
+
 # Dossier: Database Schema Migration
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))
