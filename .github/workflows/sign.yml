@@ -1,0 +1,39 @@
+name: sign
+on:
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ROLE_ARN: arn:aws:iam::942039714848:role/github-dossier-oidc
+  KMS_KEY_ALIAS: alias/dossier-official-prod
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS creds via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: KMS sign test artifact
+        run: |
+          echo "hello from github" > artifact.bin
+          shasum -a 256 artifact.bin | awk '{print $1}' | xxd -r -p | base64 > digest.b64
+          aws kms sign \
+            --key-id "${KMS_KEY_ALIAS}" \
+            --message-type DIGEST \
+            --signing-algorithm ECDSA_SHA_256 \
+            --message "$(cat digest.b64)" \
+            --query Signature --output text > signature.b64
+          aws kms get-public-key \
+            --key-id "${KMS_KEY_ALIAS}" \
+            --query PublicKey --output text | base64 --decode > publickey.der
+          ls -lh artifact.bin signature.b64 publickey.der
