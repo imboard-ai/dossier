@@ -43,14 +43,17 @@ LLM:  "Found project-init dossier v1.0.0. Analyzing prerequisites..."
 - **`list_dossiers`** - Discover available dossiers
 - **`read_dossier`** - Get dossier content and metadata
 - **`get_registry`** - Understand dossier relationships
-- **`validate_dossier`** - Check compliance
+- **`validate_dossier`** - Check specification compliance
+- **`verify_dossier`** - 🔒 Verify integrity and authenticity (security)
 
 ### 📚 Resources
 
 - **`dossier://concept`** - What are dossiers?
-- **`dossier://protocol`** - How to execute them
+- **`dossier://protocol`** - How to execute them (includes security protocol)
 - **`dossier://specification`** - How to create them
 - **`dossier://examples`** - Example dossiers
+- **`dossier://security`** - 🔒 Security architecture and trust model
+- **`dossier://keys`** - 🔒 Official and community public keys
 
 ### 💡 Prompts
 
@@ -181,6 +184,74 @@ LLM: *Uses get_registry tool*
 
 ---
 
+## 🔒 Built-in Security
+
+The MCP server includes comprehensive security verification for all dossiers.
+
+### Automatic Verification
+
+Every dossier execution through the MCP server is automatically verified:
+
+```
+User: "Execute the deploy-to-aws dossier"
+
+LLM: *Calls verify_dossier tool*
+
+     🔒 Security Verification:
+     ✅ Integrity: Checksum verified (content not tampered with)
+     ✅ Authenticity: Signed by imboard-ai-2024 (trusted)
+     ⚠️  Risk Level: HIGH
+
+     This dossier will:
+     • Modify AWS infrastructure
+     • Require AWS credentials
+     • Execute Infrastructure as Code
+
+     Proceed? (y/N)
+```
+
+### Security Features
+
+**1. Integrity Verification**
+- SHA256 checksums ensure dossiers haven't been modified
+- Automatic verification before execution
+- BLOCKS execution if checksum fails
+
+**2. Cryptographic Signatures (Optional)**
+- Dossiers can be signed with minisign
+- Trust levels: VERIFIED, SIGNED_UNKNOWN, UNSIGNED, INVALID
+- User controls which keys to trust
+
+**3. Risk Assessment**
+- Every dossier declares risk level (low/medium/high/critical)
+- Specific risk factors (modifies_files, requires_credentials, etc.)
+- Detailed destructive operations list
+- Automatic approval requests for high-risk operations
+
+**4. Trust Model**
+- Decentralized (like Docker Hub)
+- Official dossiers signed by Imboard AI
+- Community dossiers signed by their authors
+- Users choose which keys to trust in `~/.dossier/trusted-keys.txt`
+
+### Verification Responses
+
+The `verify_dossier` tool returns:
+
+- **ALLOW**: Verified signature from trusted source + low risk → Execute confidently
+- **WARN**: Unsigned/unknown signer OR high risk → Request user approval
+- **BLOCK**: Checksum failed OR signature invalid → DO NOT EXECUTE
+
+### Resources
+
+- `dossier://security` - Full security architecture documentation
+- `dossier://keys` - Official and community public keys
+- `dossier://protocol` - Includes security verification steps
+
+Learn more: [SECURITY_ARCHITECTURE.md](../SECURITY_ARCHITECTURE.md)
+
+---
+
 ## For Developers
 
 ### Project Structure
@@ -242,7 +313,10 @@ Contributions welcome! This is a critical piece of infrastructure for making dos
 - [ ] Simple validation
 - [ ] Working with Claude Desktop
 
-### Phase 2: Enhanced (v1.1.0) - Target: 4 weeks
+### Phase 2: Security & Enhanced Features (v1.1.0) - 🚧 IN PROGRESS
+- [x] **Security verification** (`verify_dossier` tool) ✅
+- [x] **Security resources** (dossier://security, dossier://keys) ✅
+- [x] **Security-first execution** (verification as step 1) ✅
 - [ ] Advanced validation
 - [ ] Registry relationship parsing
 - [ ] Journey map support

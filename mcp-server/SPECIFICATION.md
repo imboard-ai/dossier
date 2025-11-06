@@ -253,6 +253,176 @@ Validate a dossier against the specification.
 
 ---
 
+### `verify_dossier`
+
+**🔒 Security verification** - Verify integrity and authenticity of a dossier.
+
+**Parameters:**
+```typescript
+{
+  path: string;                    // Path to dossier file
+  trusted_keys_path?: string;      // Path to trusted-keys.txt (default: ~/.dossier/trusted-keys.txt)
+}
+```
+
+**Returns:**
+```typescript
+{
+  dossierFile: string;               // Path to dossier
+  integrity: {
+    status: "valid" | "invalid" | "missing";
+    message: string;
+    expectedHash?: string;           // From frontmatter
+    actualHash?: string;             // Calculated
+  };
+  authenticity: {
+    status: "verified" | "signed_unknown" | "unsigned" | "invalid" | "error";
+    message: string;
+    signer?: string;                 // From signature.signed_by
+    keyId?: string;                  // From signature.key_id
+    publicKey?: string;              // From signature.public_key
+    isTrusted: boolean;              // Is key in trusted-keys.txt?
+    trustedAs?: string;              // Key identifier from trusted-keys.txt
+  };
+  riskAssessment: {
+    riskLevel: "low" | "medium" | "high" | "critical" | "unknown";
+    riskFactors: string[];           // From frontmatter
+    destructiveOperations: string[]; // From frontmatter
+    requiresApproval: boolean;       // From frontmatter
+  };
+  recommendation: "ALLOW" | "WARN" | "BLOCK";
+  message: string;                   // Human-readable recommendation
+  errors: string[];                  // Any errors encountered
+}
+```
+
+**Example Response (Verified):**
+```typescript
+{
+  "dossierFile": "examples/devops/deploy-to-aws.md",
+  "integrity": {
+    "status": "valid",
+    "message": "Checksum matches - content has not been tampered with",
+    "expectedHash": "a3b5c8d9e1f2...",
+    "actualHash": "a3b5c8d9e1f2..."
+  },
+  "authenticity": {
+    "status": "verified",
+    "message": "Verified signature from trusted source: imboard-ai-2024",
+    "signer": "Imboard AI <security@imboard.ai>",
+    "keyId": "imboard-ai-2024",
+    "publicKey": "RWTx5V7Kf1KLN8BVF3PqZ...",
+    "isTrusted": true,
+    "trustedAs": "imboard-ai-2024"
+  },
+  "riskAssessment": {
+    "riskLevel": "high",
+    "riskFactors": ["modifies_cloud_resources", "requires_credentials"],
+    "destructiveOperations": [
+      "Creates/updates AWS infrastructure",
+      "Modifies IAM roles"
+    ],
+    "requiresApproval": true
+  },
+  "recommendation": "WARN",
+  "message": "Verified dossier from trusted source. High risk operations require approval.",
+  "errors": []
+}
+```
+
+**Example Response (Unsigned Warning):**
+```typescript
+{
+  "dossierFile": "custom-dossier.md",
+  "integrity": {
+    "status": "valid",
+    "message": "Checksum matches - content has not been tampered with",
+    "expectedHash": "abc123...",
+    "actualHash": "abc123..."
+  },
+  "authenticity": {
+    "status": "unsigned",
+    "message": "No signature found - authenticity cannot be verified",
+    "isTrusted": false
+  },
+  "riskAssessment": {
+    "riskLevel": "medium",
+    "riskFactors": ["modifies_files"],
+    "destructiveOperations": ["Creates configuration files"],
+    "requiresApproval": false
+  },
+  "recommendation": "WARN",
+  "message": "Unsigned dossier with medium risk. Verify source before execution.",
+  "errors": []
+}
+```
+
+**Example Response (Blocked - Tampered):**
+```typescript
+{
+  "dossierFile": "tampered-dossier.md",
+  "integrity": {
+    "status": "invalid",
+    "message": "CHECKSUM MISMATCH - dossier has been tampered with!",
+    "expectedHash": "abc123...",
+    "actualHash": "def456..."
+  },
+  "authenticity": {
+    "status": "error",
+    "message": "Cannot verify signature - integrity check failed",
+    "isTrusted": false
+  },
+  "riskAssessment": {
+    "riskLevel": "unknown",
+    "riskFactors": [],
+    "destructiveOperations": [],
+    "requiresApproval": true
+  },
+  "recommendation": "BLOCK",
+  "message": "DO NOT EXECUTE - Dossier has been tampered with!",
+  "errors": ["Checksum verification FAILED - do not execute!"]
+}
+```
+
+**Usage in LLM Execution:**
+
+When an LLM reads a dossier, it should:
+1. **Call `verify_dossier`** before execution
+2. **Check recommendation**:
+   - `ALLOW`: Proceed confidently (verified + low risk)
+   - `WARN`: Show user the warning and request approval
+   - `BLOCK`: Do NOT execute, show error to user
+3. **Show risk information** from `riskAssessment`
+4. **Follow PROTOCOL.md** security verification steps
+
+**Security Flow:**
+```typescript
+// 1. Verify dossier
+const verification = await verify_dossier({ path: "dossier.md" });
+
+// 2. Handle recommendation
+if (verification.recommendation === "BLOCK") {
+  console.error(verification.message);
+  console.error("Errors:", verification.errors);
+  return; // DO NOT EXECUTE
+}
+
+if (verification.recommendation === "WARN") {
+  console.warn(verification.message);
+  console.warn("Risk Level:", verification.riskAssessment.riskLevel);
+  console.warn("Destructive Operations:", verification.riskAssessment.destructiveOperations);
+
+  // Request user approval
+  const approved = await askUser("Proceed? (y/N)");
+  if (!approved) return;
+}
+
+// 3. Proceed with execution
+executeDossier(dossierContent);
+```
+
+---
+
 ## Resources
 
 Resources provide documentation and context about the dossier system.
@@ -355,6 +525,42 @@ Resources provide documentation and context about the dossier system.
 
 ---
 
+### `dossier://security`
+
+**URI**: `dossier://security`
+**MIME Type**: `text/markdown`
+
+**Description**: Security architecture and trust model - how dossiers are signed, verified, and trusted.
+
+**Content**: Full SECURITY_ARCHITECTURE.md content
+
+**Key Topics**:
+- Multi-layer security (integrity, authenticity, risk assessment)
+- Signing with minisign
+- Trust model (decentralized like Docker Hub)
+- Verification workflow
+- Risk classification guidelines
+- Best practices for authors and users
+
+---
+
+### `dossier://keys`
+
+**URI**: `dossier://keys`
+**MIME Type**: `text/plain`
+
+**Description**: Official and community public keys for signature verification.
+
+**Content**: Full KEYS.txt content
+
+**Usage**:
+- Provides official Imboard AI public key
+- Explains how to add keys to trusted-keys.txt
+- Documents trust model
+- Lists revoked keys
+
+---
+
 ## Prompts
 
 Prompts provide execution templates for common dossier operations.
@@ -382,39 +588,49 @@ You are about to execute the "{dossier}" dossier following the Dossier Execution
 
 ## Protocol Steps
 
-1. **Read Protocol & Dossier**
+1. **🔒 Security Verification** (REQUIRED - ALWAYS FIRST)
+   - Use verify_dossier tool to check integrity and authenticity
+   - Check verification.recommendation:
+     * BLOCK → DO NOT EXECUTE, show error to user
+     * WARN → Show warning + risk info, request user approval
+     * ALLOW → Proceed with confidence
+   - If WARN and user declines → STOP execution
+   - Access dossier://security for security architecture details
+
+2. **Read Protocol & Dossier**
    - Access dossier://protocol resource for execution guidelines
    - Use read_dossier tool to get the dossier content
    - Review self-improvement analysis requirements
 
-2. **Pre-Execution Analysis** (unless skipImprovement=true)
+3. **Pre-Execution Analysis** (unless skipImprovement=true)
    - Analyze dossier quality per protocol
    - Identify potential improvements based on current project
    - Suggest enhancements to user
    - Apply improvements if user accepts
 
-3. **Validate Prerequisites**
+4. **Validate Prerequisites**
    - Check all prerequisites from dossier
    - Verify required tools/permissions
    - Confirm with user if any prerequisites are missing
 
-4. **Gather Context**
+5. **Gather Context**
    - Analyze project structure per "Context to Gather" section
    - Identify relevant files and configurations
    - Understand project-specific constraints
 
-5. **Make Decisions**
+6. **Make Decisions**
    - Process "Decision Points" section
    - Choose appropriate options based on gathered context
    - Explain choices to user
 
-6. **Execute Actions**
+7. **Execute Actions**
    - Follow "Actions to Perform" sequentially
    - Request confirmation for destructive operations (unless autoConfirm=true)
    - Provide progress updates
    - Handle errors per troubleshooting guidance
+   - Log all actions for audit trail
 
-7. **Validate Results**
+8. **Validate Results**
    - Run all validation checks from "Validation" section
    - Verify success criteria met
    - Report outcome to user

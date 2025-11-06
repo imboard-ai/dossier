@@ -1,0 +1,133 @@
+# Dossier Official Public Keys
+
+This file contains the official public keys used to sign dossiers published by the Dossier project.
+
+## About Dossier Signatures
+
+Dossiers can be cryptographically signed to verify their authenticity. Signatures use **minisign** - a lightweight, modern signature tool.
+
+**Why signatures matter:**
+- ✅ **Authenticity**: Verify the dossier comes from a trusted source
+- ✅ **Integrity**: Confirm the dossier hasn't been tampered with
+- ✅ **Trust**: Build confidence in executing automation workflows
+
+## Official Imboard AI Key
+
+**Status**: To be generated
+
+The official Imboard AI signing key will be generated and published here in a future release.
+
+**How to use** (when available):
+```bash
+# Add to your trusted keys file
+mkdir -p ~/.dossier
+echo "RWT... imboard-ai-2024" >> ~/.dossier/trusted-keys.txt
+```
+
+## Community Keys
+
+Anyone can sign their own dossiers! If you're publishing dossiers:
+
+1. **Generate your key**:
+   ```bash
+   # Install minisign
+   brew install minisign  # macOS
+   # or apt-get install minisign  # Linux
+
+   # Generate key pair
+   minisign -G -p your-name-2024.pub -s your-name-2024.key
+   ```
+
+2. **Publish your public key**:
+   - Add it to your dossier repository
+   - Share it in your README
+   - Include it in your project documentation
+
+3. **Sign your dossiers**:
+   ```bash
+   node tools/sign-dossier.js your-dossier.md \\
+     --key your-name-2024.key \\
+     --key-id your-name-2024 \\
+     --signed-by "Your Name <email@example.com>"
+   ```
+
+## Trust Model
+
+The Dossier project uses a **decentralized trust model** similar to Docker Hub:
+
+- **Official dossiers**: Signed by Imboard AI (this key)
+- **Community dossiers**: Signed by their authors
+- **User choice**: You decide which keys to trust
+
+### How to Trust a Key
+
+1. **Verify the key source**: Get the public key from a trusted source (official website, verified repository)
+
+2. **Add to trusted keys**:
+   ```bash
+   echo "RWT... key-identifier" >> ~/.dossier/trusted-keys.txt
+   ```
+
+3. **Format**: Each line is: `<public-key> <key-identifier>`
+   ```
+   RWTx5V7Kf1KLN8BVF3PqZ... imboard-ai-2024
+   RWAbc123xyz... community-author-2024
+   ```
+
+### Trust Levels
+
+When you execute a dossier, the verification tool will report:
+
+- ✅ **VERIFIED**: Valid signature from a key you trust
+- ⚠️  **SIGNED_UNKNOWN**: Valid signature, but key not in your trusted list
+- ⚠️  **UNSIGNED**: No signature (integrity still checked via checksum)
+- ❌ **INVALID**: Signature verification failed (DO NOT EXECUTE)
+
+## Verification
+
+### Verify a Dossier
+
+```bash
+# Automated verification
+node tools/verify-dossier.js path/to/dossier.md
+
+# Manual checksum verification
+tail -n +N path/to/dossier.md | shasum -a 256
+# Compare with checksum.hash in frontmatter
+```
+
+### Verify This File
+
+This file itself should be verified through:
+- GitHub commit signatures (GPG)
+- Git tags for releases
+- Official project website
+
+## Key Rotation
+
+Keys should be rotated periodically for security:
+
+- Official keys: Annually or upon compromise
+- Community keys: As needed
+- Old keys: Listed as "REVOKED" below when replaced
+
+## Revoked Keys
+
+**None yet**
+
+When a key is compromised or rotated, it will be listed here:
+```
+# Format: <public-key> <key-identifier> <revoked-date> <reason>
+# RWT... imboard-ai-2023 2024-01-15 "Routine rotation"
+```
+
+## Questions?
+
+- **Documentation**: See [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
+- **Issues**: Report at https://github.com/imboard-ai/dossier/issues
+- **Security concerns**: Email security@imboard.ai (when available)
+
+---
+
+**Last Updated**: 2025-11-06
+**Format Version**: 1.0

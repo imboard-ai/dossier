@@ -65,6 +65,85 @@ LLM: ✓ Enhanced dossier with Python support
 
 ---
 
+## 🔒 Security & Trust
+
+Dossiers contain executable instructions, so **security is critical**. The Dossier system includes multiple layers of protection:
+
+### Integrity Verification (Required)
+
+Every dossier includes a **SHA256 checksum** to verify it hasn't been tampered with:
+
+```json
+{
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "a3b5c8d9e1f2..."
+  }
+}
+```
+
+**Before execution**, LLM agents must verify the checksum matches the dossier content. If it doesn't match → **BLOCK execution**.
+
+### Cryptographic Signatures (Optional)
+
+Dossiers can be **signed with minisign** to verify authenticity:
+
+```json
+{
+  "signature": {
+    "algorithm": "minisign",
+    "public_key": "RWT...",
+    "signature": "...",
+    "signed_by": "Imboard AI <security@imboard.ai>"
+  }
+}
+```
+
+**Trust levels:**
+- ✅ **VERIFIED**: Signed by a key you trust
+- ⚠️  **SIGNED_UNKNOWN**: Valid signature, unknown signer
+- ⚠️  **UNSIGNED**: No signature (integrity still checked)
+- ❌ **INVALID**: Signature failed → **BLOCK execution**
+
+### Risk Assessment
+
+Every dossier declares its risk level and operations:
+
+```json
+{
+  "risk_level": "high",
+  "risk_factors": ["modifies_cloud_resources", "requires_credentials"],
+  "requires_approval": true,
+  "destructive_operations": [
+    "Creates/updates AWS infrastructure",
+    "Modifies IAM roles"
+  ]
+}
+```
+
+**High-risk dossiers require user approval** before execution.
+
+### Verification Tools
+
+```bash
+# Verify integrity + authenticity
+node tools/verify-dossier.js path/to/dossier.md
+
+# Sign a dossier (authors)
+node tools/sign-dossier.js path/to/dossier.md --key your-key.key
+```
+
+### Trust Model
+
+Like Docker Hub, Dossier uses **decentralized trust**:
+- **Official dossiers**: Signed by Imboard AI (see [KEYS.txt](./KEYS.txt))
+- **Community dossiers**: Signed by their authors
+- **You decide**: Which keys to trust in `~/.dossier/trusted-keys.txt`
+
+📚 **Full details**: [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
+
+---
+
 ## How to Use Dossiers
 
 > **🎯 New User?** See [QUICK_START.md](./QUICK_START.md) for a complete beginner's guide with examples!

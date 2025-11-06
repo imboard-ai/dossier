@@ -26,7 +26,24 @@
       "check_command": "git --version"
     }
   ],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
   "risk_level": "high",
+  "risk_factors": [
+    "modifies_cloud_resources",
+    "requires_credentials",
+    "network_access",
+    "executes_external_code"
+  ],
+  "requires_approval": true,
+  "destructive_operations": [
+    "Creates or updates AWS infrastructure (ECS services, Lambda functions, VPC, subnets)",
+    "Modifies IAM roles and security groups",
+    "May replace existing resources during blue-green deployments",
+    "Executes Infrastructure as Code (Terraform/CloudFormation) which can modify or delete resources"
+  ],
   "estimated_duration": {
     "min_minutes": 15,
     "max_minutes": 60

@@ -114,6 +114,149 @@ This protocol defines **standard execution guidelines** for all dossiers. Every 
 
 ---
 
+## 🔒 Security Verification Protocol
+
+**CRITICAL**: Before executing ANY dossier, verify its integrity and authenticity.
+
+### Step 1: Integrity Check (REQUIRED)
+
+**Every dossier execution MUST start with checksum verification**:
+
+1. **Extract checksum** from frontmatter `checksum.hash`
+2. **Calculate SHA256** of dossier body (content after `---` closing frontmatter)
+3. **Compare** calculated hash with frontmatter hash
+
+**If checksums match**: ✅ Continue to Step 2
+**If checksums DON'T match**: ❌ **BLOCK EXECUTION**
+
+```
+❌ SECURITY ALERT: Checksum Verification Failed
+
+This dossier has been modified since it was created/signed.
+Expected: abc123...
+Actual:   def456...
+
+DO NOT EXECUTE - The dossier may have been tampered with.
+
+Actions:
+1. Re-download from trusted source
+2. Contact dossier author to verify
+3. If you made intentional changes, regenerate checksum with:
+   node tools/sign-dossier.js <dossier-file> --dry-run
+```
+
+### Step 2: Authenticity Check (OPTIONAL but RECOMMENDED)
+
+**If dossier has `signature` field**:
+
+1. **Extract signature** from frontmatter
+2. **Verify signature** using public_key (minisign or verify-dossier tool)
+3. **Check trust level**:
+   - Is `public_key` in user's `~/.dossier/trusted-keys.txt`?
+   - Or is it a known official key (e.g., imboard-ai)?
+
+**Trust levels**:
+- ✅ **VERIFIED**: Valid signature + key is trusted → Proceed with confidence
+- ⚠️  **SIGNED_UNKNOWN**: Valid signature + key NOT trusted → Warn user
+- ⚠️  **UNSIGNED**: No signature field → Warn user
+- ❌ **INVALID**: Signature verification failed → **BLOCK EXECUTION**
+
+**Warning template for unsigned/unknown**:
+```
+⚠️  SECURITY WARNING: Unsigned Dossier
+
+This dossier does not have a cryptographic signature.
+- Integrity: ✅ Verified (checksum matches)
+- Authenticity: ⚠️  Cannot verify author
+
+Only proceed if you trust the source!
+
+Continue? (y/N)
+```
+
+### Step 3: Risk Assessment (REQUIRED)
+
+**Read risk metadata from frontmatter**:
+
+```json
+{
+  "risk_level": "high",
+  "risk_factors": ["modifies_cloud_resources", "requires_credentials"],
+  "requires_approval": true,
+  "destructive_operations": [
+    "Creates/updates AWS infrastructure",
+    "Modifies IAM roles"
+  ]
+}
+```
+
+**Risk-based approval requirements**:
+
+| Risk Level | Requires Approval | Additional Checks |
+|------------|------------------|-------------------|
+| **low** | Only if `requires_approval: true` | None |
+| **medium** | If unsigned OR `requires_approval: true` | Show risk_factors |
+| **high** | ALWAYS | Show risk_factors + destructive_operations |
+| **critical** | ALWAYS | Show ALL metadata + require explicit confirmation |
+
+**Approval prompt template**:
+```
+⚠️  EXECUTION APPROVAL REQUIRED
+
+Dossier: Deploy to AWS v1.0.0
+Trust: ✅ Verified (imboard-ai-2024) [or ⚠️ Unsigned]
+
+Risk Level: HIGH
+Risk Factors:
+  • Modifies cloud resources
+  • Requires AWS credentials
+  • Network access
+
+This dossier will:
+  • Create/update AWS infrastructure (ECS, Lambda, VPC)
+  • Modify IAM roles and security groups
+  • Deploy application code
+
+Proceed with execution? (y/N)
+```
+
+### Step 4: Execution Monitoring (REQUIRED for high/critical risk)
+
+**During execution**:
+1. **Log all commands** executed (for audit trail)
+2. **Confirm destructive operations** individually (unless auto-approved)
+3. **Show progress** at each major step
+4. **Handle errors** gracefully with rollback guidance
+
+**Never bypass security**:
+- ❌ Don't skip checksum verification
+- ❌ Don't auto-approve high-risk operations without user consent
+- ❌ Don't execute if signature verification fails
+- ❌ Don't hide risk information from user
+
+### Security Verification Tools
+
+**Automated verification** (if available):
+```bash
+# MCP Server (if available)
+Use `verify_dossier` tool for automated checks
+
+# Standalone verification
+node tools/verify-dossier.js <dossier-file>
+# Exit codes: 0 = ALLOW, 2 = WARN, 1 = BLOCK
+```
+
+**Manual verification**:
+```bash
+# Calculate checksum manually
+tail -n +N <dossier-file> | shasum -a 256
+# (where N is the line after `---` closing frontmatter)
+
+# Compare with frontmatter checksum.hash
+```
+
+---
+
 ## 📋 Standard Execution Guidelines
 
 ### General Principles
@@ -128,14 +271,19 @@ This protocol defines **standard execution guidelines** for all dossiers. Every 
 
 **Standard dossier execution sequence**:
 
-1. **Self-improvement check** (optional, see above)
-2. **Read prerequisites**: Validate all prerequisites met
-3. **Gather context**: Analyze project before making decisions
-4. **Present plan**: Show user what will happen
-5. **Execute actions**: Perform operations with progress updates
-6. **Validate results**: Verify success criteria met
-7. **Report outcome**: Clear summary of what was done
-8. **Next steps**: Guide user on what to do next
+1. **🔒 Security verification** (REQUIRED - see Security Verification Protocol above)
+   - Verify checksum (integrity)
+   - Verify signature (authenticity) if present
+   - Assess risk level
+   - Request approval if required
+2. **🔄 Self-improvement check** (optional, see Self-Improvement Protocol above)
+3. **📋 Read prerequisites**: Validate all prerequisites met
+4. **🔍 Gather context**: Analyze project before making decisions
+5. **📝 Present plan**: Show user what will happen
+6. **⚙️  Execute actions**: Perform operations with progress updates
+7. **✅ Validate results**: Verify success criteria met
+8. **📊 Report outcome**: Clear summary of what was done
+9. **➡️  Next steps**: Guide user on what to do next
 
 ### Context Gathering Best Practices
 

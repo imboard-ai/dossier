@@ -1,3 +1,42 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Train ML Model",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-05",
+  "objective": "Train a machine learning model with proper data validation, evaluation, and artifact management for reproducible experiments",
+  "category": ["data-science", "development"],
+  "tags": ["machine-learning", "python", "scikit-learn", "training", "model", "data-science"],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "risk_level": "medium",
+  "risk_factors": [
+    "modifies_files",
+    "executes_external_code",
+    "network_access"
+  ],
+  "requires_approval": false,
+  "destructive_operations": [
+    "Creates model artifacts and experiment files in local directory",
+    "Installs Python packages via pip (scikit-learn, pandas, numpy, etc.)",
+    "Consumes significant CPU/memory during training (may impact system performance)",
+    "Creates virtual environment if needed"
+  ],
+  "estimated_duration": {
+    "min_minutes": 5,
+    "max_minutes": 60
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "Self-contained workflow with no external dossier dependencies. Outputs can feed into deployment dossiers but are independently usable."
+  }
+}
+---
+
 # Dossier: Train ML Model
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))
