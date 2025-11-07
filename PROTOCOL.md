@@ -624,14 +624,18 @@ git status           # Criterion 3
 
 **When creating new dossiers**:
 1. Use `dossiers/templates/dossier-template.md`
-2. Reference protocol version in header
-3. Follow guidelines in this protocol
-4. Don't duplicate what's in protocol
+2. **Name files with `.ds.md` extension** (e.g., `setup-project.ds.md`)
+3. Reference protocol version in header
+4. Follow guidelines in this protocol
+5. Don't duplicate what's in protocol
 
 **When updating existing dossiers**:
 1. Add protocol version header if missing
-2. Optionally refactor to align with protocol
-3. Document any protocol deviations
+2. Rename to use `.ds.md` extension for clarity
+3. Optionally refactor to align with protocol
+4. Document any protocol deviations
+
+**Naming Convention**: All dossier files should use `.ds.md` extension to clearly identify them as dossiers (not regular documentation).
 
 ### For Dossier Citizens (Dossier Users)
 

@@ -173,7 +173,7 @@ These tools can already read files, so just provide context:
 "I want to use the dossier automation system. First, read and
 understand these files:
 - README.md (dossier concept)
-- examples/devops/deploy-to-aws.md (example dossier)
+- examples/devops/deploy-to-aws.ds.md (example dossier)
 
 Then help me execute the project-init dossier from the dossiers/
 directory to initialize this project."
@@ -303,7 +303,7 @@ Want to create an implementation? See [SPECIFICATION.md](./SPECIFICATION.md) for
 This repository includes comprehensive example dossiers demonstrating the standard across diverse domains:
 
 ### 🔬 Data Science: ML Training Pipeline
-**[examples/data-science/train-ml-model.md](./examples/data-science/train-ml-model.md)**
+**[examples/data-science/train-ml-model.ds.md](./examples/data-science/train-ml-model.ds.md)**
 
 Train a machine learning model with proper validation, evaluation, and artifact management.
 
@@ -326,7 +326,7 @@ Train a machine learning model with proper validation, evaluation, and artifact 
 ---
 
 ### 🗄️ Database: Schema Migration
-**[examples/database/migrate-schema.md](./examples/database/migrate-schema.md)**
+**[examples/database/migrate-schema.ds.md](./examples/database/migrate-schema.ds.md)**
 
 Execute database schema migrations with comprehensive safety checks and rollback capability.
 
@@ -349,7 +349,7 @@ Execute database schema migrations with comprehensive safety checks and rollback
 ---
 
 ### ⚛️ Frontend Development: React Component Library
-**[examples/development/setup-react-library.md](./examples/development/setup-react-library.md)**
+**[examples/development/setup-react-library.ds.md](./examples/development/setup-react-library.ds.md)**
 
 Create a production-ready React component library with TypeScript, Storybook, and testing.
 
@@ -372,7 +372,7 @@ Create a production-ready React component library with TypeScript, Storybook, an
 ---
 
 ### 🚀 DevOps: AWS Deployment
-**[examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md)**
+**[examples/devops/deploy-to-aws.ds.md](./examples/devops/deploy-to-aws.ds.md)**
 
 Deploy applications to AWS using Infrastructure as Code with validation and rollback.
 
@@ -641,18 +641,18 @@ Validate Dossiers programmatically before execution:
 ```bash
 cd examples/validation
 npm install ajv ajv-formats
-node validate-dossier.js ../devops/deploy-to-aws.md
+node validate-dossier.js ../devops/deploy-to-aws.ds.md
 ```
 
 **Python**:
 ```bash
 pip install jsonschema
-python validate-dossier.py ../devops/deploy-to-aws.md
+python validate-dossier.py ../devops/deploy-to-aws.ds.md
 ```
 
 **Output**:
 ```
-🔍 Validating: ../devops/deploy-to-aws.md
+🔍 Validating: ../devops/deploy-to-aws.ds.md
 
 ✓ Frontmatter extracted successfully
   Title: Deploy to AWS
@@ -679,11 +679,30 @@ python validate-dossier.py ../devops/deploy-to-aws.md
 
 ### Example with Schema
 
-See **[examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md)** for a complete example Dossier with schema frontmatter.
+See **[examples/devops/deploy-to-aws.ds.md](./examples/devops/deploy-to-aws.ds.md)** for a complete example Dossier with schema frontmatter.
 
 ---
 
 ## Creating Custom Dossiers
+
+### Naming Convention
+
+**All dossier files should use the `.ds.md` extension** to clearly identify them as dossier files:
+
+```bash
+✅ add-git-worktree-support.ds.md
+✅ deploy-to-production.ds.md
+✅ setup-development-environment.ds.md
+
+❌ setup-project.md  # Could be regular documentation
+❌ dossier-deploy.md # Unclear naming
+```
+
+**Benefits**:
+- Instantly recognizable as dossier files
+- Won't be confused with regular documentation
+- Tools can easily glob for `**/*.ds.md`
+- Follows common patterns (`.test.js`, `.spec.ts`, etc.)
 
 ### 1. Use the Template
 
@@ -691,7 +710,7 @@ Start with the dossier template:
 
 ```bash
 cp templates/dossier-template.md \
-   dossiers/my-custom-dossier.md
+   dossiers/my-custom-dossier.ds.md
 ```
 
 ### 2. Follow the Format
@@ -792,7 +811,7 @@ A well-organized registry makes your dossier collection more discoverable and he
 ```
 User: "Deploy to AWS staging using the deploy-to-aws dossier"
 
-AI: (Follows deploy-to-aws.md dossier)
+AI: (Follows deploy-to-aws.ds.md dossier)
     ✓ Detected: AWS credentials configured
     ✓ Found: terraform/ configuration
     ✓ Validated: Staging environment exists
