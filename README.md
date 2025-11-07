@@ -271,12 +271,28 @@ npm install -g @dossier/mcp-server
 
 All dossiers support **fallback to manual execution**.
 
+### ⚠️ Important: Security Verification
+
+**Current Reality**: LLMs don't automatically enforce security checks, even with MCP server.
+
+**For mandatory verification**, use the CLI tool:
+```bash
+# Verify before executing
+dossier-verify https://example.com/dossier.ds.md
+
+# Or use wrapper function
+claude-run-dossier https://example.com/dossier.ds.md
+```
+
+**See**: [`SECURITY_STATUS.md`](SECURITY_STATUS.md) - Current security status and roadmap
+
 ### Learn More
 
 - **Setup Guide**: [`examples/setup/setup-dossier-mcp.ds.md`](examples/setup/setup-dossier-mcp.ds.md)
+- **Security Status**: [`SECURITY_STATUS.md`](SECURITY_STATUS.md) - Gaps, vision, current tools
+- **CLI Tool**: [`cli/`](cli/) - Command-line verification enforcer
 - **Protocol**: [PROTOCOL.md § MCP Server Integration](PROTOCOL.md#-mcp-server-integration)
 - **MCP Server Code**: [`mcp-server/`](mcp-server/)
-- **Research**: [`MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md`](MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md)
 
 ---
 

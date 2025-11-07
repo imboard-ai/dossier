@@ -1,0 +1,31 @@
+{
+  "name": "@dossier/cli",
+  "version": "0.1.0",
+  "description": "Command-line tool for verifying dossier security before execution",
+  "main": "bin/dossier-verify",
+  "bin": {
+    "dossier-verify": "./bin/dossier-verify"
+  },
+  "scripts": {
+    "test": "node bin/dossier-verify ../examples/devops/deploy-to-aws.ds.md"
+  },
+  "keywords": [
+    "dossier",
+    "security",
+    "verification",
+    "checksum",
+    "signature",
+    "automation"
+  ],
+  "author": "Imboard AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imboard-ai/dossier.git",
+    "directory": "cli"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "preferGlobal": true
+}
