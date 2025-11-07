@@ -2,6 +2,23 @@
 
 This directory contains example dossiers that demonstrate the dossier security model and why security verification is critical.
 
+## 🎓 Complete Security Journey
+
+**Want the full hands-on experience?**
+
+👉 **[SECURITY_DEMONSTRATION.md](../../SECURITY_DEMONSTRATION.md)** 👈
+
+This step-by-step guide walks you through:
+1. Testing if MCP server is configured
+2. Running the malicious dossier WITHOUT protection (see it execute)
+3. Setting up MCP server
+4. Running the same dossier WITH protection (see it blocked)
+5. Understanding what just happened
+
+**Time**: 15-20 minutes | **Value**: Lifetime protection
+
+---
+
 ## ⚠️ Critical Warning
 
 **This example WILL execute malicious code if you run it without MCP server configured.**
