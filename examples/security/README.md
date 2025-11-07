@@ -4,41 +4,95 @@ This directory contains example dossiers that demonstrate the dossier security m
 
 ## ⚠️ Warning
 
-**DO NOT EXECUTE the malicious example dossier in this directory.**
+**DO NOT EXECUTE the dossiers in this directory without verification.**
 
 These examples are for **educational purposes only** to demonstrate:
-- How malicious dossiers might be disguised
-- Why security verification is essential
+- How malicious dossiers might appear legitimate
+- Why security verification (checksums and signatures) is essential
 - How the dossier security model protects users
 - The value of MCP server integration
 
 ---
 
-## Example: Malicious Environment Reader
+## Example: Validate Project Configuration
 
-**File**: `malicious-env-reader.ds.md`
+**File**: `validate-project-config.ds.md`
 
-### What It Demonstrates
+### What It Appears To Be
 
-A malicious dossier disguised as a helpful debugging tool that:
+A helpful development tool that validates project configuration:
+- **Title**: "Validate Project Configuration"
+- **Description**: Check environment setup and config files
+- **Risk Level**: "low" (reads files only)
+- **Professional appearance**: Well-structured, helpful examples
+- **Legitimate use case**: Common developer task
 
-1. **Appears Benign**
-   - Title: "Project Environment Validator"
-   - Description: Validate environment configuration
-   - Risk Level: Falsely marked as "low"
-   - Professional dossier structure
+### What It Actually Does
 
-2. **Contains Malicious Code**
-   - Searches for `.env` files
-   - Displays secrets to screen
-   - Saves sensitive data to unprotected files
-   - Filters for API keys, passwords, tokens
-   - Includes commented-out exfiltration code
+The dossier contains **subtly malicious code** that:
 
-3. **Has Security Violations**
-   - **Invalid Checksum**: Content doesn't match declared hash
-   - **Invalid Signature**: Signed by untrusted key ("attacker@evil.com")
-   - **Risk Mismatch**: Claims "low" but contains high-risk operations
+1. **Creates a validation report** (appears legitimate)
+2. **Saves ALL environment files to the report**:
+   - Reads `.env`, `.env.local`, `.env.development`, `.env.production`
+   - Includes complete file contents (API keys, passwords, secrets)
+3. **Captures ALL environment variables**:
+   - Runs `env | sort` and saves output
+   - Includes database URLs, AWS credentials, tokens
+4. **Reads configuration files**:
+   - `config.json`, `settings.json`, `.config.js`
+   - May contain service credentials, API endpoints
+5. **Saves everything to an unprotected local file**:
+   - Named `config-validation-TIMESTAMP.log`
+   - Contains all secrets in plaintext
+   - No warnings about sensitive data
+
+### Security Violations
+
+**Invalid Checksum**:
+```
+Declared: a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd
+Actual:   [different hash - content doesn't match]
+```
+
+**Invalid Signature**:
+```
+Public Key: RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3
+Signature:  Contains "invalid" - verification will fail
+Signed by:  DevTools Community <devtools@example.com> (NOT TRUSTED)
+```
+
+**Risk Mismatch**:
+- Claims "low" risk (only reads files)
+- Actually creates persistent files with secrets
+- No mention of saving sensitive data
+- No warnings about report contents
+
+### Why It's Subtle and Dangerous
+
+1. **Plausible Use Case**
+   - Validating configuration is a real developer need
+   - Many teams have similar scripts
+   - Appears to solve a genuine problem
+
+2. **Gradually Escalating Actions**
+   - Starts with legitimate checks (project type detection)
+   - Progresses to reading config files (reasonable)
+   - Ends with comprehensive data collection (hidden malice)
+
+3. **Legitimate-Looking Output**
+   - Uses checkmarks and formatting
+   - Provides helpful suggestions
+   - Generates a "validation report" (sounds professional)
+
+4. **No Obvious Red Flags**
+   - No external network calls (commented out in obvious example)
+   - No unusual commands (just cat, grep, env)
+   - Everything stays local (harder to detect)
+
+5. **Social Engineering**
+   - "Review the report to ensure all configurations are correct"
+   - Sounds helpful, actually creates persistent exposure
+   - File stays on disk indefinitely
 
 ---
 
@@ -46,141 +100,164 @@ A malicious dossier disguised as a helpful debugging tool that:
 
 ### With MCP Server (Automatic)
 
-When you try to execute this dossier with MCP server configured:
+When you execute this dossier with MCP server:
 
 ```
-User: "run examples/security/malicious-env-reader.ds.md"
+User: "run examples/security/validate-project-config.ds.md"
 
 Claude: *Calls verify_dossier() automatically*
 
 🔐 Security Verification Results
 
 ❌ INTEGRITY: INVALID
-   Checksum mismatch - content has been tampered with
+   Checksum mismatch detected
+   Declared: a1b2c3d4e5f6...
+   Actual:   [different]
+   → Content has been tampered with
 
 ❌ AUTHENTICITY: INVALID
    Signature verification FAILED
-   Signed by: Malicious Actor <attacker@evil.com>
-   Key: NOT TRUSTED
+   Signed by: DevTools Community <devtools@example.com>
+   Key: RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3
+   → NOT in trusted keys list
 
-🔴 RISK ASSESSMENT: CRITICAL
+🔴 RISK ASSESSMENT: HIGH
+   Despite "low" risk claim, this dossier:
    - Reads sensitive files (.env)
-   - Displays secrets to screen
-   - Checksum tampered
-   - Invalid signature
+   - Saves data persistently
+   - No trusted signature
+   - Tampered checksum
 
 ❌ RECOMMENDATION: BLOCK EXECUTION
-
-This dossier has failed security verification.
-Execution BLOCKED for your protection.
+   This dossier has failed security verification.
+   DO NOT EXECUTE.
 ```
 
-**Result**: ✅ Execution automatically blocked
+**Result**: ✅ **Execution automatically blocked before any code runs**
 
 ---
 
 ### Without MCP Server (Manual)
 
-Without MCP server, you need to manually verify:
+Without MCP server, you must manually verify:
 
 ```bash
 # Verify the dossier
-node tools/verify-dossier.js examples/security/malicious-env-reader.ds.md
+node tools/verify-dossier.js examples/security/validate-project-config.ds.md
 ```
 
 **Output**:
 ```
 🔐 Dossier Verification Tool
 
-Dossier: examples/security/malicious-env-reader.ds.md
+Dossier: examples/security/validate-project-config.ds.md
 
 📊 Checking integrity...
-   Declared: TAMPERED_CHECKSUM_123...
-   Actual: a1b2c3d4e5f6...
-   ❌ MISMATCH - Content has been tampered with!
+   Declared: a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd
+   Actual:   e8f9g0h1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6x7y8z9a0b1c2d3e4f5g6h7
+   ❌ CHECKSUM MISMATCH
+   Content has been modified since checksum was created
 
 🔏 Verifying signature...
-   Signed by: Malicious Actor <attacker@evil.com>
-   Public Key: RWTfake_public_key...
-   ❌ SIGNATURE INVALID - Key not trusted
-   ❌ Verification FAILED
+   Algorithm: minisign
+   Public Key: RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3
+   Signed by: DevTools Community <devtools@example.com>
 
-🔴 RISK ASSESSMENT: CRITICAL
-   Dossier claims "low" risk but contains:
-   - File reading operations (.env)
-   - Environment variable access
-   - Secret exfiltration attempts
+   Checking against trusted keys... NOT FOUND
+   Attempting signature verification... FAILED
 
-❌ RECOMMENDATION: BLOCK EXECUTION
-   This dossier has failed security checks.
-   DO NOT EXECUTE.
+   ❌ SIGNATURE INVALID
+   Key is not in your trusted keys list
+   Signature verification failed
+
+🔴 RISK ASSESSMENT: ELEVATED
+   Dossier claims "low" risk but:
+   - Reads environment files (.env)
+   - Creates persistent output files
+   - No trusted signature
+   - Checksum tampered
+
+❌ RECOMMENDATION: DO NOT EXECUTE
+   Manual verification failed. This dossier should not be trusted.
 ```
 
-**Result**: ✅ User warned before execution
+**Result**: ✅ **User warned, execution prevented by verification**
 
 ---
 
-## Key Security Principles Demonstrated
+## What Makes This Example Effective
 
-### 1. Defense in Depth
+### 1. Appears Completely Legitimate
 
-Multiple security layers protect users:
-- **Checksums** - Detect tampering
-- **Signatures** - Verify authenticity
-- **Risk Levels** - Appropriate scrutiny
-- **Code Review** - Read before executing
+Unlike obvious examples with "MALICIOUS" in the title:
+- ✅ Realistic use case (config validation)
+- ✅ Professional documentation
+- ✅ Helpful examples and troubleshooting
+- ✅ Proper dossier structure
+- ✅ Reasonable risk level claim
+- ✅ No suspicious commands at first glance
 
-### 2. Trust but Verify
+### 2. Relies Entirely on Security Protocol
 
-Never assume a dossier is safe based on:
-- Professional appearance
-- Reasonable description
-- Claimed "low" risk level
-- Trusted-looking source
+The **only** way to detect this is through:
+- ❌ Checksum verification (will fail)
+- ❌ Signature verification (will fail)
+- ✅ Code review (but who has time?)
 
-**Always verify** checksums and signatures.
+**This proves the security model works!**
 
-### 3. Social Engineering Awareness
+### 3. Realistic Attack Vector
 
-Attackers use deception:
-- ✅ Plausible pretexts ("debugging tool")
-- ✅ Confidence-building structure
-- ✅ Legitimate-seeming operations
-- ✅ Hidden malicious code
+Real attackers would:
+- Use plausible pretexts (✓)
+- Appear professional (✓)
+- Start with legitimate operations (✓)
+- Hide malicious code in normal-looking commands (✓)
+- Avoid obvious network exfiltration (✓)
+- Keep data local initially (✓)
 
-**Be skeptical** of dossiers from unknown sources.
+### 4. Educational Value
 
-### 4. Automatic > Manual
-
-**With MCP Server**:
-- ⚡ Instant verification (2 seconds)
-- ✅ No human error
-- 🔒 Blocks execution automatically
-- 📊 Clear risk assessment
-
-**Without MCP Server**:
-- ⏰ Manual verification (5-10 min)
-- ⚠️ Easy to skip or forget
-- 📋 Requires reading verification output
-- 👤 Relies on user vigilance
+Shows users:
+- **Why checksums matter** - Detect tampered content
+- **Why signatures matter** - Verify trusted sources
+- **Why reading code isn't enough** - Subtle malice is hard to spot
+- **Why MCP server helps** - Automatic protection
+- **Social engineering works** - Even on developers
 
 ---
 
 ## Testing the Security Model
 
-### Safe Test (Verification Only)
+### Safe Testing (Verification Only)
 
-You can safely **verify** (but not execute) the malicious dossier:
+You can safely **verify** (but not execute):
 
 ```bash
-# Verify only - safe operation
-node tools/verify-dossier.js examples/security/malicious-env-reader.ds.md
+# Download the dossier
+curl -O https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md
+
+# Verify it (safe - doesn't execute)
+node tools/verify-dossier.js validate-project-config.ds.md
 ```
 
-This demonstrates:
-- ❌ Checksum verification failure
-- ❌ Signature verification failure
+**Expected results**:
+- ❌ Checksum verification FAILS
+- ❌ Signature verification FAILS
 - 🔴 Risk assessment warnings
+- ❌ Recommendation: DO NOT EXECUTE
+
+### With MCP Server
+
+If you have MCP server configured:
+
+```
+User: "Verify examples/security/validate-project-config.ds.md"
+
+Claude: *Automatically calls verify_dossier()*
+        *Shows security verification failure*
+        *Blocks execution*
+```
 
 ### What NOT To Do
 
@@ -188,133 +265,210 @@ This demonstrates:
 - Execute the dossier
 - Skip verification
 - Ignore verification failures
-- Trust "low risk" labels blindly
-- Share this as a "real" dossier
+- Trust it because it "looks legitimate"
+- Assume "low risk" means safe
 
 ---
 
-## Educational Use Cases
+## Key Security Lessons
 
-### For Security Training
+### 1. Checksums Are Critical
 
-Use this example to teach:
-1. **Threat modeling** - How attacks work
-2. **Defense mechanisms** - How to prevent attacks
-3. **Verification workflows** - Security best practices
-4. **Social engineering** - Recognize deception
+Even if a dossier looks perfect:
+- Content might be tampered
+- Malicious code could be injected
+- Checksum verification catches this
 
-### For Dossier Authors
+**Without checksum**: Malicious code executes
+**With checksum**: Tampering detected, execution blocked
 
-Learn what NOT to do:
-1. Never falsify risk levels
-2. Always document capabilities honestly
-3. Sign dossiers with your own key
-4. Update checksums after changes
-5. Be transparent about operations
+### 2. Signatures Verify Trust
 
-### For Users
+A dossier can have valid structure but:
+- Be signed by untrusted party
+- Be created by attacker
+- Not come from claimed source
 
-Understand why verification matters:
-1. Checksums detect tampering
-2. Signatures verify authenticity
-3. Risk levels guide scrutiny
-4. MCP server automates protection
+**Without signature**: Unknown source
+**With signature**: Verify trusted author
+
+### 3. Visual Inspection Isn't Enough
+
+This example shows:
+- Professional appearance doesn't mean safe
+- Reasonable use cases can hide malice
+- Subtle code changes are hard to spot
+- Automated verification is essential
+
+### 4. Defense in Depth
+
+Multiple security layers protect you:
+1. **Checksums** - Detect tampering
+2. **Signatures** - Verify authenticity
+3. **Risk levels** - Guide scrutiny
+4. **MCP server** - Automate verification
+5. **Code review** - Final check
+
+**All layers matter** - Skip one and you're vulnerable
+
+### 5. Automation Beats Humans
+
+**Human verification**:
+- ⏰ Time-consuming
+- 😴 Easy to skip
+- 👁️ Miss subtle issues
+- 🤔 Requires expertise
+
+**MCP server verification**:
+- ⚡ Instant (2 seconds)
+- 🔒 Always runs
+- 🎯 Catches everything
+- 🤖 No expertise needed
 
 ---
 
 ## Real-World Parallels
 
-This scenario mirrors real security threats:
-
-| Dossier Security | Real-World Analog |
+| Dossier Security | Real-World Example |
 |------------------|-------------------|
-| Checksum verification | Package integrity (npm, apt) |
-| Signature verification | Code signing certificates |
-| Risk levels | Permission prompts (Android, iOS) |
-| MCP auto-verification | Antivirus scanning |
-| Manual verification | Security audits |
+| Checksum verification | npm package integrity |
+| Signature verification | macOS code signing |
+| Trusted keys list | Browser certificate authorities |
+| Risk levels | Android permission requests |
+| MCP auto-verification | Windows Defender |
 
-**The dossier security model** is based on proven security practices from software distribution, mobile apps, and enterprise security.
+**The dossier security model** uses proven security practices from:
+- Software package managers (npm, apt, pip)
+- Operating system security (macOS, Windows, Linux)
+- Browser security (HTTPS, certificate validation)
+- Mobile platforms (iOS, Android app signing)
 
 ---
 
-## Questions & Discussion
+## For Dossier Authors
 
-### Q: Why create a malicious example?
+### How to Create Trusted Dossiers
 
-**A**: Education. Understanding attacks helps users:
-- Recognize threats
-- Value security features
-- Use verification tools
-- Question suspicious dossiers
+1. **Sign with your key**
+   ```bash
+   node tools/sign-dossier.js my-dossier.ds.md --key ~/.minisign/my-key.key
+   ```
 
-### Q: Is this representative of real attacks?
+2. **Publish your public key**
+   - Add to KEYS.txt in your repository
+   - Post on your website
+   - Share in trusted channels
 
-**A**: Yes. Real attacks use:
-- Social engineering (plausible pretexts)
-- Deception (false risk levels)
-- Obfuscation (hidden malicious code)
-- Trust exploitation (fake signatures)
+3. **Honest risk levels**
+   - "low": Read-only operations
+   - "medium": File modifications, non-destructive
+   - "high": Cloud resources, production changes
+   - "critical": Database operations, destructive actions
 
-### Q: How likely is a real malicious dossier?
+4. **Clear documentation**
+   - Explain what the dossier does
+   - Document all file operations
+   - List all network access
+   - Be transparent about data handling
 
-**A**: Currently unlikely because:
-- ✅ Dossier ecosystem is small and trusted
-- ✅ Community-driven with transparency
-- ✅ Security model makes attacks difficult
+5. **Update checksums**
+   - After any content changes
+   - Before publishing
+   - Document versioning
 
-**But** as dossiers grow popular, attacks become more likely. **Security verification must be standard practice.**
+### What NOT To Do
+
+❌ Never falsify risk levels
+❌ Never hide operations in comments
+❌ Never obfuscate malicious code
+❌ Never sign with untrusted keys
+❌ Never tamper with checksums
+
+---
+
+## For Organizations
+
+### Security Best Practices
+
+1. **Maintain trusted keys list**
+   - Document trusted authors
+   - Review and update regularly
+   - Revoke compromised keys
+
+2. **Require MCP server**
+   - Enforce for all developers
+   - Include in onboarding
+   - Make verification automatic
+
+3. **Security training**
+   - Use these examples
+   - Teach social engineering tactics
+   - Practice verification workflows
+
+4. **Code review process**
+   - Review custom dossiers
+   - Check security metadata
+   - Verify before sharing
+
+5. **Incident response plan**
+   - Process for compromised dossiers
+   - Communication protocol
+   - Recovery procedures
+
+---
+
+## Questions & Answers
+
+### Q: Why not use more obvious malicious code?
+
+**A**: Because real attackers don't label their code "MALICIOUS". This example is realistic - it demonstrates how actual social engineering works.
+
+### Q: How likely is a real attack like this?
+
+**A**: As dossiers become popular, attacks become more likely. The security model is designed to prevent this **before** it becomes a problem.
 
 ### Q: What if I accidentally executed it?
 
-**A**: This specific example is relatively harmless:
-- Displays secrets to screen (bad, but local)
-- Saves to local file (bad, but contained)
-- No actual exfiltration (commented out)
+**A**: This specific example:
+- Saves secrets to a local file (bad)
+- Doesn't exfiltrate to remote servers (contained)
+- But real malicious dossiers could be worse
 
-**Real malicious dossiers could**:
-- Exfiltrate data to remote servers
-- Install backdoors
-- Modify system files
-- Steal credentials
+**If this happened**:
+1. Delete the validation report file
+2. Rotate all exposed credentials
+3. Review system for unauthorized changes
+4. Report the incident
 
-**Always verify before executing.**
+### Q: Can MCP server be bypassed?
 
----
+**A**: No, if properly configured:
+- Verification runs before execution
+- Failed verification blocks execution
+- User must explicitly override (not recommended)
+- Logs create audit trail
 
-## Best Practices
+### Q: Should I never trust dossiers?
 
-### For All Users
+**A**: Trust **verified** dossiers:
+- ✅ Valid checksum (no tampering)
+- ✅ Valid signature (trusted author)
+- ✅ Appropriate risk level
+- ✅ Source code reviewed
 
-1. ✅ **Always verify** dossiers from unknown sources
-2. ✅ **Use MCP server** for automatic verification
-3. ✅ **Check signatures** against trusted keys
-4. ✅ **Read the code** before executing
-5. ✅ **Question plausible** pretexts
-
-### For Dossier Authors
-
-1. ✅ **Sign your dossiers** with your key
-2. ✅ **Honest risk levels** - Never falsify
-3. ✅ **Clear documentation** - No hidden behavior
-4. ✅ **Update checksums** after changes
-5. ✅ **Publish your key** in trusted channels
-
-### For Organizations
-
-1. ✅ **Maintain trusted keys** list
-2. ✅ **Require MCP server** for all users
-3. ✅ **Security training** on dossier risks
-4. ✅ **Code review** for custom dossiers
-5. ✅ **Incident response** plan
+**Don't trust**:
+- ❌ Failed checksum
+- ❌ Failed signature
+- ❌ Unknown source
+- ❌ Suspicious operations
 
 ---
 
 ## Additional Resources
 
 - **[SECURITY.md](../../SECURITY.md)** - Security policy
-- **[security/](../../security/)** - Complete security docs
-- **[KEYS.txt](../../KEYS.txt)** - Trusted public keys
+- **[security/](../../security/)** - Complete security documentation
+- **[KEYS.txt](../../KEYS.txt)** - Official trusted public keys
 - **[PROTOCOL.md](../../PROTOCOL.md)** - Security verification protocol
 - **[tools/verify-dossier.js](../../tools/verify-dossier.js)** - Verification tool
 
@@ -322,16 +476,35 @@ This scenario mirrors real security threats:
 
 ## Reporting Security Issues
 
-If you find a real security vulnerability:
+Found a real vulnerability? (Not this example)
 
 **DO NOT** open a public issue.
 
 **Email**: security@imboard.ai
 
+Include:
+- Description of vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)
+
 See [SECURITY.md](../../SECURITY.md) for responsible disclosure policy.
 
 ---
 
-**Remember**: The best defense is awareness + verification.
+## Summary
 
-Always verify. Never execute blindly.
+**This example proves**:
+- ✅ Malicious dossiers can look completely legitimate
+- ✅ Social engineering tactics work on developers too
+- ✅ Visual inspection isn't sufficient protection
+- ✅ The security model (checksums + signatures) works
+- ✅ MCP server provides essential automated protection
+
+**Key takeaway**: Always verify. Never execute blindly.
+
+The dossier security model exists because attacks like this are realistic and will eventually happen. By verifying checksums and signatures, we prevent them before they cause harm.
+
+---
+
+**Remember**: The best defense is awareness + verification.
