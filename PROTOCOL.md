@@ -257,6 +257,488 @@ tail -n +N <dossier-file> | shasum -a 256
 
 ---
 
+## 🔧 MCP Server Integration
+
+### Overview
+
+The **Model Context Protocol (MCP) server** provides automated tools and resources that streamline dossier execution with automatic security verification, discovery, and protocol access.
+
+**Key Benefits**:
+- ⚡ **Automatic security verification** (checksums, signatures)
+- 📋 **Dossier discovery** (`list_dossiers` tool)
+- 🔒 **Trust management** (verify authenticity)
+- 📖 **Built-in protocol access** (via `dossier://protocol` resource)
+- 🚀 **Streamlined execution** (no manual file reading)
+
+**When MCP is configured**: All security checks happen automatically via tools.
+**When MCP is missing**: Fallback to manual verification (slower, more steps).
+
+---
+
+### Prerequisites Check
+
+**Before executing any dossier**, LLMs should check if the MCP server is available:
+
+#### Detection Method
+
+**Step 1**: Attempt to call an MCP tool
+
+```typescript
+// Try calling any MCP tool
+try {
+  await tools.list_dossiers({ path: "." });
+  // SUCCESS: MCP server is available
+  mcpAvailable = true;
+} catch (error) {
+  if (error.message.includes("tool not found") ||
+      error.message.includes("unknown tool")) {
+    // MCP server not configured
+    mcpAvailable = false;
+  } else {
+    // Other error (server configured but failing)
+    throw error;
+  }
+}
+```
+
+**Step 2**: Check dossier's MCP requirements
+
+```typescript
+// Read dossier frontmatter
+const dossier = await readDossierFile(path);
+const mcpConfig = dossier.frontmatter.mcp_integration;
+
+// Determine if MCP is required
+const mcpRequired = mcpConfig?.required === true;
+const fallbackMode = mcpConfig?.fallback || "manual_execution";
+```
+
+**Step 3**: Decide how to proceed
+
+```typescript
+if (mcpAvailable) {
+  // Use MCP tools for automatic verification
+  executeWithMCP(dossier);
+} else if (mcpRequired && fallbackMode === "error") {
+  // Block execution - MCP required but not available
+  showSetupInstructions();
+  return;
+} else {
+  // Proceed with fallback mode
+  executeWithFallback(dossier, fallbackMode);
+}
+```
+
+---
+
+### MCP Server Not Configured
+
+When MCP server is not available, behavior depends on the dossier's `mcp_integration.fallback` setting:
+
+#### If Dossier Requires MCP (`mcp_integration.required: true`)
+
+**Recommended User Flow**:
+
+```
+LLM: "This dossier requires the MCP server for automatic security
+      verification, but I don't see it configured yet.
+
+The MCP server enables:
+- ✅ Automatic checksum verification
+- ✅ Signature validation
+- ✅ Risk assessment
+- ✅ Streamlined execution
+
+Would you like to:
+1. Set up MCP server now (5-10 minutes, one-time)
+   → I'll guide you through setup-dossier-mcp.ds.md
+2. See manual configuration instructions
+3. Cancel execution
+
+Your choice?"
+```
+
+**After User Choice**:
+- **Option 1**: Execute `examples/setup/setup-dossier-mcp.ds.md` interactively
+- **Option 2**: Show manual configuration steps (JSON editing)
+- **Option 3**: Exit gracefully
+
+#### If Dossier Allows Fallback
+
+**Check fallback mode**:
+
+```typescript
+switch (mcpConfig.fallback) {
+  case "manual_execution":
+    // Offer choice: setup MCP or continue manually
+    offerSetupOrManual();
+    break;
+
+  case "degraded":
+    // Continue with reduced functionality
+    // (e.g., skip signature verification, keep checksums)
+    executeInDegradedMode();
+    break;
+
+  case "error":
+    // Block execution, require MCP setup
+    requireMCPSetup();
+    break;
+}
+```
+
+**Recommended Flow for `manual_execution` fallback**:
+
+```
+LLM: "I notice the dossier MCP server isn't configured yet.
+
+This dossier can work without MCP, but automatic security
+verification won't be available. I'll need to guide you through
+manual verification steps.
+
+Would you like to:
+1. Set up MCP server first (recommended, 5-10 min one-time setup)
+2. Continue with manual verification (this session only)
+3. See what MCP server provides
+
+Your preference?"
+```
+
+---
+
+### Fallback Modes Explained
+
+#### 1. `manual_execution` (Default, Recommended)
+
+**When to use**: Most dossiers
+
+**Behavior**:
+- LLM reads dossier content directly (via Read tool)
+- Manual checksum verification with user
+- Manual risk assessment explanation
+- Step-by-step execution with user approval
+- No automatic security checks
+
+**User experience**: Slower, more manual steps, but fully functional
+
+**Example**:
+```json
+{
+  "mcp_integration": {
+    "required": false,
+    "fallback": "manual_execution"
+  }
+}
+```
+
+---
+
+#### 2. `degraded` (Reduced Functionality)
+
+**When to use**: Dossiers with optional features that enhance with MCP
+
+**Behavior**:
+- Continue execution with core functionality only
+- Skip optional MCP-dependent features
+- Warn user about missing capabilities
+- Don't block execution
+
+**User experience**: Works, but misses enhanced features
+
+**Example**:
+```json
+{
+  "mcp_integration": {
+    "required": false,
+    "fallback": "degraded",
+    "benefits": [
+      "Without MCP: basic execution only",
+      "With MCP: automatic discovery of related dossiers"
+    ]
+  }
+}
+```
+
+---
+
+#### 3. `error` (Block Execution)
+
+**When to use**: Dossiers that truly cannot function without MCP
+
+**Behavior**:
+- Block execution immediately
+- Show clear error message
+- Provide setup instructions
+- Don't attempt fallback
+
+**User experience**: Must set up MCP to use this dossier
+
+**Example**:
+```json
+{
+  "mcp_integration": {
+    "required": true,
+    "fallback": "error",
+    "benefits": [
+      "This dossier requires MCP server for automated registry parsing"
+    ]
+  }
+}
+```
+
+**Note**: Very few dossiers should use `error` fallback. Most can work in `manual_execution` mode.
+
+---
+
+### Setup Guidance Flow
+
+When offering MCP setup, use this flow:
+
+#### Step 1: Explain Benefits
+
+```
+"The dossier MCP server provides:
+
+✅ Automatic Security Verification
+   - Checksums verified automatically
+   - Signatures validated
+   - Risk assessment shown before execution
+
+✅ Dossier Discovery
+   - Find dossiers with natural language
+   - See metadata without reading files
+
+✅ Protocol Access
+   - Built-in documentation
+   - Consistent execution across all dossiers
+
+This is a one-time setup (5-10 minutes) that enhances
+all future dossier executions."
+```
+
+#### Step 2: Offer Setup Options
+
+```
+"Would you like to set up the MCP server?
+
+1. ⭐ Guided setup (recommended)
+   → I'll walk you through setup-dossier-mcp.ds.md step-by-step
+
+2. Manual configuration
+   → I'll show you the configuration file to edit
+
+3. Skip for now
+   → Continue without MCP (manual verification mode)
+
+What's your preference?"
+```
+
+#### Step 3: Execute Setup (if chosen)
+
+**If option 1 (guided)**:
+```typescript
+// Execute setup dossier
+await executeDossier("examples/setup/setup-dossier-mcp.ds.md");
+
+// After completion, verify
+const result = await tools.list_dossiers({ path: "." });
+if (result.success) {
+  console.log("✅ MCP server configured successfully!");
+  console.log("Returning to original dossier execution...");
+} else {
+  console.log("Setup incomplete. See troubleshooting.");
+}
+```
+
+**If option 2 (manual)**:
+```markdown
+To configure manually:
+
+1. Edit: ~/.claude/settings.local.json
+2. Add:
+   {
+     "mcpServers": {
+       "dossier": {
+         "command": "npx",
+         "args": ["-y", "@dossier/mcp-server"]
+       }
+     }
+   }
+3. Restart Claude Code
+4. Return to this dossier
+```
+
+#### Step 4: Return to Original Task
+
+After setup complete, resume the original dossier execution with MCP now available.
+
+---
+
+### Example Conversation Flows
+
+#### Example 1: High-Risk Dossier, No MCP
+
+```
+User: "run examples/devops/deploy-to-aws.ds.md"
+
+LLM: *Attempts verify_dossier() → fails*
+     *Reads dossier frontmatter*
+     *Sees: mcp_integration.required: false, fallback: manual_execution*
+
+LLM: "I notice the dossier MCP server isn't configured yet.
+
+This is a HIGH RISK dossier (modifies cloud resources) that
+benefits from automatic security verification.
+
+Without MCP server:
+- ❌ No automatic checksum verification
+- ❌ No signature validation
+- ⚠️  Manual verification required
+
+With MCP server:
+- ✅ Automatic security checks
+- ✅ Cryptographic verification
+- ✅ Clear risk assessment
+
+Would you like to set up MCP server first? (recommended)
+1. Yes, guide me through setup (5-10 min)
+2. No, continue with manual verification
+3. Learn more about MCP server"
+
+User: "1"
+
+LLM: "Great! Let's set up the MCP server..."
+     *Executes setup-dossier-mcp.ds.md*
+     ...
+LLM: "✅ Setup complete! Now let's execute deploy-to-aws.ds.md
+     with automatic security verification..."
+     *Calls verify_dossier() → SUCCESS*
+```
+
+#### Example 2: Bootstrap Dossier (Setup Itself)
+
+```
+User: "run examples/setup/setup-dossier-mcp.ds.md"
+
+LLM: *Attempts verify_dossier() → fails*
+     *Reads dossier frontmatter*
+     *Sees: mcp_integration.required: false (bootstrap pattern)*
+
+LLM: *Proceeds in manual_execution mode*
+     "This dossier will set up the MCP server for future use.
+
+     Let's start by checking prerequisites..."
+
+     *Guides through setup without needing MCP*
+     *User completes configuration*
+
+     "✅ Setup complete! Verifying MCP server is working..."
+     *Calls list_dossiers() → SUCCESS*
+
+     "Perfect! MCP server is now configured. All future dossiers
+     can use automatic verification."
+```
+
+#### Example 3: Low-Risk Dossier, Optional MCP
+
+```
+User: "run examples/development/setup-react-library.ds.md"
+
+LLM: *Attempts verify_dossier() → fails*
+     *Reads dossier frontmatter*
+     *Sees: mcp_integration.required: false, risk_level: medium*
+
+LLM: "This dossier can work without the MCP server, but would benefit
+     from automatic verification.
+
+     Quick setup available (5 min) or continue as-is?
+
+     1. Set up MCP server (recommended for future dossiers too)
+     2. Continue without MCP
+
+     Your choice?"
+```
+
+---
+
+### MCP Tools Reference
+
+When MCP server is available, use these tools:
+
+#### `verify_dossier`
+```typescript
+const result = await tools.verify_dossier({
+  path: "path/to/dossier.ds.md",
+  trusted_keys_path: "~/.dossier/trusted-keys.txt" // optional
+});
+
+// result contains:
+// - integrity: { status, message, expectedHash, actualHash }
+// - authenticity: { status, message, signer, isTrusted }
+// - riskAssessment: { riskLevel, riskFactors, destructiveOperations }
+// - recommendation: "ALLOW" | "WARN" | "BLOCK"
+```
+
+#### `read_dossier`
+```typescript
+const dossier = await tools.read_dossier({
+  path: "path/to/dossier.ds.md"
+});
+
+// dossier contains:
+// - metadata: { title, version, status, risk_level, ... }
+// - frontmatter: { ... full frontmatter }
+// - body: "markdown content"
+```
+
+#### `list_dossiers`
+```typescript
+const result = await tools.list_dossiers({
+  path: "./examples",  // optional, default: cwd
+  recursive: true      // optional, default: true
+});
+
+// result contains:
+// - dossiers: [{ name, path, version, status, objective, riskLevel }]
+// - scannedPath: string
+// - count: number
+```
+
+#### Resources
+
+```typescript
+// Access protocol documentation
+const protocol = await resources.read("dossier://protocol");
+
+// Access security architecture
+const security = await resources.read("dossier://security");
+
+// Access dossier concept introduction
+const concept = await resources.read("dossier://concept");
+```
+
+---
+
+### Best Practices
+
+#### For LLM Agents
+
+1. **Always check MCP availability first** - Try calling a tool before assuming it's not available
+2. **Read mcp_integration metadata** - Respect the dossier's fallback preferences
+3. **Be helpful about setup** - Offer guided setup, don't just say "not available"
+4. **Respect user choice** - If they decline MCP, proceed with fallback gracefully
+5. **Use MCP when available** - Don't fall back to manual if MCP is working
+
+#### For Dossier Authors
+
+1. **Default to `required: false`** - Most dossiers can work without MCP
+2. **Use `manual_execution` fallback** - Provides best user experience
+3. **Document MCP benefits** - Help users understand value of setup
+4. **Test without MCP** - Ensure fallback mode actually works
+5. **Only use `error` fallback** - When truly impossible to execute without MCP
+
+---
+
 ## 📋 Standard Execution Guidelines
 
 ### General Principles
