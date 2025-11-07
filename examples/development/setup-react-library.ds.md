@@ -11,7 +11,7 @@
   "tags": ["react", "typescript", "component-library", "storybook", "vite", "npm", "testing"],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    "hash": "62897b1b4f8b066a009707d834732035cfd2ce994346239e50d7ada7d0f3fde3"
   },
   "risk_level": "medium",
   "risk_factors": [
@@ -33,6 +33,17 @@
   "coupling": {
     "level": "Loose",
     "details": "Creates self-contained library project. No dependencies on external systems except NPM registry for package installation."
+  },
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic checksum verification",
+      "Streamlined setup validation"
+    ]
   }
 }
 ---

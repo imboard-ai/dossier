@@ -11,7 +11,7 @@
   "tags": ["machine-learning", "python", "scikit-learn", "training", "model", "data-science"],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    "hash": "98ae7bc6d566a34f55aa48bbab2d4e20ad2eaf3cce56ff4e4ccbb4a4aa263165"
   },
   "risk_level": "medium",
   "risk_factors": [
@@ -33,6 +33,17 @@
   "coupling": {
     "level": "Loose",
     "details": "Self-contained workflow with no external dossier dependencies. Outputs can feed into deployment dossiers but are independently usable."
+  },
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic checksum verification",
+      "Streamlined security validation"
+    ]
   }
 }
 ---

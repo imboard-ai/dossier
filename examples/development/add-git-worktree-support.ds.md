@@ -78,6 +78,18 @@
       }
     ]
   },
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier", "dossier://security"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic security verification for high-risk file restructuring",
+      "Signature validation for trusted workflow changes",
+      "Clear risk assessment before modifying directory structure"
+    ]
+  },
   "prerequisites": [
     {
       "description": "Must be in a git repository",

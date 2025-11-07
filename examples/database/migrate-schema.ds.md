@@ -11,7 +11,7 @@
   "tags": ["database", "migration", "sql", "postgresql", "mysql", "schema", "rollback"],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    "hash": "e45cd92ee1868a873cf39f94e9738cce47b766acbcc627f61247293eaa2bc740"
   },
   "risk_level": "critical",
   "risk_factors": [
@@ -34,6 +34,18 @@
   "coupling": {
     "level": "Tight",
     "details": "Directly modifies database state. All applications depending on this database are tightly coupled to the schema."
+  },
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier", "dossier://security"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic security verification before critical operations",
+      "Signature validation for trusted migrations",
+      "Clear risk assessment for critical database changes"
+    ]
   }
 }
 ---

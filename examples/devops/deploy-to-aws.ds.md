@@ -28,7 +28,7 @@
   ],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    "hash": "35aab70823edd888a2c4a6650d19f403de5a30f74dc91b7868b62d38a43d02f0"
   },
   "risk_level": "high",
   "risk_factors": [
@@ -73,6 +73,19 @@
         "dossier": "deploy-to-kubernetes",
         "when_to_use": "When deploying to Kubernetes clusters instead of AWS-native services"
       }
+    ]
+  },
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier", "dossier://security"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic security verification before cloud deployments",
+      "Signature validation for trusted infrastructure changes",
+      "Clear risk assessment for high-risk AWS operations",
+      "Streamlined approval workflow"
     ]
   },
   "inputs": {
