@@ -12,6 +12,8 @@ Instead of writing brittle scripts that break on edge cases, you write clear ins
 
 **Example**: A "deploy-to-aws" dossier tells the AI how to deploy, but the AI figures out your specific AWS setup, validates prerequisites, and handles errors intelligently.
 
+> **❓ First time here?** See [FAQ.md](./FAQ.md) for common questions like "Why not just use AGENTS.md?", "Who controls this protocol?", and detailed comparisons with alternatives.
+
 ---
 
 ## Choose Your Path
@@ -338,29 +340,25 @@ diagnose the issue. Then propose a fix."
 
 ---
 
-## FAQ
+## Common Questions
+
+**For comprehensive answers, see [FAQ.md](./FAQ.md)**
 
 ### Q: Do I need special tools?
 
 **A**: No! Dossiers work with any AI assistant. File-access tools (Claude Code, Cursor, etc.) make it easier, but copy-paste works everywhere.
 
-### Q: Can I use dossiers without AI?
+### Q: How is this different from AGENTS.md?
 
-**A**: Yes! Dossiers also serve as excellent documentation and can be followed manually.
+**A**: AGENTS.md provides project context. Dossiers provide executable workflows with validation and security. They're complementary! See [FAQ.md § Dossiers vs. AGENTS.md](./FAQ.md#how-are-dossiers-different-from-agentsmd-files) for detailed comparison.
+
+### Q: Who controls this protocol?
+
+**A**: It's an open protocol - you control your dossiers. See [FAQ.md § Protocol & Governance](./FAQ.md#protocol--governance) for governance model.
 
 ### Q: Are dossiers secure?
 
-**A**: Dossiers follow the safety guidelines in PROTOCOL.md:
-- Always create backups before destructive operations
-- Require confirmation for risky actions
-- Validate prerequisites
-- Include rollback procedures
-
-You control execution - review what the AI is doing!
-
-### Q: Can I modify existing dossiers?
-
-**A**: Absolutely! Dossiers are markdown files. Edit them for your needs. The protocol even encourages AI-assisted improvement.
+**A**: Yes - multi-layer security with checksums, signatures, and risk assessment. See [FAQ.md § Security & Trust](./FAQ.md#security--trust) for details.
 
 ### Q: Do dossiers work with all LLMs?
 
@@ -370,6 +368,7 @@ You control execution - review what the AI is doing!
 
 ## Get Help
 
+- **FAQ**: [FAQ.md](./FAQ.md) - Comprehensive objection handling & comparisons
 - **Issues**: https://github.com/imboard-ai/dossier/issues
 - **Discussions**: https://github.com/imboard-ai/dossier/discussions
 - **Examples**: See [examples/](./examples/)
@@ -401,6 +400,7 @@ You control execution - review what the AI is doing!
 ├─────────────────────────────────────────────────────────────┤
 │ KEY FILES                                                   │
 │   README.md        - Dossier concept overview              │
+│   FAQ.md           - Common objections & comparisons       │
 │   SPECIFICATION.md - How to create dossiers                │
 │   PROTOCOL.md      - How to execute dossiers               │
 │   examples/        - Real-world examples                    │

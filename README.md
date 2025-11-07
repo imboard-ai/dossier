@@ -10,6 +10,8 @@
 
 Instead of writing complex scripts that try to handle every edge case, dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
 
+> **❓ Questions?** See [FAQ.md](./FAQ.md) for common objections and detailed comparisons to alternatives (AGENTS.md, scripts, CI/CD, frameworks).
+
 ### The Concept
 
 Modern developers **already have access to LLMs** in their workflows! So why write brittle shell scripts when we can provide structured guidance for intelligent agents?
@@ -28,6 +30,26 @@ Modern developers **already have access to LLMs** in their workflows! So why wri
 # Agent adapts to actual project context
 # Handles edge cases naturally through understanding
 ```
+
+### Dossiers vs. AGENTS.md Files
+
+**"Why not just use AGENTS.md?"** - Great question! Many projects already use files like `AGENTS.md`, `.cursorrules`, or `.claude.md` for AI context.
+
+**Key difference**: Those files provide **project-level context** (architecture, conventions). Dossiers provide **workflow-level automation** with validation and security.
+
+| AGENTS.md | Dossiers |
+|-----------|----------|
+| "Here's how our project works" | "Here's how to execute this task" |
+| Project documentation | Executable workflows |
+| Informal instructions | Structured protocol |
+| No validation | Built-in validation steps |
+| No security layer | Checksums + signatures |
+| No versioning | Semantic versioning |
+| No tooling | CLI tools, registries, IDEs |
+
+**They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks.
+
+**See [FAQ.md](./FAQ.md) for detailed comparison with concrete examples.**
 
 ---
 
@@ -62,6 +84,49 @@ LLM: ✓ Enhanced dossier with Python support
 **Protocol Version**: Each dossier specifies which protocol version it follows (e.g., v1.0)
 
 📚 **Full protocol**: [PROTOCOL.md](./PROTOCOL.md)
+
+---
+
+## 🌐 Open Protocol, Not Vendor Lock-In
+
+**"Who controls this protocol?"** - You do.
+
+Dossiers are an **OPEN PROTOCOL**, like Docker containers or HTTP - not a proprietary system:
+
+### What "Open Protocol" Means
+
+- ✅ **Specification is open source** - Full protocol publicly documented
+- ✅ **Anyone can create dossiers** - No permission or licensing required
+- ✅ **Anyone can execute dossiers** - Works with any LLM (Claude, GPT, Gemini, local models)
+- ✅ **No external dependencies** - Dossiers are local markdown files
+- ✅ **Multiple implementations encouraged** - Build your own tools and executors
+- ✅ **Community-driven evolution** - Protocol changes via RFC process
+
+### Governance Model
+
+| Aspect | Status |
+|--------|--------|
+| Protocol specification | Open (Apache 2.0 after 2028, BSL 1.1 now) |
+| Creating dossiers | Free & open |
+| Executing dossiers | No restrictions |
+| Tooling | Open source + optional commercial services |
+| Protocol changes | Semantic versioning + community input |
+
+**Think of it like**:
+- **Docker**: Open container spec, optional registry services
+- **Git**: Open protocol, optional hosting (GitHub, GitLab)
+- **HTTP**: Open standard, various implementations
+
+### What We Provide (Optional)
+
+- Registry hosting (you can self-host)
+- Signing key management (you can use your own keys)
+- Premium tools (basic tools are open source)
+- Enterprise support
+
+**Your dossiers are yours** - stored in your repos, executable locally, no external calls required.
+
+**See [FAQ.md § Protocol & Governance](./FAQ.md#protocol--governance) for detailed trust model.**
 
 ---
 
@@ -703,13 +768,31 @@ Without a schema, LLMs interpret Dossiers based on training. This creates brittl
 | ❌ Isolated - hard to search/categorize programmatically | ✅ Integrated - tooling-ready (CLI, IDE, registries) |
 | ❌ Unpredictable costs - unknown tool requirements | ✅ Predictable - know tools/deps before execution |
 
-### What the Schema Provides
+### Why Structure Matters for LLMs
+
+**"LLMs work fine without structure!"** - Yes, but they work BETTER with it:
 
 1. **Deterministic Parsing**: Extract metadata without LLM interpretation
+   - Without schema: LLM spends tokens figuring out "Where are prerequisites?"
+   - With schema: `metadata.prerequisites` is always in the same place (zero parsing cost)
+
 2. **Fast Validation**: Catch errors before expensive LLM execution
-3. **Tooling Foundation**: Enable CLI tools, IDEs, registries, and automation
-4. **Searchability**: Discover Dossiers by category, tags, tools, dependencies
-5. **Professional Credibility**: Enterprise-ready automation standard
+   - Schema validation: milliseconds, zero cost
+   - LLM interpretation errors: discovered during expensive execution
+
+3. **Reduced Model Variance**: Clear schema = consistent interpretation
+   - GPT-4 and Claude interpret the same structured dossier identically
+   - Freeform markdown can be interpreted differently across models
+
+4. **Tooling Foundation**: Enable CLI tools, IDEs, registries, and automation
+   - Structured metadata = machine-readable
+   - CLIs can validate without an LLM
+   - IDEs can provide autocomplete
+   - Registries can index and search
+
+5. **Predictable Costs**: Know requirements before execution
+   - See tool requirements upfront
+   - Estimate complexity before LLM call
 
 ### Schema Format
 
