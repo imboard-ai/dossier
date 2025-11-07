@@ -784,6 +784,61 @@
       "type": "object",
       "description": "Custom metadata fields (prefixed with X- in markdown)",
       "additionalProperties": true
+    },
+    "mcp_integration": {
+      "type": "object",
+      "description": "MCP (Model Context Protocol) server integration metadata for automatic dossier execution",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether the dossier MCP server is required for execution",
+          "default": false
+        },
+        "server_name": {
+          "type": "string",
+          "description": "npm package name of the required MCP server",
+          "default": "@dossier/mcp-server"
+        },
+        "min_version": {
+          "type": "string",
+          "description": "Minimum MCP server version required (semver format)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "features_used": {
+          "type": "array",
+          "description": "List of MCP tools and resources this dossier uses",
+          "items": {
+            "type": "string",
+            "enum": [
+              "verify_dossier",
+              "read_dossier",
+              "list_dossiers",
+              "validate_dossier",
+              "dossier://protocol",
+              "dossier://security",
+              "dossier://concept"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "fallback": {
+          "type": "string",
+          "description": "Behavior when MCP server is not available",
+          "enum": [
+            "manual_execution",
+            "degraded",
+            "error"
+          ],
+          "default": "manual_execution"
+        },
+        "benefits": {
+          "type": "array",
+          "description": "Benefits of using MCP server for this dossier",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }
