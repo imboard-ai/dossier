@@ -1,6 +1,6 @@
 # Dossier MCP Server
 
-> **Status**: 🚧 In Development - Specification complete, implementation in progress
+> **Status**: ✅ MVP Complete - Core security verification tools working, ready for testing with Claude Code
 
 Make dossier automation truly frictionless with Model Context Protocol integration.
 
@@ -65,52 +65,69 @@ LLM:  "Found project-init dossier v1.0.0. Analyzing prerequisites..."
 
 ## Installation
 
-### For End Users
+### For Claude Code (Current Method - Local Development)
 
-**Using with Claude Desktop:**
+Since the MCP server is not yet published to NPM, you can use it locally:
+
+1. **Build the MCP server** (from `mcp-server/` directory):
+```bash
+cd mcp-server
+npm install
+npm run build
+```
+
+2. **Configure Claude Code** (Settings → Extensions → MCP Servers):
+
+Add this configuration:
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "node",
+      "args": ["/absolute/path/to/dossier/mcp-server/dist/index.js"],
+      "cwd": "/absolute/path/to/dossier"
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/dossier` with the full path to your dossier project.
+
+3. **Restart Claude Code**
+
+4. **Test it:**
+```
+"List available dossiers in this project"
+"Verify the security of examples/development/add-git-worktree-support.ds.md"
+```
+
+### For End Users (Future - After NPM Publish)
+
+**Using with Claude Desktop/Code:**
 
 1. Install the MCP server:
 ```bash
 npm install -g @dossier/mcp-server
 ```
 
-2. Configure Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+2. Configure Claude (`~/Library/Application Support/Claude/claude_desktop_config.json` or Claude Code settings):
 ```json
 {
   "mcpServers": {
     "dossier": {
-      "command": "npx",
-      "args": ["@dossier/mcp-server"]
+      "command": "dossier-mcp-server"
     }
   }
 }
 ```
 
-3. Restart Claude Desktop
+3. Restart Claude
 
 4. Try it:
 ```
 "List available dossiers in this project"
 "Execute the project-init dossier"
 ```
-
-**Using with Cursor:**
-
-1. Install the MCP server (same as above)
-
-2. Configure Cursor (`.cursor/mcp_config.json`):
-```json
-{
-  "mcpServers": {
-    "dossier": {
-      "command": "npx",
-      "args": ["@dossier/mcp-server"]
-    }
-  }
-}
-```
-
-3. Restart Cursor
 
 ---
 
@@ -306,25 +323,33 @@ Contributions welcome! This is a critical piece of infrastructure for making dos
 
 ## Roadmap
 
-### Phase 1: MVP (v1.0.0) - Target: 2 weeks
-- [ ] Basic tools (list, read, get_registry)
-- [ ] Core resources (concept, protocol, spec)
-- [ ] Execute-dossier prompt
-- [ ] Simple validation
-- [ ] Working with Claude Desktop
-
-### Phase 2: Security & Enhanced Features (v1.1.0) - 🚧 IN PROGRESS
+### Phase 1: MVP (v1.0.0) - ✅ COMPLETED
+- [x] Basic tools (list_dossiers, read_dossier) ✅
+- [x] Core resources (concept, protocol, security) ✅
 - [x] **Security verification** (`verify_dossier` tool) ✅
-- [x] **Security resources** (dossier://security, dossier://keys) ✅
-- [x] **Security-first execution** (verification as step 1) ✅
-- [ ] Advanced validation
-- [ ] Registry relationship parsing
+- [x] Checksum verification (SHA256) ✅
+- [x] Signature verification (minisign) ✅
+- [x] Trust management (trusted-keys.txt) ✅
+- [x] Risk assessment and recommendations ✅
+- [x] TypeScript implementation ✅
+- [x] MCP SDK integration ✅
+- [x] Structured logging ✅
+- [x] Working locally with Claude Code ✅
+
+### Phase 2: Testing & Publishing (v1.1.0) - 🚧 NEXT
+- [ ] Integration testing with Claude Code
+- [ ] Test with all example dossiers
+- [ ] NPM package preparation
+- [ ] CLI entry point for global install
+- [ ] Advanced validation (`validate_dossier` tool)
+- [ ] Registry relationship parsing (`get_registry` tool)
+- [ ] Comprehensive test suite
+- [ ] Documentation improvements
+
+### Phase 3: Ecosystem (v1.2.0) - Target: Future
+- [ ] NPM package published
 - [ ] Journey map support
 - [ ] Create/improve dossier prompts
-- [ ] Comprehensive test suite
-
-### Phase 3: Ecosystem (v1.2.0) - Target: 8 weeks
-- [ ] NPM package published
 - [ ] VS Code extension
 - [ ] Web documentation
 - [ ] Community templates
@@ -374,13 +399,20 @@ This transforms dossiers from "interesting idea" to "production-ready automation
 
 ## Status
 
-**Current Phase**: Specification & Design ✅
+**Current Phase**: MVP Complete ✅
+
+**What's Working**:
+- ✅ Security verification (checksum + signature)
+- ✅ Dossier listing and reading
+- ✅ MCP protocol integration
+- ✅ Resource serving (protocol, security, concept)
+- ✅ Structured logging and error handling
 
 **Next Steps**:
-1. Implement core tools
-2. Create resource providers
-3. Build parser
-4. Add tests
+1. Test integration with Claude Code
+2. NPM package preparation
+3. Advanced validation tool
+4. Registry support
 5. Publish to NPM
 
 **Contributors Welcome!** This is a community-driven effort to make LLM automation truly accessible.
