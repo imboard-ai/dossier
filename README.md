@@ -1,8 +1,114 @@
+# Dossier — LLM-Executable Automation, with Guardrails
+
+**Write workflows once, let any LLM execute them safely.**
+✓ Validated steps • ✓ Checksums & signatures • ✓ Works with Claude, ChatGPT, Cursor, MCP
+
+[![Spec](https://img.shields.io/badge/Dossier%20Spec-v1.0-blue)](#)
+[![MCP Ready](https://img.shields.io/badge/MCP-Ready-brightgreen)](#)
+[![Security](https://img.shields.io/badge/Verification-Checksums%20%26%20Signatures-yellow)](#)
+[![GitHub](https://img.shields.io/github/stars/imboard-ai/dossier?style=social)](https://github.com/imboard-ai/dossier)
+
+> **TL;DR**
+> Dossier turns plain-text "instructions" into **executable, verifiable workflows** any LLM can run.
+> You get **evidence-based validation**, **guardrails** (checksums/signatures), and **tooling** (CLI, MCP server).
+
+---
+
+## Try it in 30 seconds
+
+**Option A — Claude Code with MCP (recommended)**
+Paste this into `~/.claude/settings.local.json` and restart Claude Code:
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "npx",
+      "args": ["-y", "@dossier/mcp-server"]
+    }
+  }
+}
+```
+
+**Option B — Run anywhere (local CLI)**
+```bash
+# Clone the repo and use the CLI tool
+git clone https://github.com/imboard-ai/dossier.git
+cd dossier/cli
+chmod +x bin/dossier-verify
+./bin/dossier-verify ../examples/git-project-review/atomic/readme-reality-check.ds.md
+```
+
+**Hello Dossier** (copy into any LLM chat)
+```markdown
+# dossier: hello-world
+version: 1.0
+objective: Print a friendly greeting and verify success.
+steps:
+  - "Print: Hello from Dossier 👋"
+validate:
+  - "Output contains: Hello from Dossier"
+success: "You saw the greeting."
+```
+
+---
+
+## Why Dossier (not just AGENTS.md)?
+
+| AGENTS.md | Dossiers |
+|-----------|----------|
+| Static tips | **Executable workflows** |
+| No validation | **Explicit success checks** |
+| No security layer | **Checksums/signatures + verification tooling** |
+| No versioning | **Versioned spec + Semantic versioning** |
+| Informal | **Protocol + Schema + Tooling (CLI, MCP)** |
+
+---
+
+## Examples Gallery (5–10 min each)
+
+| Example | What it shows | Perfect for | Time |
+|---------|---------------|-------------|------|
+| [Git Project Reality Check](./examples/git-project-review/) | Evidence-based repo audit with file:line refs | Maintainers, reviewers | ~5 min |
+| [Setup React Library](./examples/development/setup-react-library.ds.md) | Build, test, publish with guardrails | Frontend/tooling | ~10 min |
+| [ML Training Pipeline](./examples/data-science/train-ml-model.ds.md) | Repro steps + post-run validation | ML engineers | ~10–15 min |
+| [DB Migration](./examples/database/migrate-schema.ds.md) | Safe change + checks + rollback | Infra/DBA | ~10 min |
+| [AWS Deploy](./examples/devops/deploy-to-aws.ds.md) | Ephemeral preview + verification gates | Platform teams | ~15 min |
+
+**Run the first one now:**
+
+Ask your LLM:
+```
+Analyze my project using the readme-reality-check dossier from:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+```
+
+---
+
+## Security & Verification
+
+- Use the CLI tool (`cli/bin/dossier-verify`) to verify checksums/signatures before execution
+- Prefer MCP mode for sandboxed, permissioned operations
+- See [SECURITY_STATUS.md](./SECURITY_STATUS.md) for current guarantees and limitations
+
+---
+
+## Adopter Playbooks
+
+- **Solo Dev**: paste a `.ds.md` into your LLM and run via MCP or CLI
+- **OSS Maintainer**: add `/dossiers` + a CI check that runs the Reality Check on your README
+- **Platform Team**: start with init → deploy → rollback dossiers; wire secrets & scanners
+
+👉 Detailed playbooks in [docs/adopter-playbooks.md](./docs/adopter-playbooks.md)
+
+---
+
+> **🚀 New here?** Jump to [QUICK_START.md](./QUICK_START.md) for a 5-minute guide!
+
+---
+
 # Dossier: Universal LLM Automation Standard
 
 **Dossiers** are intelligent instruction sets that leverage LLM agents to automate complex workflows with adaptability and continuous improvement.
-
-> **🚀 New here?** Jump to [QUICK_START.md](./QUICK_START.md) for a 5-minute guide!
 
 ---
 
@@ -634,7 +740,7 @@ Atomic dossiers that analyze Git projects to surface insights requiring deep cod
 **How to run** (works today):
 ```
 Analyze https://github.com/yourorg/yourproject using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 Your LLM fetches the dossier, analyzes the project, and provides structured output with:

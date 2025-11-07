@@ -1000,10 +1000,10 @@ Test dossiers on real projects:
 │   ├── git-project-review/    # LLM code analysis
 │   │   ├── README.md
 │   │   └── atomic/            # ⭐ Composable atomic dossiers
-│   │       ├── architecture-patterns.dossier
-│   │       ├── onboarding-friction.dossier
-│   │       ├── readme-reality-check.dossier
-│   │       └── schema-capability-check.dossier
+│   │       ├── architecture-patterns.ds.md
+│   │       ├── onboarding-friction.ds.md
+│   │       ├── readme-reality-check.ds.md
+│   │       └── schema-capability-check.ds.md
 │   ├── validation/            # Schema validation tools
 │   │   ├── validate-dossier.js   # Node.js validator
 │   │   └── validate-dossier.py   # Python validator

@@ -21,19 +21,19 @@ You're already using an LLM assistant (Claude Code, Cursor, ChatGPT, etc.). Just
 #### On Your Local Project:
 ```
 Analyze my project using the readme-reality-check dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 #### On Any GitHub Project:
 ```
 Analyze https://github.com/imboard-ai/mi6 using the onboarding-friction dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
 ```
 
 #### With Variables:
 ```
 Analyze this codebase using the schema-capability-check dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
 
 Use this variable:
 - capability: "Does the schema support referencing other dossier files?"
@@ -57,15 +57,15 @@ dossier run registry.dossier.ai/coding/readme-reality-check \
   --project https://github.com/imboard-ai/mi6
 
 # Local dossier, remote project
-dossier run ./atomic/readme-reality-check.dossier \
+dossier run ./atomic/readme-reality-check.ds.md \
   --project https://github.com/yourorg/yourproject
 
 # Local dossier, local project
-dossier run ./atomic/onboarding-friction.dossier \
+dossier run ./atomic/onboarding-friction.ds.md \
   --project .
 
 # With variables
-dossier run ./atomic/schema-capability-check.dossier \
+dossier run ./atomic/schema-capability-check.ds.md \
   --var capability="composition support"
 ```
 
@@ -82,7 +82,7 @@ dossier run ./atomic/schema-capability-check.dossier \
 **Run it**:
 ```
 Hey Claude, analyze this project using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 **Output**: Promises kept ✅, promises broken ❌, undocumented features 🎁
@@ -96,7 +96,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Analyze https://github.com/yourproject using the onboarding-friction dossier:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
 ```
 
 **Output**: Friction score, blockers, confusion points, quick wins
@@ -110,7 +110,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Use the architecture-patterns dossier on my project:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/architecture-patterns.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/architecture-patterns.ds.md
 ```
 
 **Output**: Pattern inventory, inconsistencies, duplication hotspots
@@ -124,7 +124,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Use this dossier to check if the schema supports composition:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
 
 Variable: "Does the schema support referencing other dossier files?"
 ```
@@ -214,7 +214,7 @@ These dossiers are actively used on the Dossier project itself! Try running them
 
 ```
 Analyze the Dossier project itself using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.dossier
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 
 Target: https://github.com/imboard-ai/dossier
 ```
@@ -224,10 +224,10 @@ Target: https://github.com/imboard-ai/dossier
 ## Contributing
 
 Want to add more atomic dossiers? Great patterns to add:
-- `test-coverage-gaps.dossier` - Semantic coverage analysis
-- `security-scan.dossier` - Common vulnerability patterns
-- `dependency-health.dossier` - Outdated deps with impact analysis
-- `tech-debt-hotspots.dossier` - Files/areas needing refactor
+- `test-coverage-gaps.ds.md` - Semantic coverage analysis
+- `security-scan.ds.md` - Common vulnerability patterns
+- `dependency-health.ds.md` - Outdated deps with impact analysis
+- `tech-debt-hotspots.ds.md` - Files/areas needing refactor
 
 Keep them:
 - **Atomic** - One clear purpose
