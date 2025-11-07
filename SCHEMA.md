@@ -622,6 +622,118 @@ Dossier Schema metadata is embedded at the **top of the Markdown file** using JS
 
 ---
 
+### MCP Integration
+
+#### `mcp_integration` (Optional)
+
+**Type**: Object
+
+**Description**: MCP (Model Context Protocol) server integration metadata. Enables dossiers to declare MCP server requirements and fallback behavior when MCP is not available.
+
+**Purpose**:
+- Machine-readable MCP requirements for LLMs
+- Enables automatic detection and guided setup
+- Supports graceful degradation
+- Maintains backwards compatibility
+
+**Properties**:
+
+##### `required` (boolean, default: false)
+Whether the dossier MCP server is required for execution.
+- `true`: Block execution if MCP not available (rare)
+- `false`: Allow fallback to manual execution (recommended)
+
+##### `server_name` (string, default: "@dossier/mcp-server")
+npm package name of the required MCP server.
+
+##### `min_version` (string, semver format)
+Minimum MCP server version required (e.g., "1.0.0"). Optional but recommended for version-dependent features.
+
+##### `features_used` (array of strings)
+List of MCP tools and resources this dossier uses. Values: "verify_dossier", "read_dossier", "list_dossiers", "validate_dossier", "dossier://protocol", "dossier://security", "dossier://concept"
+
+Helps LLMs understand which MCP capabilities are needed.
+
+##### `fallback` (string, enum, default: "manual_execution")
+Behavior when MCP server is not available:
+- "manual_execution": Continue with manual verification (recommended)
+- "degraded": Reduced functionality, continue execution
+- "error": Block execution, require MCP setup (rare)
+
+##### `benefits` (array of strings)
+Human-readable list of benefits when using MCP for this dossier. Shown to users when offering setup.
+
+**Examples**:
+
+High-risk dossier, MCP optional but recommended:
+```json
+{
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic security verification",
+      "Signature validation",
+      "Clear risk assessment"
+    ]
+  }
+}
+```
+
+Bootstrap/setup dossier (no MCP needed):
+```json
+{
+  "mcp_integration": {
+    "required": false,
+    "fallback": "manual_execution",
+    "benefits": [
+      "This dossier sets up MCP integration (does not require it)"
+    ]
+  }
+}
+```
+
+Dossier requiring MCP (very rare):
+```json
+{
+  "mcp_integration": {
+    "required": true,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["validate_dossier", "dossier://registry"],
+    "fallback": "error",
+    "benefits": [
+      "This dossier requires MCP for automated registry parsing"
+    ]
+  }
+}
+```
+
+**Best Practices**:
+
+For Dossier Authors:
+1. Default to `required: false` - Most dossiers can work without MCP
+2. Use `manual_execution` fallback - Best user experience
+3. Document benefits clearly - Help users understand value
+4. Test without MCP - Ensure fallback actually works
+5. Only use `error` fallback when truly impossible without MCP
+
+For LLM Agents:
+1. Check MCP availability before execution (see PROTOCOL.md)
+2. Respect fallback preferences
+3. Offer setup guidance when MCP missing
+4. Use MCP tools when available
+
+**See Also**:
+- PROTOCOL.md § MCP Server Integration
+- SPECIFICATION.md § MCP Integration Examples
+- examples/setup/setup-dossier-mcp.ds.md
+
+---
+
 ### Additional Metadata
 
 #### `authors`

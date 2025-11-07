@@ -148,6 +148,138 @@ Like Docker Hub, Dossier uses **decentralized trust**:
 
 ---
 
+## MCP Server Integration
+
+### What is the MCP Server?
+
+The **Dossier MCP Server** is a [Model Context Protocol](https://modelcontextprotocol.io) integration that enables Claude Code (and other MCP-compatible tools) to:
+
+- ⚡ **Automatically verify** dossier security (checksums, signatures)
+- 📋 **Discover dossiers** with natural language queries
+- 🔒 **Validate authenticity** using cryptographic signatures
+- 📖 **Access protocol documentation** built-in
+- 🚀 **Streamline execution** with fewer manual steps
+
+### Why Use MCP Server?
+
+**Without MCP Server**:
+```
+User: "run deploy-to-aws.ds.md"
+
+Claude: "Let me read that file..."
+        *Reads file manually*
+        "I need to verify the checksum manually..."
+        *Guides user through verification*
+        "Now let's check the risk level..."
+        *Manual risk assessment*
+        (5-10 minutes of manual steps)
+```
+
+**With MCP Server**:
+```
+User: "run deploy-to-aws.ds.md"
+
+Claude: *Calls verify_dossier() automatically*
+        "✅ Checksum verified
+         ⚠️  Unsigned (no signature)
+         🔴 High risk: modifies cloud resources
+
+         Proceed? (y/N)"
+
+(Automatic verification in 2 seconds)
+```
+
+### Quick Setup
+
+**One-time setup** (5-10 minutes):
+
+```
+In Claude Code: "run examples/setup/setup-dossier-mcp.ds.md"
+```
+
+This interactive dossier will guide you through configuration.
+
+**Or manually configure**:
+
+1. Edit `~/.claude/settings.local.json`
+2. Add:
+   ```json
+   {
+     "mcpServers": {
+       "dossier": {
+         "command": "npx",
+         "args": ["-y", "@dossier/mcp-server"]
+       }
+     }
+   }
+   ```
+3. Restart Claude Code
+
+### With vs Without MCP
+
+| Feature | Without MCP | With MCP |
+|---------|-------------|----------|
+| **Security Verification** | Manual (5-10 min) | Automatic (2 sec) |
+| **Checksum Validation** | Calculate manually | ✅ Automatic |
+| **Signature Verification** | External tool needed | ✅ Built-in |
+| **Risk Assessment** | Read manually | ✅ Structured display |
+| **Dossier Discovery** | File search | ✅ Natural language |
+| **Protocol Access** | Read PROTOCOL.md | ✅ Built-in resource |
+| **Trust Management** | Manual key checking | ✅ Automatic |
+
+### Configuration Options
+
+#### Option 1: npx (Recommended)
+
+No installation needed - downloads on first use:
+
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "npx",
+      "args": ["-y", "@dossier/mcp-server"]
+    }
+  }
+}
+```
+
+#### Option 2: Global Install
+
+Explicit installation:
+
+```bash
+npm install -g @dossier/mcp-server
+```
+
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "dossier-mcp-server"
+    }
+  }
+}
+```
+
+### Do I Need MCP Server?
+
+**No!** Dossiers work without MCP server - it just makes them better.
+
+- **With MCP**: Automatic verification, streamlined execution
+- **Without MCP**: Manual verification, more steps, fully functional
+
+All dossiers support **fallback to manual execution**.
+
+### Learn More
+
+- **Setup Guide**: [`examples/setup/setup-dossier-mcp.ds.md`](examples/setup/setup-dossier-mcp.ds.md)
+- **Protocol**: [PROTOCOL.md § MCP Server Integration](PROTOCOL.md#-mcp-server-integration)
+- **MCP Server Code**: [`mcp-server/`](mcp-server/)
+- **Research**: [`MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md`](MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md)
+
+---
+
 ## How to Use Dossiers
 
 > **🎯 New User?** See [QUICK_START.md](./QUICK_START.md) for a complete beginner's guide with examples!
@@ -186,25 +318,40 @@ The AI will:
 
 ---
 
-### Method 2: MCP Server (Frictionless for Claude Desktop)
+### Method 2: MCP Server (Best for Claude Code)
 
-**🚀 Coming Soon**: Install the dossier MCP server to enable true natural language:
+**🚀 Available Now**: Install the dossier MCP server for automatic verification and discovery:
 
-```bash
-# Install MCP server (upcoming)
-npx @dossier/mcp-server install
+**Setup** (one-time, 5-10 minutes):
+```
+In Claude Code: "run examples/setup/setup-dossier-mcp.ds.md"
+```
 
-# Then just say:
-"Use the project-init dossier"
+Or manually add to `~/.claude/settings.local.json`:
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "npx",
+      "args": ["-y", "@dossier/mcp-server"]
+    }
+  }
+}
+```
+
+**Then just say:**
+```
+"Use the deploy-to-aws dossier"
 ```
 
 The MCP server provides:
-- 📂 Automatic dossier discovery
-- 📖 Built-in dossier concept documentation
-- 🔍 Registry and relationship awareness
-- ✅ Validation and compliance checking
+- ⚡ **Automatic security verification** (checksums, signatures)
+- 📂 **Dossier discovery** with natural language
+- 📖 **Built-in protocol documentation**
+- 🔍 **Registry and relationship awareness**
+- ✅ **Streamlined execution** (2 seconds vs 5-10 minutes)
 
-**Status**: MCP server in development. See [mcp-server/](./mcp-server/) for progress.
+**See**: [MCP Server Integration](#mcp-server-integration) section above for details.
 
 ---
 
@@ -912,46 +1059,6 @@ If you don't have an LLM agent:
 - Follow dossier steps manually
 - Use traditional automation scripts alongside dossiers
 - Dossiers provide clear workflow documentation even without AI execution
-
----
-
-## 🚀 MCP Server (Frictionless Integration)
-
-The **Dossier MCP Server** is in development to make dossier usage truly frictionless with Model Context Protocol integration.
-
-### What It Enables
-
-With the MCP server installed, Claude Desktop (and other MCP-compatible tools) can:
-- 📂 **Auto-discover** available dossiers in your project
-- 📖 **Understand** the dossier concept automatically
-- 🔍 **Navigate** dossier registries and relationships
-- ✅ **Execute** dossiers following the standard protocol
-
-### Vision
-
-```
-# Instead of explaining and copy-pasting...
-User: "Use the project-init dossier"
-
-# The AI just works!
-AI: *Discovers dossiers via MCP*
-    *Understands concept from resources*
-    *Reads and executes*
-    "Executing project-init dossier v1.0.0..."
-```
-
-### Status & Contributing
-
-- **Specification**: ✅ Complete
-- **Implementation**: 🚧 In Progress
-- **Contributors**: Welcome!
-
-See [mcp-server/](./mcp-server/) for:
-- Full API specification
-- Development roadmap
-- How to contribute
-
-This is a **community-driven effort** to make LLM automation truly accessible. Help us build the future of AI-powered development workflows!
 
 ---
 

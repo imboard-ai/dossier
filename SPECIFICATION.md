@@ -293,6 +293,180 @@ As of Dossier Specification v1.0.0, dossiers **SHOULD** include structured metad
 
 **Backward Compatibility**: Dossiers without schema frontmatter remain valid and can be executed by LLM agents. The schema is an enhancement, not a breaking change.
 
+### 3.5 MCP Integration (Optional)
+
+The `mcp_integration` field enables dossiers to declare MCP server requirements and fallback behavior. This allows LLMs to detect when the dossier MCP server is available and provide streamlined, automatic security verification.
+
+#### Example 1: High-Risk Dossier with MCP Benefits
+
+For high-risk dossiers, MCP provides automatic security verification but manual execution is still possible:
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Deploy to AWS",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "objective": "Deploy application to AWS ECS with automated rollback",
+  "category": ["devops", "deployment"],
+  "risk_level": "high",
+  "mcp_integration": {
+    "required": false,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.0.0",
+    "features_used": ["verify_dossier", "dossier://security"],
+    "fallback": "manual_execution",
+    "benefits": [
+      "Automatic checksum and signature verification",
+      "Clear risk assessment presentation",
+      "Streamlined approval workflow"
+    ]
+  }
+}
+---
+
+# Dossier: Deploy to AWS
+[... rest of content ...]
+```
+
+**LLM Behavior**:
+- Tries `verify_dossier()` tool first
+- If not available, offers MCP setup guidance
+- If user declines, proceeds with manual verification
+- Never blocks execution (fallback: manual_execution)
+
+---
+
+#### Example 2: Medium-Risk with Optional MCP
+
+Medium-risk dossiers work well without MCP but benefit from it:
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Train ML Model",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "objective": "Train and evaluate a machine learning model with proper validation",
+  "category": ["data-science"],
+  "risk_level": "medium",
+  "mcp_integration": {
+    "required": false,
+    "features_used": ["verify_dossier"],
+    "fallback": "manual_execution"
+  }
+}
+---
+
+# Dossier: Train ML Model
+[... rest of content ...]
+```
+
+**LLM Behavior**:
+- Briefly mentions MCP availability if detected
+- Doesn't push hard for setup
+- Proceeds with manual mode if MCP not configured
+- Focuses on executing the workflow
+
+---
+
+#### Example 3: Bootstrap/Setup Dossier
+
+Setup dossiers that configure MCP should not require it (avoids chicken-and-egg problem):
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Set Up Dossier MCP Server",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "objective": "Configure Claude Code to use the dossier MCP server",
+  "category": ["setup"],
+  "risk_level": "low",
+  "mcp_integration": {
+    "required": false,
+    "fallback": "manual_execution",
+    "benefits": [
+      "This dossier sets up MCP integration (does not require it)"
+    ]
+  }
+}
+---
+
+# Dossier: Set Up Dossier MCP Server
+[... rest of content ...]
+```
+
+**Key**: `required: false` prevents chicken-and-egg problem where you'd need MCP to set up MCP.
+
+---
+
+#### Example 4: MCP-Dependent Dossier (Rare)
+
+Very few dossiers should truly require MCP - only when functionality is genuinely impossible without it:
+
+```markdown
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Advanced Registry Operations",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Experimental",
+  "objective": "Perform automated operations on dossier registry with validation",
+  "category": ["maintenance"],
+  "risk_level": "medium",
+  "mcp_integration": {
+    "required": true,
+    "server_name": "@dossier/mcp-server",
+    "min_version": "1.1.0",
+    "features_used": [
+      "get_registry",
+      "validate_dossier",
+      "dossier://registry"
+    ],
+    "fallback": "error",
+    "benefits": [
+      "This dossier requires MCP for automated registry parsing",
+      "Registry relationships cannot be parsed manually efficiently"
+    ]
+  }
+}
+---
+
+# Dossier: Advanced Registry Operations
+[... rest of content ...]
+```
+
+**LLM Behavior**:
+- Blocks execution if MCP not available
+- Shows clear setup instructions
+- Does not attempt manual fallback
+- Explains why MCP is required
+
+---
+
+#### When to Use Each Pattern
+
+| Pattern | Use When | `required` | `fallback` | Example |
+|---------|----------|-----------|-----------|---------|
+| **Optional MCP** | Most dossiers | `false` | `manual_execution` | deploy-to-aws, train-ml-model |
+| **Bootstrap** | Setting up MCP | `false` | `manual_execution` | setup-dossier-mcp |
+| **Required MCP** | Truly impossible without | `true` | `error` | Registry operations (rare) |
+
+**Default Pattern**: Optional MCP with `manual_execution` fallback provides the best user experience - users get enhanced functionality when MCP is available, but dossiers remain fully functional without it.
+
+**Design Philosophy**:
+- MCP enhances the experience but shouldn't be a hard requirement
+- Users should be guided to set up MCP, not blocked from using dossiers
+- The dossier system works great with or without MCP
+
 ---
 
 ## 4. Protocol Compliance
