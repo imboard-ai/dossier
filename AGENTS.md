@@ -250,7 +250,7 @@ INVALID          → Failed verification → BLOCK EXECUTION
 - Checks risk metadata
 - Returns decision: ALLOW, WARN, or BLOCK
 
-**Technology**: Node.js, native crypto module, child_process for minisign
+**Technology**: Node.js, native crypto module, tweetnacl for Ed25519 signatures, AWS SDK for KMS signatures
 
 #### 4. Examples & Templates
 
@@ -273,22 +273,21 @@ INVALID          → Failed verification → BLOCK EXECUTION
 - Demonstrate best practices
 - Test LLM interpretation across domains
 
-#### 5. MCP Server (Planned)
+#### 5. MCP Server
 
 **Location**: `/mcp-server/`
-**Status**: Specification complete, implementation pending
+**Status**: Partially Implemented
 **Purpose**: Frictionless integration with LLM tools
 
-**Planned Features**:
-- **Tools**: `list_dossiers`, `read_dossier`, `validate_dossier`, `verify_dossier`, `get_registry`
-- **Resources**: `dossier://concept`, `dossier://protocol`, `dossier://security`, `dossier://keys`
-- **Prompts**: `execute-dossier`, `create-dossier`, `improve-dossier`
+**Implemented Features**:
+- **Tools**: `list_dossiers`, `read_dossier`, `verify_dossier`
+- **Resources**: `dossier://concept`, `dossier://protocol`, `dossier://security`
 
 **Technology Stack**: TypeScript, Node.js 18+, @modelcontextprotocol/sdk
 
-**Current State**: See `mcp-server/SPECIFICATION.md` for complete API design
+**Current State**: The server is functional and implements core features for discovering, reading, and verifying dossiers. See `mcp-server/SPECIFICATION.md` for the complete API design and `mcp-server/src` for the implementation.
 
-**Contribution Opportunity**: Implementation help welcome! See [MCP Server Roadmap](#mcp-server-roadmap)
+**Contribution Opportunity**: Further implementation and testing are welcome! See [MCP Server Roadmap](#mcp-server-roadmap)
 
 #### 6. CI/CD Infrastructure
 
@@ -647,8 +646,7 @@ Invalid signature or checksum     → BLOCK (refuse execution)
 ### Security Verification Workflow
 
 ```bash
-# Step 1: Verify dossier before execution
-node tools/verify-dossier.js examples/devops/deploy-to-aws.md
+node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
 
 # Output examples:
 
@@ -742,7 +740,7 @@ cat security/THREAT_MODEL.md
 
 # Review examples
 ls examples/
-cat examples/devops/deploy-to-aws.md
+cat examples/devops/deploy-to-aws.ds.md
 cat examples/git-project-review/README.md
 ```
 
@@ -750,7 +748,7 @@ cat examples/git-project-review/README.md
 - Node.js (for validation and signing tools)
 - Git
 - Text editor with Markdown support
-- Optional: minisign (for signing), AWS CLI (for KMS signing)
+- Optional: AWS CLI (for KMS signing)
 
 ### Creating a New Dossier
 
@@ -858,28 +856,6 @@ git push origin add-my-dossier
 
 ### Generating Signing Keys
 
-#### minisign (Community Signing)
-
-```bash
-# Install minisign
-# macOS
-brew install minisign
-
-# Ubuntu/Debian
-apt install minisign
-
-# Generate key pair
-minisign -G -p mykey.pub -s mykey.key
-
-# Outputs:
-# - mykey.pub (public key - share this)
-# - mykey.key (private key - keep secure)
-
-# Publish public key
-cat mykey.pub
-# Add to your GitHub profile, website, or repository
-```
-
 #### AWS KMS (Official Signing - Maintainers Only)
 
 **Prerequisites**:
@@ -930,11 +906,11 @@ done
 cd ../..
 
 # Valid signed dossier
-node tools/verify-dossier.js examples/devops/deploy-to-aws.md
+node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
 # Expected: ALLOW
 
 # Tamper with a copy
-cp examples/devops/deploy-to-aws.md /tmp/tampered.md
+cp examples/devops/deploy-to-aws.ds.md /tmp/tampered.md
 echo "malicious content" >> /tmp/tampered.md
 node tools/verify-dossier.js /tmp/tampered.md
 # Expected: BLOCK (checksum invalid)
@@ -945,9 +921,9 @@ node tools/verify-dossier.js /tmp/tampered.md
 **Test Matrix**:
 | LLM | Dossier | Project Type | Result |
 |-----|---------|--------------|--------|
-| Claude | deploy-to-aws.md | Node.js API | ✅ Success |
-| GPT-4 | deploy-to-aws.md | Python Flask | ✅ Success |
-| Claude | setup-react-library.md | Greenfield | ✅ Success |
+| Claude | deploy-to-aws.ds.md | Node.js API | ✅ Success |
+| GPT-4 | deploy-to-aws.ds.md | Python Flask | ✅ Success |
+| Claude | setup-react-library.ds.md | Greenfield | ✅ Success |
 
 **Document failures**: Open issues for LLM-specific problems
 
@@ -1014,19 +990,20 @@ Test dossiers on real projects:
 │
 ├── examples/                   # Reference Implementations
 │   ├── devops/                # DevOps automation
-│   │   └── deploy-to-aws.md
+│   │   └── deploy-to-aws.ds.md
 │   ├── database/              # Database operations
-│   │   └── schema-migration.md
+│   │   └── migrate-schema.ds.md
 │   ├── development/           # Development workflows
-│   │   └── setup-react-library.md
+│   │   └── setup-react-library.ds.md
 │   ├── data-science/          # ML/Data pipelines
-│   │   └── train-model.md
+│   │   └── train-ml-model.ds.md
 │   ├── git-project-review/    # LLM code analysis
 │   │   ├── README.md
 │   │   └── atomic/            # ⭐ Composable atomic dossiers
-│   │       ├── analyze-architecture.md
-│   │       ├── identify-patterns.md
-│   │       └── security-review.md
+│   │       ├── architecture-patterns.dossier
+│   │       ├── onboarding-friction.dossier
+│   │       ├── readme-reality-check.dossier
+│   │       └── schema-capability-check.dossier
 │   ├── validation/            # Schema validation tools
 │   │   ├── validate-dossier.js   # Node.js validator
 │   │   └── validate-dossier.py   # Python validator
@@ -1106,9 +1083,9 @@ Test dossiers on real projects:
 
 **Files**:
 - Format: `lowercase-with-hyphens.md`
-- Action-oriented: `deploy-to-aws.md`, `migrate-database.md`, `setup-react-library.md`
-- Descriptive, specific: Not `deploy.md`, but `deploy-to-aws.md`
-- Extensions: `.md` (standard) or `.dossier` (explicit)
+- Action-oriented: `deploy-to-aws.ds.md`, `migrate-database.ds.md`, `setup-react-library.ds.md`
+- Descriptive, specific: Not `deploy.md`, but `deploy-to-aws.ds.md`
+- Extensions: `.ds.md` (standard dossier) or `.dossier` (atomic, composable dossier)
 
 **Directories**:
 - Category-based: `devops/`, `database/`, `development/`, `data-science/`
@@ -1411,11 +1388,11 @@ npm start
 ```bash
 # Schema validation
 cd examples/validation
-node validate-dossier.js ../devops/deploy-to-aws.md
+node validate-dossier.js ../devops/deploy-to-aws.ds.md
 
 # Security verification
 cd ../..
-node tools/verify-dossier.js examples/devops/deploy-to-aws.md
+node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
 ```
 
 #### Sign a Dossier
@@ -1459,8 +1436,8 @@ node tools/verify-dossier.js examples/my-category/new-dossier.md
 
 ```bash
 # Copy dossier content
-cat examples/devops/deploy-to-aws.md | pbcopy  # macOS
-cat examples/devops/deploy-to-aws.md | xclip -selection clipboard  # Linux
+cat examples/devops/deploy-to-aws.ds.md | pbcopy  # macOS
+cat examples/devops/deploy-to-aws.ds.md | xclip -selection clipboard  # Linux
 
 # Paste into Claude, GPT-4, or your LLM tool
 # Provide project context
@@ -1532,9 +1509,9 @@ cat mykey.pub
 cat > /tmp/test-matrix.md << 'EOF'
 | LLM | Dossier | Project | Result | Notes |
 |-----|---------|---------|--------|-------|
-| Claude | deploy-to-aws.md | Node.js | ⏳ Testing | |
-| GPT-4 | deploy-to-aws.md | Node.js | ⏳ Testing | |
-| Claude | setup-react-library.md | Greenfield | ⏳ Testing | |
+| Claude | deploy-to-aws.ds.md | Node.js | ⏳ Testing | |
+| GPT-4 | deploy-to-aws.ds.md | Node.js | ⏳ Testing | |
+| Claude | setup-react-library.ds.md | Greenfield | ⏳ Testing | |
 EOF
 
 # Execute tests manually, update table

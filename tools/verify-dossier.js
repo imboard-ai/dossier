@@ -9,15 +9,15 @@
  *   node tools/verify-dossier.js <dossier-file> [--trusted-keys <file>]
  *
  * Example:
- *   node tools/verify-dossier.js examples/devops/deploy-to-aws.md
- *   node tools/verify-dossier.js examples/devops/deploy-to-aws.md --trusted-keys ~/.dossier/trusted-keys.txt
+ *   node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
+ *   node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ~/.dossier/trusted-keys.txt
  */
 
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
 const os = require('os');
+const { loadTrustedKeys, verifyWithMinisign, verifyWithKms } = require('../security/verifier');
 
 // Parse command line arguments
 function parseArgs() {
@@ -36,8 +36,8 @@ Options:
   --help, -h             Show this help message
 
 Example:
-  node tools/verify-dossier.js examples/devops/deploy-to-aws.md
-  node tools/verify-dossier.js examples/devops/deploy-to-aws.md --trusted-keys ./my-keys.txt
+  node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
+  node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ./my-keys.txt
 `);
     process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
   }
@@ -82,73 +82,8 @@ function calculateChecksum(body) {
   return crypto.createHash('sha256').update(body, 'utf8').digest('hex');
 }
 
-// Load trusted keys
-function loadTrustedKeys(filePath) {
-  if (!fs.existsSync(filePath)) {
-    return new Map();
-  }
-
-  const content = fs.readFileSync(filePath, 'utf8');
-  const keys = new Map();
-
-  content.split('\n').forEach((line, lineNum) => {
-    line = line.trim();
-    if (!line || line.startsWith('#')) return;
-
-    const parts = line.split(/\s+/);
-    if (parts.length >= 2) {
-      const publicKey = parts[0];
-      const keyId = parts.slice(1).join(' ');
-      keys.set(publicKey, keyId);
-    }
-  });
-
-  return keys;
-}
-
-// Verify signature with minisign
-function verifyWithMinisign(content, signature, publicKey) {
-  // Check if minisign is installed
-  try {
-    execSync('which minisign', { stdio: 'ignore' });
-  } catch (err) {
-    throw new Error('minisign not found. Install it with: brew install minisign (macOS) or apt-get install minisign (Linux)');
-  }
-
-  // Create temporary files
-  const tempContent = '/tmp/dossier-verify-content-' + Date.now() + '.txt';
-  const tempSig = '/tmp/dossier-verify-sig-' + Date.now() + '.minisig';
-  const tempPubKey = '/tmp/dossier-verify-key-' + Date.now() + '.pub';
-
-  fs.writeFileSync(tempContent, content, 'utf8');
-  fs.writeFileSync(tempSig, signature, 'utf8');
-  // Minisign public key file format
-  fs.writeFileSync(tempPubKey, `untrusted comment: dossier verification\n${publicKey}\n`, 'utf8');
-
-  try {
-    // Verify with minisign
-    execSync(`minisign -V -p "${tempPubKey}" -m "${tempContent}" -x "${tempSig}"`, {
-      stdio: 'pipe'
-    });
-
-    // Clean up
-    fs.unlinkSync(tempContent);
-    fs.unlinkSync(tempSig);
-    fs.unlinkSync(tempPubKey);
-
-    return true;
-  } catch (err) {
-    // Clean up on error
-    if (fs.existsSync(tempContent)) fs.unlinkSync(tempContent);
-    if (fs.existsSync(tempSig)) fs.unlinkSync(tempSig);
-    if (fs.existsSync(tempPubKey)) fs.unlinkSync(tempPubKey);
-
-    return false;
-  }
-}
-
 // Main verification function
-function verifyDossier(dossierFile, trustedKeysFile) {
+async function verifyDossier(dossierFile, trustedKeysFile) {
   const result = {
     dossierFile,
     integrity: {
@@ -231,14 +166,19 @@ function verifyDossier(dossierFile, trustedKeysFile) {
     const trustedKeys = loadTrustedKeys(trustedKeysFile);
 
     // Check if key is trusted
-    if (trustedKeys.has(sig.public_key)) {
+    if (trustedKeys.has(sig.public_key || sig.key_id)) {
       result.authenticity.isTrusted = true;
-      result.authenticity.trustedAs = trustedKeys.get(sig.public_key);
+      result.authenticity.trustedAs = trustedKeys.get(sig.public_key || sig.key_id);
     }
 
     // Verify signature
     try {
-      const isValid = verifyWithMinisign(body, sig.signature, sig.public_key);
+      let isValid = false;
+      if (sig.algorithm === 'ECDSA-SHA-256') {
+        isValid = await verifyWithKms(body, sig.signature, sig.key_id);
+      } else {
+        isValid = verifyWithMinisign(body, sig.signature, sig.public_key);
+      }
 
       if (isValid) {
         if (result.authenticity.isTrusted) {
@@ -379,10 +319,10 @@ function printResults(result) {
 }
 
 // Main
-function main() {
+async function main() {
   const options = parseArgs();
 
-  const result = verifyDossier(options.dossierFile, options.trustedKeysFile);
+  const result = await verifyDossier(options.dossierFile, options.trustedKeysFile);
 
   if (options.jsonOutput) {
     console.log(JSON.stringify(result, null, 2));
@@ -410,4 +350,5 @@ if (require.main === module) {
   }
 }
 
-module.exports = { parseDossier, calculateChecksum, verifyDossier, loadTrustedKeys };
+module.exports = { parseDossier, calculateChecksum, verifyDossier };
+

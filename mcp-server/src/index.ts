@@ -107,7 +107,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'verify_dossier': {
-        const result = verifyDossier(args as unknown as VerifyDossierInput);
+        const result = await verifyDossier(args as unknown as VerifyDossierInput);
         return {
           content: [
             {

@@ -18,7 +18,7 @@ export interface VerifyDossierInput {
 /**
  * Verify dossier security (integrity, authenticity, risk assessment)
  */
-export function verifyDossier(input: VerifyDossierInput): VerificationResult {
+export async function verifyDossier(input: VerifyDossierInput): Promise<VerificationResult> {
   const { path, trusted_keys_path } = input;
 
   logger.info('Starting dossier verification', { dossierFile: path });
@@ -73,7 +73,7 @@ export function verifyDossier(input: VerifyDossierInput): VerificationResult {
     }
 
     // 3. AUTHENTICITY CHECK (signature)
-    result.authenticity = verifyAuthenticity(body, frontmatter, trusted_keys_path);
+    result.authenticity = await verifyAuthenticity(body, frontmatter, trusted_keys_path);
 
     if (result.authenticity.status === 'invalid') {
       result.errors.push('Signature verification FAILED - do not execute!');
