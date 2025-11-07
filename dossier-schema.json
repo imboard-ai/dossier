@@ -41,7 +41,12 @@
     "status": {
       "type": "string",
       "description": "Lifecycle status of this Dossier",
-      "enum": ["Draft", "Stable", "Deprecated", "Experimental"]
+      "enum": [
+        "Draft",
+        "Stable",
+        "Deprecated",
+        "Experimental"
+      ]
     },
     "last_updated": {
       "type": "string",
@@ -94,7 +99,9 @@
       "description": "List of tools/commands that must be available for execution",
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -135,7 +142,12 @@
     "risk_level": {
       "type": "string",
       "description": "Risk assessment of executing this Dossier (REQUIRED for security)",
-      "enum": ["low", "medium", "high", "critical"]
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
     },
     "risk_factors": {
       "type": "array",
@@ -171,12 +183,17 @@
     "checksum": {
       "type": "object",
       "description": "Content integrity hash (REQUIRED for security - verifies dossier hasn't been tampered with)",
-      "required": ["algorithm", "hash"],
+      "required": [
+        "algorithm",
+        "hash"
+      ],
       "properties": {
         "algorithm": {
           "type": "string",
           "description": "Hash algorithm used",
-          "enum": ["sha256"],
+          "enum": [
+            "sha256"
+          ],
           "const": "sha256"
         },
         "hash": {
@@ -188,38 +205,103 @@
     },
     "signature": {
       "type": "object",
-      "description": "Optional cryptographic signature for authenticity verification (minisign format)",
-      "required": ["algorithm", "public_key", "signature", "signed_by"],
-      "properties": {
-        "algorithm": {
-          "type": "string",
-          "description": "Signature algorithm",
-          "enum": ["minisign"],
-          "const": "minisign"
+      "description": "Optional cryptographic signature for authenticity verification (dual-signature system: AWS KMS for official, minisign for community)",
+      "required": [
+        "algorithm",
+        "signed_by"
+      ],
+      "oneOf": [
+        {
+          "description": "AWS KMS signature (official dossiers)",
+          "required": [
+            "algorithm",
+            "key_id",
+            "signature",
+            "signed_by"
+          ],
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "const": "ecdsa-sha256",
+              "description": "ECDSA signature with SHA256 (AWS KMS)"
+            },
+            "key_id": {
+              "type": "string",
+              "description": "AWS KMS key identifier (e.g., 'imboard-ai-2024-kms' or ARN)",
+              "examples": [
+                "imboard-ai-2024-kms",
+                "arn:aws:kms:us-east-1:942039714848:key/xxx"
+              ]
+            },
+            "signature": {
+              "type": "string",
+              "description": "Base64-encoded ECDSA signature (DER format)",
+              "pattern": "^[A-Za-z0-9+/]+=*$"
+            },
+            "public_key": {
+              "type": "string",
+              "description": "Base64-encoded DER public key from AWS KMS (optional, can be fetched from KMS)"
+            },
+            "signed_by": {
+              "type": "string",
+              "description": "Signer identity",
+              "examples": [
+                "Imboard AI Security Team <security@imboard.ai>"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "When the signature was created (ISO 8601 format)",
+              "format": "date-time"
+            }
+          }
         },
-        "public_key": {
-          "type": "string",
-          "description": "Minisign public key (base64 encoded, starts with 'RWT')",
-          "pattern": "^RWT[A-Za-z0-9+/=]+$"
-        },
-        "signature": {
-          "type": "string",
-          "description": "Minisign signature data (base64 encoded)"
-        },
-        "key_id": {
-          "type": "string",
-          "description": "Human-readable key identifier (e.g., 'imboard-ai-2024')"
-        },
-        "signed_by": {
-          "type": "string",
-          "description": "Signer identity (e.g., 'Imboard AI <security@imboard.ai>')"
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "When the signature was created (ISO 8601 format)",
-          "format": "date-time"
+        {
+          "description": "minisign signature (community dossiers)",
+          "required": [
+            "algorithm",
+            "public_key",
+            "signature",
+            "signed_by"
+          ],
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "const": "ed25519",
+              "description": "Ed25519 signature (minisign)"
+            },
+            "public_key": {
+              "type": "string",
+              "description": "Minisign public key (base64 encoded, starts with 'RWT')",
+              "pattern": "^RWT[A-Za-z0-9+/=]+$"
+            },
+            "signature": {
+              "type": "string",
+              "description": "Minisign signature data (includes trusted comment)"
+            },
+            "key_id": {
+              "type": "string",
+              "description": "Human-readable key identifier",
+              "examples": [
+                "author-2024",
+                "community-member-2024"
+              ]
+            },
+            "signed_by": {
+              "type": "string",
+              "description": "Signer identity",
+              "examples": [
+                "Author Name <author@example.com>"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "When the signature was created (ISO 8601 format)",
+              "format": "date-time"
+            }
+          }
         }
-      }
+      ]
     },
     "relationships": {
       "type": "object",
@@ -230,7 +312,9 @@
           "description": "Dossiers that should run before this one",
           "items": {
             "type": "object",
-            "required": ["dossier"],
+            "required": [
+              "dossier"
+            ],
             "properties": {
               "dossier": {
                 "type": "string",
@@ -238,7 +322,11 @@
               },
               "condition": {
                 "type": "string",
-                "enum": ["required", "optional", "suggested"],
+                "enum": [
+                  "required",
+                  "optional",
+                  "suggested"
+                ],
                 "description": "Whether this prerequisite is required, optional, or suggested"
               },
               "reason": {
@@ -253,7 +341,9 @@
           "description": "Dossiers that should run after this one",
           "items": {
             "type": "object",
-            "required": ["dossier"],
+            "required": [
+              "dossier"
+            ],
             "properties": {
               "dossier": {
                 "type": "string",
@@ -261,7 +351,10 @@
               },
               "condition": {
                 "type": "string",
-                "enum": ["required", "suggested"],
+                "enum": [
+                  "required",
+                  "suggested"
+                ],
                 "description": "Whether this follow-up is required or suggested"
               },
               "purpose": {
@@ -276,7 +369,9 @@
           "description": "Alternative Dossiers that accomplish similar goals",
           "items": {
             "type": "object",
-            "required": ["dossier"],
+            "required": [
+              "dossier"
+            ],
             "properties": {
               "dossier": {
                 "type": "string",
@@ -294,7 +389,10 @@
           "description": "Dossiers that conflict with this one",
           "items": {
             "type": "object",
-            "required": ["dossier", "reason"],
+            "required": [
+              "dossier",
+              "reason"
+            ],
             "properties": {
               "dossier": {
                 "type": "string",
@@ -326,7 +424,10 @@
           "description": "Required inputs that must be provided",
           "items": {
             "type": "object",
-            "required": ["name", "description"],
+            "required": [
+              "name",
+              "description"
+            ],
             "properties": {
               "name": {
                 "type": "string",
@@ -356,7 +457,10 @@
           "description": "Optional inputs with default behaviors",
           "items": {
             "type": "object",
-            "required": ["name", "description"],
+            "required": [
+              "name",
+              "description"
+            ],
             "properties": {
               "name": {
                 "type": "string",
@@ -385,7 +489,10 @@
           "description": "Inputs sourced from other Dossiers' outputs",
           "items": {
             "type": "object",
-            "required": ["source_dossier", "output_name"],
+            "required": [
+              "source_dossier",
+              "output_name"
+            ],
             "properties": {
               "source_dossier": {
                 "type": "string",
@@ -413,7 +520,10 @@
           "description": "Files created or modified",
           "items": {
             "type": "object",
-            "required": ["path", "description"],
+            "required": [
+              "path",
+              "description"
+            ],
             "properties": {
               "path": {
                 "type": "string",
@@ -440,7 +550,10 @@
           "description": "Configuration values produced",
           "items": {
             "type": "object",
-            "required": ["key", "description"],
+            "required": [
+              "key",
+              "description"
+            ],
             "properties": {
               "key": {
                 "type": "string",
@@ -469,7 +582,9 @@
           "description": "State changes made by this Dossier",
           "items": {
             "type": "object",
-            "required": ["description"],
+            "required": [
+              "description"
+            ],
             "properties": {
               "description": {
                 "type": "string",
@@ -491,7 +606,10 @@
           "description": "Generated artifacts (scripts, reports, logs)",
           "items": {
             "type": "object",
-            "required": ["path", "purpose"],
+            "required": [
+              "path",
+              "purpose"
+            ],
             "properties": {
               "path": {
                 "type": "string",
@@ -513,11 +631,18 @@
     "coupling": {
       "type": "object",
       "description": "Coupling level with other systems and Dossiers",
-      "required": ["level"],
+      "required": [
+        "level"
+      ],
       "properties": {
         "level": {
           "type": "string",
-          "enum": ["None", "Loose", "Medium", "Tight"],
+          "enum": [
+            "None",
+            "Loose",
+            "Medium",
+            "Tight"
+          ],
           "description": "Coupling level"
         },
         "details": {
@@ -531,7 +656,9 @@
       "description": "Prerequisites that must exist before execution",
       "items": {
         "type": "object",
-        "required": ["description"],
+        "required": [
+          "description"
+        ],
         "properties": {
           "description": {
             "type": "string",
@@ -543,7 +670,14 @@
           },
           "type": {
             "type": "string",
-            "enum": ["file", "directory", "tool", "service", "permission", "environment"],
+            "enum": [
+              "file",
+              "directory",
+              "tool",
+              "service",
+              "permission",
+              "environment"
+            ],
             "description": "Type of prerequisite"
           }
         }
@@ -565,7 +699,10 @@
           "description": "Commands to verify success",
           "items": {
             "type": "object",
-            "required": ["command", "expected"],
+            "required": [
+              "command",
+              "expected"
+            ],
             "properties": {
               "command": {
                 "type": "string",

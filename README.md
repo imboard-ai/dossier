@@ -132,15 +132,19 @@ node tools/verify-dossier.js path/to/dossier.md
 # Sign a dossier (authors)
 node tools/sign-dossier.js path/to/dossier.md --key your-key.key
 ```
-
 ### Trust Model
 
 Like Docker Hub, Dossier uses **decentralized trust**:
-- **Official dossiers**: Signed by Imboard AI (see [KEYS.txt](./KEYS.txt))
-- **Community dossiers**: Signed by their authors
+- **Official dossiers**: Signed with AWS KMS by Imboard AI (see [KEYS.txt](./KEYS.txt))
+- **Community dossiers**: Signed with minisign by their authors
 - **You decide**: Which keys to trust in `~/.dossier/trusted-keys.txt`
 
-📚 **Full details**: [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
+📚 **Security Documentation**:
+- **[security/](./security/)** - Complete security documentation hub
+- **[SECURITY.md](./SECURITY.md)** - Vulnerability disclosure policy
+- **[security/ARCHITECTURE.md](./security/ARCHITECTURE.md)** - Security architecture
+- **[security/THREAT_MODEL.md](./security/THREAT_MODEL.md)** - Threat analysis
+- **[security/KEY_MANAGEMENT.md](./security/KEY_MANAGEMENT.md)** - Key lifecycle management
 
 ---
 

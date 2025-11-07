@@ -160,7 +160,7 @@ LLM agents MUST follow security protocol:
 
 ## Trust Model (Like Docker Hub)
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │  Official Dossiers (imboard-ai)                 │
 │  ✅ Verified Publisher                          │
@@ -373,7 +373,7 @@ RWAbc123...  jane-doe-personal
 
 ## Security Execution Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │ 1. User: "Execute deploy-to-aws dossier"        │
 └──────────────────┬──────────────────────────────┘

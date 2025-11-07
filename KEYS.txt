@@ -4,18 +4,36 @@ This file contains the official public keys used to sign dossiers published by t
 
 ## About Dossier Signatures
 
-Dossiers can be cryptographically signed to verify their authenticity. Signatures use **minisign** - a lightweight, modern signature tool.
+Dossiers can be cryptographically signed to verify their authenticity. The project supports a **dual signature system**:
+- **AWS KMS (ECDSA-SHA256)**: Official Imboard AI signatures (HSM-backed, enterprise-grade)
+- **minisign (Ed25519)**: Community signatures and transparent verification
 
 **Why signatures matter:**
 - ✅ **Authenticity**: Verify the dossier comes from a trusted source
 - ✅ **Integrity**: Confirm the dossier hasn't been tampered with
 - ✅ **Trust**: Build confidence in executing automation workflows
 
-## Official Imboard AI Key
+## Official Imboard AI Keys
+
+### AWS KMS Key (Primary)
 
 **Status**: To be generated
+**Algorithm**: ECDSA-SHA256 (P-256 curve)
+**Key Type**: AWS KMS (HSM-backed, FIPS 140-2 Level 2)
+**Purpose**: Official Imboard AI dossier signatures
+**Trust Level**: OFFICIAL
 
-The official Imboard AI signing key will be generated and published here in a future release.
+The official AWS KMS key will be generated and published here in a future release. This key provides the highest security level with hardware-backed private keys.
+
+### minisign Key (Community Transparency)
+
+**Status**: To be generated
+**Algorithm**: Ed25519
+**Key Type**: minisign
+**Purpose**: Community-verifiable signatures (dual-signing with KMS)
+**Trust Level**: OFFICIAL
+
+This key enables verification without AWS credentials, providing transparency for the community.
 
 **How to use** (when available):
 ```bash
@@ -78,7 +96,8 @@ The Dossier project uses a **decentralized trust model** similar to Docker Hub:
 
 When you execute a dossier, the verification tool will report:
 
-- ✅ **VERIFIED**: Valid signature from a key you trust
+- ✅ **OFFICIAL**: Valid signature from official Imboard AI keys (AWS KMS or minisign)
+- ✅ **TRUSTED**: Valid signature from a community key you explicitly trust
 - ⚠️  **SIGNED_UNKNOWN**: Valid signature, but key not in your trusted list
 - ⚠️  **UNSIGNED**: No signature (integrity still checked via checksum)
 - ❌ **INVALID**: Signature verification failed (DO NOT EXECUTE)
@@ -123,11 +142,12 @@ When a key is compromised or rotated, it will be listed here:
 
 ## Questions?
 
-- **Documentation**: See [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
+- **Documentation**: See [security/ARCHITECTURE.md](./security/ARCHITECTURE.md)
+- **Key Management**: See [security/KEY_MANAGEMENT.md](./security/KEY_MANAGEMENT.md)
 - **Issues**: Report at https://github.com/imboard-ai/dossier/issues
 - **Security concerns**: Email security@imboard.ai (when available)
 
 ---
 
-**Last Updated**: 2025-11-06
-**Format Version**: 1.0
+**Last Updated**: 2025-11-07
+**Format Version**: 1.1
