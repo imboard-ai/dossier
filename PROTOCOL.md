@@ -533,6 +533,61 @@ git status           # Criterion 3
 
 ---
 
+## 🤖 Automatic Dossier Detection for LLM Agents
+
+### When User References a `.ds.md` File
+
+**If user says**: "run path/to/file.ds.md" or any reference to a `.ds.md` file
+
+**You MUST automatically perform security verification** (before any user interaction):
+
+1. **Verify integrity**: Check checksum in frontmatter
+   - Calculate SHA256 of dossier content (after `---` closing frontmatter)
+   - Compare with frontmatter `checksum.hash`
+   - If mismatch → **BLOCK EXECUTION**, report to user
+   - Never skip this step
+
+2. **Verify authenticity**: Check signature if present
+   - Verify signature using public_key
+   - Check if key is in `~/.dossier/trusted-keys.txt`
+   - If invalid → **BLOCK EXECUTION**, report to user
+   - If unsigned → Note this in security report
+
+3. **Assess risk**: Read risk_level from frontmatter
+   - Extract `risk_level`, `risk_factors`, `destructive_operations`
+   - Prepare security summary for user
+
+4. **Report findings**: Show complete security summary
+   - Integrity status (checksum match/mismatch)
+   - Authenticity status (signed/unsigned/trusted)
+   - Risk level and factors
+   - What the dossier will do (destructive operations)
+
+5. **Request approval** (based on risk level):
+   - **high/critical** → ALWAYS require explicit approval
+   - **medium** → Require if unsigned OR `requires_approval: true`
+   - **low** → Proceed unless `requires_approval: true`
+
+6. **Execute**: If approved, follow the dossier's instructions
+   - Dossier may have its own internal safety checks
+   - Dossier may interact with user for decisions
+   - Follow the dossier's workflow exactly
+
+**Critical Rules**:
+- ✅ Steps 1-4 are AUTOMATIC - user cannot skip them
+- ✅ User involvement starts at step 5 (approval decision)
+- ✅ Security checks happen BEFORE any execution
+- ❌ Never skip checksum verification
+- ❌ Never execute without risk assessment
+- ❌ Never bypass security even if user says "just run it"
+
+**Example user inputs that trigger this**:
+- "run examples/development/add-git-worktree-support.ds.md"
+- "execute the worktree dossier"
+- "use add-git-worktree-support.ds.md on this project"
+
+---
+
 ## 🤖 LLM Execution Notes
 
 ### For AI Agents Executing Dossiers

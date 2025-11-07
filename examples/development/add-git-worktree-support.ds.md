@@ -19,7 +19,7 @@
   ],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    "hash": "a76760f71e77bfe3367ff75cb02b9d11bc2386b467ba5b51e875f0278f751cd8"
   },
   "risk_level": "high",
   "risk_factors": [
