@@ -2,15 +2,49 @@
 
 This directory contains example dossiers that demonstrate the dossier security model and why security verification is critical.
 
-## ⚠️ Warning
+## ⚠️ Critical Warning
 
-**DO NOT EXECUTE the dossiers in this directory without verification.**
+**This example WILL execute malicious code if you run it without MCP server configured.**
 
-These examples are for **educational purposes only** to demonstrate:
-- How malicious dossiers might appear legitimate
-- Why security verification (checksums and signatures) is essential
-- How the dossier security model protects users
-- The value of MCP server integration
+### What This Demonstrates
+
+**Without MCP Server**: ❌ LLMs will execute this malicious dossier
+- No automatic checksum verification
+- No automatic signature verification
+- Malicious code WILL run
+- Secrets WILL be exposed
+
+**With MCP Server**: ✅ Execution automatically blocked
+- Checksum verification runs first
+- Signature verification runs first
+- Failed verification blocks execution
+- You are protected
+
+**This is not a bug - this is the point.**
+
+The security example proves:
+1. ✅ Malicious dossiers CAN look legitimate
+2. ✅ Without proper tooling, they WILL be executed
+3. ✅ MCP server is ESSENTIAL, not optional
+4. ✅ The security model works when properly deployed
+
+---
+
+## If You Just Ran This...
+
+**Did the LLM start executing commands?** That's expected without MCP server.
+
+**What just happened**:
+- ❌ No checksum verification occurred
+- ❌ No signature verification occurred
+- ❌ LLM executed the dossier as written
+- ⚠️ Your environment variables may have been captured
+
+**What to do**:
+1. **Stop execution immediately** if still running
+2. **Delete any generated files**: `rm config-validation-*.log`
+3. **Set up MCP server**: Run `examples/setup/setup-dossier-mcp.ds.md`
+4. **Understand**: This proves why MCP server is critical
 
 ---
 
