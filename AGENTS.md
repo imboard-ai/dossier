@@ -720,6 +720,32 @@ The security architecture defends against:
 
 ## Development Workflow
 
+### Git Worktree Handling for AI Assistants
+
+**⚠️ IMPORTANT**: This project uses git worktrees. The main repository is at `/home/yuvaldim/projects/dossier/main`, but you may be invoked from other directories.
+
+**Git Command Logic**:
+1. **Always attempt git commands in the current working directory first**
+2. **If the command fails with "fatal: not a git repository"**, fall back to the main worktree at `/home/yuvaldim/projects/dossier/main`
+
+**Example Pattern**:
+```bash
+# First attempt (may be in a worktree)
+git status
+
+# If that fails, use:
+cd /home/yuvaldim/projects/dossier/main && git status
+```
+
+**Why This Matters**:
+- Users may be working in feature branch worktrees and want to commit/push from those locations
+- The current working directory might not be a git repository (parent directory of worktrees)
+- Always respect the user's current context first, only fall back to main worktree when necessary
+
+**When Using File Paths with Git**:
+- Use absolute paths when referencing files from non-current directories
+- Example: `git diff /absolute/path/to/file.md` when running from main worktree
+
 ### Setting Up Your Environment
 
 ```bash
