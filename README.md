@@ -1,23 +1,43 @@
-# Dossier — LLM-Executable Automation, with Guardrails
+# Dossier — Automation Instructions for AI Agents
 
-**Build LLM automation that's easy to: Build • Share • Run • Verify • Test**
-✓ Portable workflows • ✓ Protocol-based • ✓ Works with Claude, ChatGPT, Cursor, MCP
+**Stop writing brittle scripts. Start writing instructions that AI executes intelligently.**
+
+✅ Portable workflows that adapt to your project
+✅ Built-in verification (checksums, signatures, success criteria)
+✅ Works with Claude, ChatGPT, Cursor—any LLM
 
 [![Spec](https://img.shields.io/badge/Dossier%20Spec-v1.0-blue)](#)
 [![MCP Ready](https://img.shields.io/badge/MCP-Ready-brightgreen)](#)
 [![Security](https://img.shields.io/badge/Verification-Checksums%20%26%20Signatures-yellow)](#)
 [![GitHub](https://img.shields.io/github/stars/imboard-ai/dossier?style=social)](https://github.com/imboard-ai/dossier)
 
-> **TL;DR**
-> Dossier turns plain-text "instructions" into **executable, verifiable workflows** any LLM can run.
-> You get **evidence-based validation**, **guardrails** (checksums/signatures), and **tooling** (CLI, MCP server).
+> **Quick Concept**
+> Dossier turns plain-text instructions into executable workflows with built-in verification.
+> Like Dockerfiles for AI automation—structured, portable, verifiable.
+
+**New here?** → [5-min Quick Start](QUICK_START.md) | **Want to try now?** → [30-sec demo](#try-it-now)
 
 ---
 
-## Try it in 30 seconds
+## At a Glance
 
-**Option A — Claude Code with MCP (recommended)**
-Paste this into `~/.claude/settings.local.json` and restart Claude Code:
+📝 **What**: Structured instruction files (`.ds.md`) that AI agents execute intelligently
+🎯 **Why**: Replace brittle scripts with adaptive, verifiable automation that handles edge cases naturally
+⚡ **How**: Create dossier → Run with your AI → Get validated results with evidence
+🔒 **Safety**: Built-in checksums, cryptographic signatures, and CLI verification tools
+🌐 **Works with**: Claude, ChatGPT, Cursor, any LLM—no vendor lock-in
+
+**Status**: v1.0 protocol | 15+ production examples | Active development
+
+---
+
+## Try it Now
+
+**Option A — Claude Code with MCP (Recommended)**
+
+Add the Dossier MCP server to enable automatic verification:
+
+**Step 1**: Create or edit `~/.claude/settings.local.json`
 ```json
 {
   "mcpServers": {
@@ -29,16 +49,27 @@ Paste this into `~/.claude/settings.local.json` and restart Claude Code:
 }
 ```
 
-**Option B — Run anywhere (local CLI)**
+**Step 2**: Restart Claude Code to load the MCP server
+
+---
+
+**Option B — Command-Line Verification (Works Anywhere)**
+
+Verify dossier security before execution:
+
 ```bash
-# Clone the repo and use the CLI tool
+# Clone the repo and use the CLI verification tool
 git clone https://github.com/imboard-ai/dossier.git
-cd dossier/cli
-chmod +x bin/dossier-verify
-./bin/dossier-verify ../examples/git-project-review/atomic/readme-reality-check.ds.md
+cd dossier
+chmod +x cli/bin/dossier-verify
+cli/bin/dossier-verify examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
-**Hello Dossier** (copy into any LLM chat)
+---
+
+**Option C — Try with Any LLM (Zero Installation)**
+
+Copy this into any LLM chat (Claude, ChatGPT, Gemini):
 ```markdown
 # dossier: hello-world
 version: 1.0
@@ -50,29 +81,40 @@ validate:
 success: "You saw the greeting."
 ```
 
----
-
-## Why Dossier (not just AGENTS.md)?
-
-| AGENTS.md | Dossiers |
-|-----------|----------|
-| Static tips | **Executable workflows** |
-| No validation | **Explicit success checks** |
-| No security layer | **Checksums/signatures + verification tooling** |
-| No versioning | **Versioned spec + Semantic versioning** |
-| Informal | **Protocol + Schema + Tooling (CLI, MCP)** |
+**Expected result**: The LLM will print "Hello from Dossier 👋" and confirm success.
 
 ---
 
-## Examples Gallery (5–10 min each)
+## Why Use Dossier?
 
-| Example | What it shows | Perfect for | Time |
-|---------|---------------|-------------|------|
-| [Git Project Reality Check](./examples/git-project-review/) | Evidence-based repo audit with file:line refs | Maintainers, reviewers | ~5 min |
-| [Setup React Library](./examples/development/setup-react-library.ds.md) | Build, test, publish with guardrails | Frontend/tooling | ~10 min |
-| [ML Training Pipeline](./examples/data-science/train-ml-model.ds.md) | Repro steps + post-run validation | ML engineers | ~10–15 min |
-| [DB Migration](./examples/database/migrate-schema.ds.md) | Safe change + checks + rollback | Infra/DBA | ~10 min |
-| [AWS Deploy](./examples/devops/deploy-to-aws.ds.md) | Ephemeral preview + verification gates | Platform teams | ~15 min |
+**"How is this different from AGENTS.md files?"** Many projects already use files like `AGENTS.md` or `.cursorrules` for AI context. Here's the key distinction:
+
+|  | AGENTS.md | Dossier |
+|--|-----------|---------|
+| **Purpose** | Project context & conventions | Executable workflow automation |
+| **Validation** | None | Built-in success criteria |
+| **Security** | None | Checksums + cryptographic signatures |
+| **Portability** | Project-specific | Cross-project, shareable |
+| **Tooling** | None | CLI verification, MCP integration |
+| **Versioning** | Informal | Semantic versioning (v1.0.0) |
+
+**They're complementary**: Use AGENTS.md to explain *your project*, use dossiers to automate *workflows*.
+
+---
+
+## Examples Gallery
+
+Real-world dossiers demonstrating the protocol across different domains:
+
+| Example | Use Case | Est. Time |
+|---------|----------|-----------|
+| [Git Project Reality Check](./examples/git-project-review/) | Audit README claims against actual code with evidence | ~5 min |
+| [Setup React Library](./examples/development/setup-react-library.ds.md) | Initialize production-ready component library with TypeScript, Storybook, tests | ~10 min |
+| [ML Training Pipeline](./examples/data-science/train-ml-model.ds.md) | Train and validate ML models with reproducible experiment logs | ~10-15 min |
+| [DB Migration](./examples/database/migrate-schema.ds.md) | Execute schema changes with automatic backup and rollback capability | ~10 min |
+| [AWS Deploy](./examples/devops/deploy-to-aws.ds.md) | Deploy applications to AWS with infrastructure validation | ~15 min |
+
+**Who should try these**: Project maintainers, DevOps/SRE teams, ML engineers, frontend developers
 
 **Run the first one now:**
 
@@ -102,27 +144,23 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 
 ---
 
-> **🚀 New here?** Jump to [QUICK_START.md](./QUICK_START.md) for a 5-minute guide!
+# Understanding Dossiers
 
----
-
-# Dossier: Universal LLM Automation Standard
-
-**Dossiers** are intelligent instruction sets that leverage LLM agents to automate complex workflows with adaptability and continuous improvement.
+**Dossiers** are intelligent instruction files that leverage LLM agents to automate complex workflows with adaptability and continuous improvement.
 
 ---
 
 ## What Are Dossiers?
 
-Instead of writing complex scripts that try to handle every edge case, dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
+A **dossier** is a structured instruction file (`.ds.md`) that an AI agent can execute. Instead of writing complex scripts that try to handle every edge case, dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
 
 > **❓ Questions?** See [FAQ.md](./FAQ.md) for common objections and detailed comparisons to alternatives (AGENTS.md, scripts, CI/CD, frameworks).
 
 ### The Concept
 
-Modern developers **already have access to LLMs** in their workflows! So why write brittle shell scripts when we can provide structured guidance for intelligent agents?
+Modern developers **already have access to LLMs** in their workflows—82% use ChatGPT, 43% use GitHub Copilot[^17][^18][^19][^20]! So why write brittle shell scripts when we can provide structured guidance for intelligent agents?
 
-**Traditional Approach** (brittle):
+**Traditional Approach** (brittle)[^21][^22][^23]:
 ```bash
 # Complex script with 200+ lines
 # Must handle: all project types, all edge cases, all errors
@@ -139,31 +177,17 @@ Modern developers **already have access to LLMs** in their workflows! So why wri
 
 ### Dossiers vs. AGENTS.md Files
 
-**"Why not just use AGENTS.md?"** - Great question! Many projects already use files like `AGENTS.md`, `.cursorrules`, or `.claude.md` for AI context.
+**Key difference**: AGENTS.md files provide **project-level context** (architecture, conventions), while dossiers provide **workflow-level automation** with validation and security.
 
-**Key difference**: Those files provide **project-level context** (architecture, conventions). Dossiers provide **workflow-level automation** with validation and security.
-
-| AGENTS.md | Dossiers |
-|-----------|----------|
-| **Project context** (stays with one project) | **Portable workflows** (work across projects) |
-| "Here's how our project works" | "Here's how to execute this task" |
-| Project documentation | Executable workflows |
-| Informal instructions | Structured protocol |
-| No validation | Built-in validation steps |
-| No security layer | Checksums + signatures |
-| No versioning | Semantic versioning |
-| No tooling | CLI tools, registries, IDEs |
-| Hard to share | **Built for sharing** (team, cross-project, ecosystem) |
-
-**They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks.
-
-**See [FAQ.md](./FAQ.md) for detailed comparison with concrete examples.**
+**They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks. See [FAQ.md](./FAQ.md) for detailed comparison with concrete examples.
 
 ---
 
 ## 🔄 Self-Improving Dossiers
 
-Dossiers follow the **Dossier Execution Protocol** ([PROTOCOL.md](./PROTOCOL.md)) which includes a **self-improvement system**.
+**One of Dossier's unique features**: Dossiers can improve through execution, learning from your project's specific needs.
+
+Dossiers follow the **Dossier Execution Protocol** ([PROTOCOL.md](./PROTOCOL.md)) which includes a **self-improvement system**.[^15][^16]
 
 ### How It Works
 
@@ -197,7 +221,9 @@ LLM: ✓ Enhanced dossier with Python support
 
 ## 🌐 Open Protocol, Not Vendor Lock-In
 
-**"Who controls this protocol?"** - You do.
+**A common question at this point**: "Who controls this protocol? Am I locked into a vendor?"
+
+**Short answer**: You control it. Dossier is an open protocol, not a proprietary system.
 
 Dossiers are an **OPEN PROTOCOL**, like Docker containers or HTTP - not a proprietary system:
 
@@ -471,129 +497,44 @@ claude-run-dossier https://example.com/dossier.ds.md
 
 ## How to Use Dossiers
 
-> **🎯 New User?** See [QUICK_START.md](./QUICK_START.md) for a complete beginner's guide with examples!
->
-> **Quick Start**: Most LLMs don't know about dossiers yet. Choose your path below based on your tools.
+> **🎯 New to Dossier?** Start with the [5-minute Quick Start Guide](./QUICK_START.md)
 
-### Prerequisites
+Dossiers work with any LLM tool. Choose the method that fits your workflow:
 
-To use dossiers with an AI assistant, you need **ONE** of:
-- ✅ **AI with file access** (Claude Code, Cursor, Aider, etc.)
-- ✅ **MCP-compatible tool** with dossier MCP server (see below)
-- ✅ **Ability to copy-paste** (works with any LLM)
+### Quick Reference
 
----
+| Method | Best For | Setup Time |
+|--------|----------|------------|
+| [MCP Integration](#mcp-server-integration) | Claude Code users | 2 min (one-time) |
+| [File Access](#file-access-method) | Cursor, Aider, Continue | Instant |
+| [Copy-Paste](#copy-paste-method) | ChatGPT, Claude.ai, Gemini | Instant |
+| [CLI Verification](#security--verification) | Security-critical workflows | 1 min install |
 
-### Method 1: AI Tools with File Access (Recommended)
+### MCP Integration
 
-**For Claude Code, Cursor, Aider, Continue, etc.**
+If you use Claude Code, the MCP server provides automatic verification and discovery. See the complete [MCP Server Integration](#mcp-server-integration) section for setup.
 
-These tools can already read files, so just provide context:
+### File Access Method
 
-```
-"I want to use the dossier automation system. First, read and
-understand these files:
-- README.md (dossier concept)
-- examples/devops/deploy-to-aws.ds.md (example dossier)
-
-Then help me execute the project-init dossier from the dossiers/
-directory to initialize this project."
-```
-
-The AI will:
-1. Learn what dossiers are from the README
-2. See an example dossier structure
-3. Find and execute your requested dossier
-
----
-
-### Method 2: MCP Server (Best for Claude Code)
-
-**🚀 Available Now**: Install the dossier MCP server for automatic verification and discovery:
-
-**Setup** (one-time, 5-10 minutes):
-```
-In Claude Code: "run examples/setup/setup-dossier-mcp.ds.md"
-```
-
-Or manually add to `~/.claude/settings.local.json`:
-```json
-{
-  "mcpServers": {
-    "dossier": {
-      "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
-    }
-  }
-}
-```
-
-**Then just say:**
-```
-"Use the deploy-to-aws dossier"
-```
-
-The MCP server provides:
-- ⚡ **Automatic security verification** (checksums, signatures)
-- 📂 **Dossier discovery** with natural language
-- 📖 **Built-in protocol documentation**
-- 🔍 **Registry and relationship awareness**
-- ✅ **Streamlined execution** (2 seconds vs 5-10 minutes)
-
-**See**: [MCP Server Integration](#mcp-server-integration) section above for details.
-
----
-
-### Method 3: Copy-Paste (Universal - Works Everywhere)
-
-**For ChatGPT, Claude.ai, Gemini, or any LLM:**
-
-#### Quick Start Template
-
-Copy and paste this template to any LLM:
+For AI tools with file access (Cursor, Aider, Continue):
 
 ```
-I'm using the "dossier" automation system. Dossiers are structured
-instructions for AI agents to execute complex workflows intelligently.
-
-Here's the dossier I want you to execute:
-
-[PASTE DOSSIER CONTENT HERE]
-
-Please:
-1. Read and understand the dossier structure
-2. Validate prerequisites
-3. Gather the context specified
-4. Execute the actions step-by-step
-5. Validate success criteria
-6. Report the outcome
-
-Start by confirming you understand the objective and prerequisites.
+"Execute the deploy-to-aws dossier from examples/devops/deploy-to-aws.ds.md"
 ```
 
-#### Example Usage
+The AI will read and execute the dossier file directly.
 
-1. **Get dossier content**:
-   ```bash
-   cat dossiers/project-init.md
-   ```
+### Copy-Paste Method
 
-2. **Copy the output**
+For web-based LLMs (ChatGPT, Claude.ai, Gemini):
 
-3. **Paste into LLM** with the template above
+1. Get the dossier content: `cat path/to/dossier.ds.md`
+2. Paste it into your LLM chat
+3. The LLM will execute the instructions
 
-4. **AI executes** the instructions adaptively
-
----
-
-### Method 4: Explicit File Reference (AI with File Access)
-
-**For tools that can read files directly:**
-
+**Pro tip**: Include this context for better results:
 ```
-"Read and execute the dossier at dossiers/project-init.md
-to initialize this project. The dossier follows the standard
-defined in SPECIFICATION.md."
+"This is a dossier—a structured workflow for AI agents. Please execute it step-by-step and validate success criteria."
 ```
 
 ---
@@ -878,21 +819,21 @@ Without a schema, LLMs interpret Dossiers based on training. This creates brittl
 
 ### Why Structure Matters for LLMs
 
-**"LLMs work fine without structure!"** - Yes, but they work BETTER with it:
+**"LLMs work fine without structure!"** - Yes, but they work BETTER with it[^1][^2]:
 
-1. **Deterministic Parsing**: Extract metadata without LLM interpretation
+1. **Deterministic Parsing**: Extract metadata without LLM interpretation[^3][^4]
    - Without schema: LLM spends tokens figuring out "Where are prerequisites?"
    - With schema: `metadata.prerequisites` is always in the same place (zero parsing cost)
 
-2. **Fast Validation**: Catch errors before expensive LLM execution
+2. **Fast Validation**: Catch errors before expensive LLM execution[^5]
    - Schema validation: milliseconds, zero cost
    - LLM interpretation errors: discovered during expensive execution
 
-3. **Reduced Model Variance**: Clear schema = consistent interpretation
+3. **Reduced Model Variance**: Clear schema = consistent interpretation[^6][^7][^8]
    - GPT-4 and Claude interpret the same structured dossier identically
    - Freeform markdown can be interpreted differently across models
 
-4. **Tooling Foundation**: Enable CLI tools, IDEs, registries, and automation
+4. **Tooling Foundation**: Enable CLI tools, IDEs, registries, and automation[^24][^25]
    - Structured metadata = machine-readable
    - CLIs can validate without an LLM
    - IDEs can provide autocomplete
@@ -1216,13 +1157,13 @@ AI: (Follows db-migration.md dossier)
 ## Why This Works
 
 ### 1. **Adaptive Intelligence**
-LLMs can understand your project's unique structure and adapt dossier instructions accordingly.
+LLMs can understand your project's unique structure and adapt dossier instructions accordingly.[^9][^10][^11]
 
 ### 2. **Less Code to Maintain**
 Dossiers are markdown files with instructions, not complex error-prone scripts.
 
 ### 3. **Better Error Handling**
-LLMs can troubleshoot and retry intelligently rather than crashing on unexpected input.
+LLMs can troubleshoot and retry intelligently rather than crashing on unexpected input.[^12][^13][^14]
 
 ### 4. **User Trust**
 Users see what the AI is doing and can guide the process, unlike opaque scripts.
@@ -1301,3 +1242,57 @@ Dossiers embody this philosophy - they give AI agents clear structure and guidan
 
 **🎯 Dossier: Universal LLM Automation Standard**
 *Structure your agents. Not your scripts.*
+
+---
+
+## References
+
+[^1]: Liu, M. X., Liu, F., Fiannaca, A. J., Koo, T., Dixon, L., Terry, M., & Cai, C. J. (2024). "We Need Structured Output": Towards User-centered Constraints on Large Language Model Output. *CHI Conference on Human Factors in Computing Systems (CHI EA '24)*.
+
+[^2]: Yang, J., Jiang, D., He, L., et al. (2025). StructEval: Benchmarking LLMs' Capabilities to Generate Structural Outputs. *arXiv:2505.20139*.
+
+[^3]: Perozzi, B., Fatemi, B., Zelle, D., Tsitsulin, A., Kazemi, M., Al-Rfou, R., & Halcrow, J. (2024). Let Your Graph Do the Talking: Encoding Structured Data for LLMs. *arXiv (CS > Machine Learning)*.
+
+[^4]: Microsoft Research. (2024). Token Efficiency with Structured Output from Language Models. *Microsoft Technical Blog*.
+
+[^5]: Grigorev, D. S., Kovalev, A. K., & Panov, A. I. (2025). VerifyLLM: LLM-Based Pre-Execution Task Plan Verification for Robots. *IROS 2025*.
+
+[^6]: Chuang, Y.-N., Tang, R., Jiang, X., & Hu, X. (2024). SPeC: A Soft Prompt-Based Calibration on Performance Variability of Large Language Model in Clinical Notes Summarization. *Journal of Biomedical Informatics*.
+
+[^7]: Errica, F., Siracusano, G., Sanvito, D., & Bifulco, R. (2025). What Did I Do Wrong? Quantifying LLMs' Sensitivity and Consistency to Prompt Engineering. *Annual Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics (NAACL 2025)*.
+
+[^8]: dottxt.ai. (2024). Structured Generation Improves LLM Performance. *Technical Blog/Research*.
+
+[^9]: Zhu, Y., Moniz, J. R. A., Bhargava, S., Lu, J., Piraviperumal, D., Li, S., Zhang, Y., Yu, H., & Tseng, B.-H. (2024). Can Large Language Models Understand Context? *EACL 2024 (Findings)*.
+
+[^10]: Using an LLM to Help With Code Understanding. (2024). *arXiv*.
+
+[^11]: Natural Language based Context Modeling and Reasoning for Ubiquitous Computing with Large Language Models: A Tutorial. (2023). *arXiv:2309.15074*.
+
+[^12]: Tyen, G., Mansoor, H., Cărbune, V., Chen, P., & Mak, T. (2024). LLMs cannot find reasoning errors, but can correct them given the error location. *ACL 2024 Findings*.
+
+[^13]: The STROT Framework: Structured Prompting and Feedback-Guided Reasoning with LLMs for Data Interpretation. (2025). *arXiv:2505.01636*.
+
+[^14]: Are Retrials All You Need? Enhancing Large Language Model Reasoning Without Verbalized Feedback. (2025). *arXiv:2504.12951*.
+
+[^15]: Pan, L., Saxon, M., Xu, W., Nathani, D., Wang, X., & Wang, W. Y. (2024). Automatically Correcting Large Language Models: Surveying the Landscape of Diverse Automated Correction Strategies. *Transactions of the Association for Computational Linguistics (TACL)*, 12, 484-506.
+
+[^16]: Progress or Regress? Self-Improvement Reversal in Post-training. (2024). *arXiv:2407.05013*.
+
+[^17]: Stack Overflow. (2024). Developer Survey 2024. 82% of professional developers use ChatGPT, 43% use Microsoft Copilot, 25% use GitHub Copilot, 16% use Claude.
+
+[^18]: McKinsey. (2024). Enterprise AI Survey 2024. 78% of organizations use AI in at least one business function (up from 55% prior year); 71% enterprise adoption of generative AI.
+
+[^19]: LangChain. (2024). State of AI 2024 Report. 61.7% of developers/ML teams have or plan to have LLM apps in production within a year; 37.3% use AI chatbots in their work every day; 60.6% implementing prompt engineering.
+
+[^20]: Anthropic. (2024). Market Analysis 2024. Anthropic leads enterprise AI with 32% market share; 73% of enterprises spend over $50,000 annually on LLMs; 37% spend over $250,000 annually.
+
+[^21]: Balancing Automation with Human Expertise in Exploratory Testing and Edge-Case Analysis. (2024). *ResearchGate*.
+
+[^22]: De Reanzi, S. R., & Thangaiah, P. R. J. (2021). Survey on Software Test Automation Return on Investment. *SAGE Journals*. Maintenance overhead (fixing script failures) is 22-30% for traditional scripts.
+
+[^23]: DAPLab Research. (2025). Columbia University Technical Blog. Notes that "digital environments are messy and stateful: every agent action perturbs hidden processes, files, and I/O, making single-shot execution brittle."
+
+[^24]: Schema Matching with Large Language Models: an Experimental Study. (2024). *arXiv:2407.11852*.
+
+[^25]: LLM4Schema.org: Generating Schema.org Markups. (2024). *HAL Science*.
