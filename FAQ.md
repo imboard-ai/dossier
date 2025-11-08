@@ -177,6 +177,213 @@ rollback:
 
 ---
 
+### How portable are dossiers across different projects?
+
+**The question**: "Can I reuse the same dossier across multiple projects, or do I need project-specific versions?"
+
+**Short answer**: Dossiers are **operation-specific, not project-specific** — this is a key differentiator from AGENTS.md.
+
+#### What This Means
+
+**AGENTS.md** = Project context (stays with one project)
+- "Here's how OUR codebase is structured"
+- "Here are OUR naming conventions"
+- Tied to a specific repository
+
+**Dossiers** = Portable workflows (work across projects)
+- "Here's how to deploy a Node.js app"
+- "Here's how to run security checks"
+- Work with ANY project that matches the operation
+
+#### Real Examples
+
+**Example 1: Deployment Dossier**
+```markdown
+# dossier: deploy-nodejs-app
+objective: Deploy a Node.js application to production
+```
+
+This dossier works with:
+- ✅ Your e-commerce API
+- ✅ Your microservices backend
+- ✅ Your colleague's SaaS app
+- ✅ Any Node.js project with npm scripts
+
+**Example 2: Security Audit Dossier**
+```markdown
+# dossier: security-audit
+objective: Run security checks on dependencies and code
+```
+
+This dossier works with:
+- ✅ Python projects
+- ✅ JavaScript projects
+- ✅ Any project with dependency files
+
+#### When Customization Is Needed
+
+**Most dossiers are portable**. Customize when:
+1. **Stack-specific details**: Using a specific framework/tool
+2. **Organization standards**: Your company's specific workflows
+3. **Environment-specific**: Particular cloud provider/infrastructure
+
+**Solution**: Use dossier **variants** or **parameters**:
+```markdown
+# dossier: deploy-nodejs-app
+parameters:
+  - platform: [aws, gcp, azure]
+  - environment: [staging, production]
+```
+
+#### The Power of Portability
+
+Because dossiers are portable:
+- 📦 **Share across your organization**: Same deployment workflow for all teams
+- 🌐 **Build community libraries**: Contribute to ecosystem of reusable dossiers
+- 🚀 **Onboard faster**: New projects start with proven workflows
+- 🔄 **Improve once, benefit everywhere**: Update affects all projects using it
+
+**Key insight**: Unlike project-specific context files, dossiers describe HOW to do something, not WHAT your project is. This makes them naturally reusable.
+
+---
+
+### How do I share dossiers with my team/community?
+
+**The question**: "What's the best way to distribute dossiers to my team, other projects, or the open-source community?"
+
+**Short answer**: Dossiers are built for sharing. Because they're protocol-based plain text, share them like code.
+
+#### Sharing Scenarios
+
+**1. Team Collaboration** (within your organization)
+
+**Git Repository** (recommended):
+```bash
+# Central dossiers repo for your organization
+my-company/
+  dossiers/
+    deployment/
+      deploy-api.ds.md
+      deploy-frontend.ds.md
+    security/
+      audit-dependencies.ds.md
+```
+
+**Benefits**:
+- ✅ Version control for dossiers
+- ✅ Pull requests for improvements
+- ✅ Team can contribute updates
+- ✅ Track what works
+
+**Shared Network Location**:
+```bash
+# Point your team to a shared directory
+/shared/team-dossiers/
+```
+
+---
+
+**2. Cross-Project Reuse** (your own multiple projects)
+
+**Approach 1: Git Submodule**
+```bash
+# In each project
+git submodule add https://github.com/you/shared-dossiers .dossiers
+```
+
+**Approach 2: Registry Pattern** (see [examples/sample-implementation/dossiers-registry.md](./examples/sample-implementation/dossiers-registry.md))
+```markdown
+# In your project's dossiers-registry.md
+## Deployment
+- [Deploy Node.js App](https://github.com/you/dossiers/deploy-nodejs.ds.md)
+- [Database Migration](https://github.com/you/dossiers/db-migrate.ds.md)
+```
+
+---
+
+**3. Community/Ecosystem** (open source)
+
+**GitHub Repository** (standard pattern):
+```bash
+awesome-dossiers/
+  README.md          # Gallery of dossiers
+  nodejs/
+    deploy.ds.md
+    test.ds.md
+  python/
+    django-deploy.ds.md
+  devops/
+    k8s-deploy.ds.md
+```
+
+**NPM Package** (for Node.js ecosystem):
+```bash
+npm install @your-org/dossiers
+# Dossiers available in node_modules/@your-org/dossiers/
+```
+
+**Direct URLs**:
+```bash
+# LLMs can fetch directly
+https://raw.githubusercontent.com/you/dossiers/main/deploy.ds.md
+```
+
+---
+
+#### Why Sharing Works So Well
+
+**Protocol-based design** means:
+- ✅ **No dependencies**: Just Markdown files
+- ✅ **No vendor lock-in**: Works with any LLM environment
+- ✅ **No installation**: Copy file and run
+- ✅ **Trust system**: Signatures and checksums travel with the dossier
+- ✅ **Version compatibility**: Semantic versioning ensures compatibility
+
+**Example workflow**:
+1. Alice writes `deploy-api.ds.md` for her project
+2. Commits to company's dossiers repo
+3. Bob clones repo to his project
+4. His LLM reads the dossier
+5. **It just works** — no setup, no configuration
+
+---
+
+#### Security Considerations When Sharing
+
+**From trusted sources**:
+- ✅ Review dossier content before using
+- ✅ Check signatures if available
+- ✅ Verify checksums for critical operations
+- ✅ Start with low-risk dossiers (read-only operations)
+
+**From community**:
+- ⚠️ Treat like code: review before executing
+- ✅ Use verification tools: `dossier-verify`
+- ✅ Test in safe environments first
+- ✅ Check dossier metadata (risk level, author)
+
+**See [security/README.md](./security/README.md) for comprehensive security guidance.**
+
+---
+
+#### Getting Started with Sharing
+
+**Quick start**:
+1. **Create a dossiers directory** in your project or organization
+2. **Add your first reusable dossier** (deployment, testing, etc.)
+3. **Document in a registry file** (see examples)
+4. **Share the location** with your team
+5. **Iterate based on feedback**
+
+**Community contribution**:
+- Open PRs to improve existing dossiers
+- Share your specialized workflows
+- Build domain-specific dossier collections (ML, DevOps, etc.)
+
+**Remember**: Every dossier you share makes the entire ecosystem stronger. Think of it like sharing Dockerfiles or GitHub Actions — you're contributing to a library of proven workflows.
+
+---
+
 ### How do dossiers compare to scripts (bash/Python/etc.)?
 
 See the comprehensive comparison table in the [main README](README.md#dossiers-vs-scripts-when-to-use-each).

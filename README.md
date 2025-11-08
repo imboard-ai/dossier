@@ -1,7 +1,7 @@
 # Dossier — LLM-Executable Automation, with Guardrails
 
-**Write workflows once, let any LLM execute them safely.**
-✓ Validated steps • ✓ Checksums & signatures • ✓ Works with Claude, ChatGPT, Cursor, MCP
+**Build LLM automation that's easy to: Build • Share • Run • Verify • Test**
+✓ Portable workflows • ✓ Protocol-based • ✓ Works with Claude, ChatGPT, Cursor, MCP
 
 [![Spec](https://img.shields.io/badge/Dossier%20Spec-v1.0-blue)](#)
 [![MCP Ready](https://img.shields.io/badge/MCP-Ready-brightgreen)](#)
@@ -145,6 +145,7 @@ Modern developers **already have access to LLMs** in their workflows! So why wri
 
 | AGENTS.md | Dossiers |
 |-----------|----------|
+| **Project context** (stays with one project) | **Portable workflows** (work across projects) |
 | "Here's how our project works" | "Here's how to execute this task" |
 | Project documentation | Executable workflows |
 | Informal instructions | Structured protocol |
@@ -152,6 +153,7 @@ Modern developers **already have access to LLMs** in their workflows! So why wri
 | No security layer | Checksums + signatures |
 | No versioning | Semantic versioning |
 | No tooling | CLI tools, registries, IDEs |
+| Hard to share | **Built for sharing** (team, cross-project, ecosystem) |
 
 **They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks.
 
