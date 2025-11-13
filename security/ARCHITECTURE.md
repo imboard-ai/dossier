@@ -158,6 +158,189 @@ LLM agents MUST follow security protocol:
 
 ---
 
+## Handling Mutable State: Working Files
+
+### The Challenge
+
+Dossiers are designed to be **immutable and signed** for security. Once a dossier is signed with a checksum and cryptographic signature, any modification breaks the integrity guarantee. This is essential for preventing tampering and establishing trust.
+
+However, during execution, LLM agents need to track **mutable state**:
+- Current progress and execution status
+- Context gathered from the project
+- Decisions made during execution
+- Temporary data and intermediate results
+- TODO lists that evolve as work progresses
+- Logs of actions taken
+
+This creates a fundamental tension: **immutable instructions** vs **mutable execution state**.
+
+### Solution Alternatives Considered
+
+#### Option 1: Sign Each Version
+Re-sign the dossier after every modification.
+
+**Rejected because:**
+- ❌ Too much overhead for frequent state updates
+- ❌ Pollutes the signature/trust model
+- ❌ Breaks the atomic guarantee (which version do you trust?)
+- ❌ Makes collaboration difficult (conflicting signatures)
+
+#### Option 2: Structured Execution Directory
+Create a separate directory structure for execution state:
+```
+project/
+├── deploy-to-aws.ds.md    # Immutable dossier
+└── .dossier/
+    └── executions/
+        └── 2025-11-12-abc123/
+            ├── state.json
+            ├── working.md
+            ├── outputs/
+            └── logs/
+```
+
+**Tradeoffs:**
+- ✅ Supports multiple concurrent executions
+- ✅ Structured separation of concerns (logs, outputs, state)
+- ✅ Matches patterns from Docker/Kubernetes
+- ❌ More complex than needed for most use cases
+- ❌ Hidden directory reduces discoverability
+- ❌ Overkill for simple workflows
+
+#### Option 3: Simple Working File Pattern (CHOSEN)
+Create a sibling markdown file with `.dsw.md` extension (dossier working file):
+```
+project/
+├── deploy-to-aws.ds.md     # Immutable, signed dossier
+└── deploy-to-aws.dsw.md    # Mutable working file
+```
+
+**Rationale:**
+- ✅ Simple and discoverable (visible in file browser)
+- ✅ Natural for LLM workflows (markdown todos/logs)
+- ✅ Easy naming convention (just add `.w` before `.md`)
+- ✅ No hidden directories to manage
+- ✅ Sufficient for vast majority of use cases
+- ✅ Teams can choose to commit or gitignore based on needs
+
+### The Working File Pattern
+
+**Working files** (`.dsw.md`) are ephemeral, agent-managed files that sit alongside dossiers but operate under different rules:
+
+**Working files ARE:**
+- ✅ Mutable markdown files for state tracking
+- ✅ Created automatically by LLM during execution
+- ✅ Used for progress logs, todos, and context
+- ✅ Committed to git OR gitignored (team choice)
+
+**Working files are NOT:**
+- ❌ Signed or checksummed
+- ❌ Subject to integrity verification
+- ❌ Part of the dossier security model
+- ❌ Shared across different projects
+
+**Naming Convention:**
+```
+<dossier-name>.dsw.md
+
+Examples:
+deploy-to-aws.ds.md → deploy-to-aws.dsw.md
+setup-project.ds.md → setup-project.dsw.md
+run-tests.ds.md → run-tests.dsw.md
+```
+
+### Security Model for Working Files
+
+Working files exist **outside the security boundary** of dossiers:
+
+```
+┌─────────────────────────────────────────────┐
+│ SECURITY BOUNDARY                           │
+│                                             │
+│  ┌────────────────────────────────────┐    │
+│  │ Dossier (.ds.md)                   │    │
+│  │ ✅ Checksummed                      │    │
+│  │ ✅ Optionally signed                │    │
+│  │ ✅ Integrity verified               │    │
+│  │ ✅ Trust evaluated                  │    │
+│  │ ✅ Immutable                        │    │
+│  └────────────────────────────────────┘    │
+│                                             │
+└─────────────────────────────────────────────┘
+
+ ┌────────────────────────────────────┐
+ │ Working File (.dsw.md)             │
+ │ ❌ No checksum                     │
+ │ ❌ No signature                    │
+ │ ❌ No verification                 │
+ │ ❌ No trust model                  │
+ │ ✅ Fully mutable                   │
+ └────────────────────────────────────┘
+```
+
+**Why this is safe:**
+1. **Dossiers define WHAT to do** (instructions) - must be trusted and verified
+2. **Working files track WHAT WAS DONE** (state) - no security risk from modification
+3. **Separation of concerns** - tampering with a working file doesn't compromise dossier integrity
+4. **LLM-private** - working files are for agent state management, not execution instructions
+
+### Version Control Considerations
+
+Teams should decide whether to commit working files based on their workflow:
+
+**Commit Working Files When:**
+- ✅ You want team members to see execution progress
+- ✅ You want to resume execution on different machines
+- ✅ You want an audit trail of decisions made
+- ✅ The project is collaborative and state should be shared
+- ✅ Working files serve as project documentation
+
+**Gitignore Working Files When:**
+- ✅ Multiple people execute the same dossier concurrently (avoid merge conflicts)
+- ✅ Working files contain machine-specific or temporary data
+- ✅ You want a clean repository history
+- ✅ Privacy is a concern (working files might contain sensitive project context)
+
+**Recommendation:**
+```gitignore
+# Add to .gitignore if you want ephemeral working files
+*.dsw.md
+```
+
+Or commit them if they serve as useful documentation. **Let your team's workflow decide.**
+
+### Risk Metadata for Dossiers That Use Working Files
+
+If a dossier creates working files, consider adding to risk factors:
+```json
+{
+  "risk_factors": ["modifies_files"],
+  "destructive_operations": [
+    "Creates working file: deploy-to-aws.dsw.md"
+  ]
+}
+```
+
+However, this is generally **low risk** since working files are:
+- Agent-managed (not user-facing)
+- Clearly named and discoverable
+- Separate from signed content
+
+### Relationship to Multi-Layer Security
+
+Working files interact with **Layer 5: LLM Execution Guards**:
+- LLMs read immutable dossiers (verified via Layers 1-4)
+- LLMs create/update working files for state tracking
+- Working files enable context persistence across sessions
+- Working files do not affect dossier security verification
+
+This pattern is analogous to:
+- **Git**: Signed commits (immutable) + working directory (mutable)
+- **Docker**: Signed images (immutable) + container state (mutable)
+- **Kubernetes**: Pod specs (immutable) + pod status (mutable)
+
+---
+
 ## Trust Model (Like Docker Hub)
 
 ```text
@@ -728,6 +911,8 @@ echo "RWAbc123...  jane-doe-personal" >> ~/.dossier/trusted-keys.txt
 - `executes_external_code` - Downloads and runs code
 - `database_operations` - Modifies database
 - `system_configuration` - Changes system settings
+
+**Note on Working Files**: If a dossier creates working files (`.dsw.md`), consider adding `modifies_files` to risk factors. However, this is generally low risk since working files are agent-managed, clearly named, and separate from signed content. See [Handling Mutable State: Working Files](#handling-mutable-state-working-files) for details.
 
 ### destructive_operations
 

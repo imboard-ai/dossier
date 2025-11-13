@@ -122,6 +122,8 @@ This protocol defines **standard execution guidelines** for all dossiers. Every 
 
 **Every dossier execution MUST start with checksum verification**:
 
+> **Note**: This applies to dossiers (`.ds.md`) only. Working files (`.dsw.md`) bypass verification as they are mutable state files. See [Working Files Protocol](#-working-files-protocol-dswmd) for details.
+
 1. **Extract checksum** from frontmatter `checksum.hash`
 2. **Calculate SHA256** of dossier body (content after `---` closing frontmatter)
 3. **Compare** calculated hash with frontmatter hash
@@ -763,6 +765,8 @@ const concept = await resources.read("dossier://concept");
 4. **🔍 Gather context**: Analyze project before making decisions
 5. **📝 Present plan**: Show user what will happen
 6. **⚙️  Execute actions**: Perform operations with progress updates
+   - For multi-step tasks: Create working file (`.dsw.md`) to track progress (see [Working Files Protocol](#-working-files-protocol-dswmd))
+   - Update working file after each significant step
 7. **✅ Validate results**: Verify success criteria met
 8. **📊 Report outcome**: Clear summary of what was done
 9. **➡️  Next steps**: Guide user on what to do next
@@ -808,6 +812,464 @@ const concept = await resources.read("dossier://concept");
 
 **Proceeding with**: [wait for user or use recommendation]
 ```
+
+---
+
+## 📝 Working Files Protocol (.dsw.md)
+
+### Overview
+
+**Working files** (`.dsw.md`) are mutable, agent-managed markdown files used to track execution state alongside immutable dossiers. They provide a structured way to maintain context, progress, and decisions across multiple execution sessions.
+
+**Purpose**:
+- Track execution progress and current status
+- Store gathered context from the project
+- Maintain decisions made during execution
+- Enable resume capability after interruption
+- Serve as persistent logs and TODO lists
+- Document the evolution of long-running tasks
+
+**Key Principle**: Working files are **outside the security boundary** - they are mutable state files, not signed instructions.
+
+### When to Create Working Files
+
+Create a working file (`.dsw.md`) when:
+- ✅ Executing a multi-step dossier that spans multiple sessions
+- ✅ The task requires tracking state (progress, context, decisions)
+- ✅ You need to gather extensive context before taking action
+- ✅ The user might interrupt and resume execution later
+- ✅ Long-running tasks benefit from visible progress tracking
+- ✅ The dossier involves complex decision-making that should be documented
+
+**Do NOT create working files** for:
+- ❌ Simple, single-step tasks that complete immediately
+- ❌ Read-only operations with no state to track
+- ❌ Tasks that don't require context persistence
+
+### File Naming Convention
+
+**Pattern**: `<dossier-name>.dsw.md`
+
+The `.dsw.md` extension stands for "dossier working file".
+
+**Examples**:
+```
+Dossier File                          →  Working File
+deploy-to-aws.ds.md                   →  deploy-to-aws.dsw.md
+setup-project.ds.md                   →  setup-project.dsw.md
+add-git-worktree-support.ds.md        →  add-git-worktree-support.dsw.md
+```
+
+### Creating Working Files
+
+**Step 1: Create the file at project root** (or appropriate location)
+
+```markdown
+# Working File: Deploy to AWS
+
+**Dossier**: deploy-to-aws.ds.md
+**Created**: 2025-11-12
+**Status**: In Progress
+
+[content follows...]
+```
+
+**Step 2: Include reference to parent dossier**
+
+Every working file MUST start with a clear reference to its parent dossier. This creates a traceable link between the immutable instructions and mutable state.
+
+**Standard header format**:
+```markdown
+# Working File: [Dossier Title]
+
+**Dossier**: [filename].ds.md
+**Created**: [timestamp]
+**Last Updated**: [timestamp]
+**Status**: [In Progress | Completed | Blocked | Paused]
+
+---
+```
+
+**Example**:
+```markdown
+# Working File: Deploy to AWS
+
+**Dossier**: deploy-to-aws.ds.md
+**Created**: 2025-11-12 14:30:00
+**Last Updated**: 2025-11-12 16:45:00
+**Status**: In Progress
+
+---
+
+## Progress
+
+- [x] Verified AWS credentials
+- [x] Gathered project context
+- [x] Reviewed existing infrastructure
+- [ ] Deploy to staging
+- [ ] Run smoke tests
+- [ ] Deploy to production
+
+## Context Gathered
+
+...
+```
+
+### Standard Working File Structure
+
+Use this structure for consistency across all working files:
+
+```markdown
+# Working File: [Dossier Title]
+
+**Dossier**: [filename].ds.md
+**Created**: [timestamp]
+**Last Updated**: [timestamp]
+**Status**: [status]
+
+---
+
+## Progress
+
+- [ ] Step 1
+- [ ] Step 2
+- [ ] Step 3
+
+## Context Gathered
+
+[Information discovered about the project]
+
+- Project structure: ...
+- Tech stack detected: ...
+- Existing configurations: ...
+- Dependencies found: ...
+
+## Decisions Made
+
+[Important decisions during execution]
+
+1. **[Decision point]**: Chose [option] because [reasoning]
+2. **[Another decision]**: ...
+
+## Actions Taken
+
+[Log of actual operations performed]
+
+### 2025-11-12 14:30
+- Created working file
+- Scanned project structure
+- Verified prerequisites
+
+### 2025-11-12 15:00
+- Modified package.json
+- Added CI configuration
+
+## Blockers / Issues
+
+[Problems encountered]
+
+- [ ] **Issue 1**: [description] - Status: [investigating/resolved]
+- [ ] **Issue 2**: [description] - Status: [...]
+
+## Next Steps
+
+[What needs to happen next]
+
+1. Complete deployment to staging
+2. Verify health checks
+3. Get approval for production
+
+## Notes
+
+[Any additional observations or reminders]
+
+---
+
+_This working file is mutable and tracks execution state. It is not signed or verified. See parent dossier for immutable instructions._
+```
+
+### Motivation and Benefits
+
+**Why working files improve LLM execution**:
+
+1. **Context Persistence**: LLMs can reference what they've already discovered instead of re-scanning the project
+2. **Resume Capability**: Users can interrupt and resume without losing progress
+3. **Decision Auditing**: Track why specific choices were made during execution
+4. **Progress Visibility**: Users can see current status at a glance
+5. **Collaboration**: Team members can see execution state (if committed)
+6. **Learning**: Future executions can learn from past decisions
+
+**Real-world scenario**:
+```
+User: "Deploy to AWS"
+LLM: Creates deploy-to-aws.dsw.md, gathers context
+User: Interrupts to fix an issue
+[Next day]
+User: "Continue the AWS deployment"
+LLM: Reads deploy-to-aws.dsw.md, resumes from last step
+```
+
+### Security and Trust Model
+
+Working files are **not part of the dossier security model**:
+
+**Working files are:**
+- ❌ NOT signed or checksummed
+- ❌ NOT subject to integrity verification
+- ❌ NOT included in cryptographic trust chain
+- ✅ Fully mutable by the LLM agent
+- ✅ Ephemeral state tracking files
+
+**Why this is safe:**
+1. **Dossiers define WHAT to do** (instructions) - these must be trusted
+2. **Working files track WHAT WAS DONE** (state) - no security risk from tampering
+3. **Separation of concerns** - modifying a working file doesn't change dossier instructions
+4. **Agent-private** - working files are for internal state management
+
+**Security boundary**:
+```
+┌────────────────────────────────┐
+│ SECURITY ZONE                  │
+│                                │
+│  Dossier (.ds.md)             │
+│  ✅ Signed, verified           │
+│  ✅ Immutable instructions     │
+│                                │
+└────────────────────────────────┘
+
+Working File (.dsw.md)
+❌ No verification
+✅ Mutable state
+```
+
+### Version Control Guidelines
+
+**Decision point**: Should working files be committed to git?
+
+**There is no universal answer** - let your team's workflow decide:
+
+#### Commit Working Files When:
+- ✅ Team collaboration (share execution progress)
+- ✅ Resuming on different machines
+- ✅ Audit trail is valuable
+- ✅ Working files serve as documentation
+- ✅ Tracking decisions over time
+
+**Example**: A deployment working file showing which servers were updated and when.
+
+#### Gitignore Working Files When:
+- ✅ Solo development with no need to share state
+- ✅ Multiple concurrent executions (avoid merge conflicts)
+- ✅ Machine-specific or temporary data
+- ✅ Clean repository history desired
+- ✅ Privacy concerns (sensitive context)
+
+**Example**: Temporary working files for quick local tasks.
+
+#### Recommended .gitignore Pattern:
+```gitignore
+# Add to .gitignore if you want ephemeral working files
+*.dsw.md
+
+# Or be selective
+# *-temp.dsw.md
+```
+
+**Best practice**: Start by committing working files. If they cause issues (merge conflicts, noise), then gitignore them. Let experience guide your decision.
+
+### Lifecycle Management
+
+#### Creation
+
+**When**: At the start of dossier execution (if multi-step or state-tracking needed)
+
+**How**:
+```markdown
+LLM: "This is a multi-step deployment. I'll create a working file
+     to track progress: deploy-to-aws.dsw.md"
+
+[Creates file with standard header and initial structure]
+```
+
+#### Updates
+
+**When**: Throughout dossier execution
+
+**How**:
+- Update "Last Updated" timestamp
+- Mark progress items as complete
+- Add new context as discovered
+- Log actions taken
+- Document decisions made
+
+**Frequency**: After each significant step or discovery.
+
+#### Cleanup
+
+**When**: After dossier execution completes successfully
+
+**Options**:
+1. **Keep as documentation** - Rename or archive for reference
+2. **Delete** - Remove if no longer needed
+3. **Convert to permanent docs** - Extract key decisions into project documentation
+
+**Pattern**:
+```markdown
+LLM: "Deployment complete! The working file (deploy-to-aws.dsw.md)
+     contains a full log of actions taken.
+
+     Would you like to:
+     1. Keep it as is (for reference)
+     2. Move to docs/ folder
+     3. Delete it
+
+     Your preference?"
+```
+
+### Example: Working File in Action
+
+**Scenario**: User asks to deploy application to AWS
+
+**Step 1: Create working file**
+```markdown
+# Working File: Deploy to AWS
+
+**Dossier**: deploy-to-aws.ds.md
+**Created**: 2025-11-12 14:00:00
+**Status**: In Progress
+
+---
+
+## Progress
+
+- [ ] Verify AWS credentials
+- [ ] Gather project context
+- [ ] Review existing infrastructure
+- [ ] Deploy to staging
+- [ ] Run tests
+- [ ] Deploy to production
+
+## Context Gathered
+
+[Starting context gathering...]
+```
+
+**Step 2: Update as execution proceeds**
+```markdown
+## Progress
+
+- [x] Verify AWS credentials ✅
+- [x] Gather project context ✅
+- [x] Review existing infrastructure ✅
+- [x] Deploy to staging ✅
+- [ ] Run tests
+- [ ] Deploy to production
+
+## Context Gathered
+
+- **Project**: Node.js API
+- **Current deployment**: ECS Fargate in us-east-1
+- **Environment**: Staging (account: 123456789)
+- **Docker image**: Built and pushed to ECR
+
+## Actions Taken
+
+### 2025-11-12 14:15
+- Verified AWS credentials (profile: production)
+- Confirmed IAM permissions
+
+### 2025-11-12 14:30
+- Built Docker image: myapp:v2.1.0
+- Pushed to ECR: 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp
+
+### 2025-11-12 14:45
+- Updated ECS task definition
+- Deployed to staging cluster
+- Service: myapp-staging, Tasks: 2/2 running
+
+## Decisions Made
+
+1. **Deployment strategy**: Blue-green (to minimize downtime)
+2. **Task count**: 2 (same as current)
+3. **Health check**: 30s grace period
+
+## Next Steps
+
+1. Run smoke tests on staging
+2. Monitor for 10 minutes
+3. Get approval for production
+```
+
+**Step 3: Resume after interruption**
+
+User interrupts, comes back later:
+```
+User: "Continue the AWS deployment"
+
+LLM: [Reads deploy-to-aws.dsw.md]
+     "I see we successfully deployed to staging at 14:45.
+     Next steps are to run smoke tests. Let me continue..."
+```
+
+### Interaction with Other Protocol Elements
+
+#### Relationship to Security Verification
+
+**Working files bypass security checks**:
+- Dossiers (`.ds.md`) → MUST verify checksum and signature
+- Working files (`.dsw.md`) → NO verification (they are mutable state)
+
+**Protocol note in Security Verification section**: "Working files (.dsw.md) are not subject to integrity verification - they track mutable execution state and are outside the security boundary."
+
+#### Relationship to Self-Improvement
+
+**Working files can store improvement suggestions**:
+```markdown
+## Improvement Suggestions
+
+[Ideas for improving the parent dossier based on this execution]
+
+1. Add step for verifying ECR repository exists
+2. Include rollback procedure for failed deployments
+3. Add smoke test examples for Node.js APIs
+```
+
+These suggestions can be referenced when the dossier is later improved.
+
+#### Relationship to Context Gathering
+
+**Working files are perfect for storing gathered context**:
+- Scan results
+- Detected configurations
+- Project structure analysis
+- Existing resources discovered
+
+This prevents re-scanning on resume and provides a record of the environment at execution time.
+
+### Best Practices
+
+#### For LLM Agents
+
+1. **Create working files proactively** for multi-step tasks
+2. **Update frequently** - after each significant step
+3. **Be detailed** - future you (or another agent) should understand the state
+4. **Use standard structure** - consistency helps users
+5. **Reference the parent dossier** - always link back to instructions
+6. **Clean up when done** - offer to delete/archive/document
+
+#### For Dossier Authors
+
+1. **Recommend working files** in dossier documentation for complex tasks
+2. **Provide working file templates** if there's a standard structure for your dossier
+3. **Don't assume working files exist** - check and create if needed
+4. **Reference working files in next steps** - "See [dossier].dsw.md for detailed log"
+
+#### For Users
+
+1. **Review working files** to understand execution progress
+2. **Commit or gitignore** based on your workflow needs
+3. **Use working files to resume** - they're designed for interruption
+4. **Archive valuable working files** - they document decisions
 
 ---
 
