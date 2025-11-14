@@ -1,8 +1,11 @@
 # Priority Roadmap: Dossier Adoption Strategy
 
 **Generated**: 2025-11-13
+**Issues Created**: 2025-11-14 (GitHub issues #9-26)
 **Focus**: Maximum adoption with minimum resources
 **Timeline**: 6-month plan
+
+> **Note**: All 18 issues have been created on GitHub as issues #9-26. Issue numbers in this document have been updated to reflect the actual GitHub issue numbers.
 
 ---
 
@@ -33,27 +36,27 @@ Track these to measure success:
 **Goal**: Prove value fast, generate word-of-mouth
 
 **Ship**:
-1. ✅ **5-Minute Showcase Pack** (Issue #3)
+1. ✅ **5-Minute Showcase Pack** (Issue #11)
    - 5 dossiers that actually take <5 minutes
    - Tested on real projects
    - Featured in README
    - **Impact**: Instant gratification for new users
    - **Effort**: 1 week
 
-2. ✅ **2-Minute Demo Video** (Issue #5)
+2. ✅ **2-Minute Demo Video** (Issue #13)
    - Professional screencast
    - Embedded in README
    - Shareable on social media
    - **Impact**: 10x increase in understanding vs text
    - **Effort**: 2-3 days
 
-3. ✅ **Interactive Quickstart Tutorial** (Issue #4)
+3. ✅ **Interactive Quickstart Tutorial** (Issue #12)
    - Self-guided dossier that teaches by doing
    - No external dependencies
    - **Impact**: Reduces onboarding friction
    - **Effort**: 3-5 days
 
-4. ✅ **CLI Enhanced UX** (Issue #6)
+4. ✅ **CLI Enhanced UX** (Issue #14)
    - `dossier run` command
    - Better error messages
    - Colorized output
@@ -70,7 +73,7 @@ Track these to measure success:
 **Goal**: Build tools that 10x productivity
 
 **Ship**:
-1. ✅ **VS Code Extension** (Issue #1)
+1. ✅ **VS Code Extension** (Issue #9)
    - Syntax highlighting
    - Schema validation
    - Autocomplete
@@ -78,7 +81,7 @@ Track these to measure success:
    - **Impact**: Makes dossier creation 5x faster
    - **Effort**: 2-3 weeks
 
-2. ✅ **Public Dossier Registry MVP** (Issue #2)
+2. ✅ **Public Dossier Registry MVP** (Issue #10)
    - Static site with search/filter
    - Browse all examples
    - Submit via PR
@@ -95,21 +98,21 @@ Track these to measure success:
 **Goal**: Build trust with reliability and proof
 
 **Ship**:
-1. ✅ **Automated Example Testing** (Issue #8)
+1. ✅ **Automated Example Testing** (Issue #16)
    - CI tests all examples
    - Catches breakage early
    - Status badge
    - **Impact**: Builds confidence in examples
    - **Effort**: 1-2 weeks
 
-2. ✅ **Public Case Studies** (Issue #7)
+2. ✅ **Public Case Studies** (Issue #15)
    - 3-5 real-world stories
    - Metrics and testimonials
    - Published on website
    - **Impact**: Social proof for decision-makers
    - **Effort**: 2 weeks (outreach + writing)
 
-3. ✅ **GitHub Actions Templates** (Issue #9)
+3. ✅ **GitHub Actions Templates** (Issue #17)
    - 3 reusable workflows
    - Copy-paste ready
    - Documented
@@ -126,14 +129,14 @@ Track these to measure success:
 **Goal**: Delight power users
 
 **Ship**:
-1. ✅ **Debugging & Dry-Run Mode** (Issue #12)
+1. ✅ **Debugging & Dry-Run Mode** (Issue #20)
    - Preview before execution
    - See what would change
    - Risk scoring
    - **Impact**: Removes fear of running unknown dossiers
    - **Effort**: 1-2 weeks
 
-2. ✅ **Enhanced Documentation Site** (Issue #13)
+2. ✅ **Enhanced Documentation Site** (Issue #21)
    - docs.dossier.dev
    - Full-text search
    - Versioned
@@ -141,7 +144,7 @@ Track these to measure success:
    - **Impact**: Professional appearance, better SEO
    - **Effort**: 1-2 weeks
 
-3. ✅ **Linter & Formatter** (Issue #14)
+3. ✅ **Linter & Formatter** (Issue #22)
    - `dossier lint` and `dossier format`
    - Catches common mistakes
    - Consistent style
@@ -158,14 +161,14 @@ Track these to measure success:
 **Goal**: Enable complex workflows
 
 **Ship**:
-1. ✅ **Dossier Composition** (Issue #11)
+1. ✅ **Dossier Composition** (Issue #19)
    - Chain multiple dossiers
    - Dependency resolution
    - Rollback on failure
    - **Impact**: Unlocks enterprise use cases
    - **Effort**: 2-3 weeks
 
-2. ✅ **Pre-commit Hook Integration** (Issue #10)
+2. ✅ **Pre-commit Hook Integration** (Issue #18)
    - Validate on commit
    - Faster feedback
    - **Impact**: Maintains quality at source
@@ -181,16 +184,16 @@ Track these to measure success:
 **Goal**: Make Dossier indispensable
 
 **Ship**:
-1. ✅ **Web-Based Playground** (Issue #15)
+1. ✅ **Web-Based Playground** (Issue #23)
    - Zero-install experimentation
    - Share via URL
    - **Impact**: Ultimate low-friction entry
    - **Effort**: 1-2 weeks
 
 2. 🎁 **Nice-to-Haves** (as time permits):
-   - JetBrains Plugin (Issue #16)
-   - Key Management UI (Issue #17)
-   - Telemetry (Issue #18)
+   - JetBrains Plugin (Issue #24)
+   - Key Management UI (Issue #25)
+   - Telemetry (Issue #26)
 
 **Total Effort**: 2-4 weeks (1 engineer)
 **Success Metric**: 100+ playground sessions/week
@@ -203,7 +206,7 @@ Track these to measure success:
 
 **Option A: Lean (1 full-time engineer)**
 - Timeline: 6 months
-- Focus: Core features only (Issues #1-14)
+- Focus: Core features only (Issues #9-22)
 - Risk: Slower momentum
 - Cost: ~$75-150K (contractor rates)
 
@@ -232,7 +235,7 @@ Track these to measure success:
 
 ## 🚀 Launch Strategy
 
-### Week 1: Soft Launch (After Issues #3, #5, #4 ship)
+### Week 1: Soft Launch (After Issues #11, #13, #12 ship)
 - Post on r/devops, r/programming, r/MachineLearning
 - Tweet thread highlighting 5-minute examples
 - Post on Hacker News (Show HN: Dossier - AI automation standard)
@@ -284,12 +287,12 @@ Create a simple dashboard to track progress:
 
 ## Milestone Progress
 
-- [ ] Month 1: Quick Wins (Issues #3, #5, #4, #6)
-- [ ] Month 2: Infrastructure (Issues #1, #2)
-- [ ] Month 3: Quality (Issues #7, #8, #9)
-- [ ] Month 4: DevEx (Issues #12, #13, #14)
-- [ ] Month 5: Advanced (Issues #10, #11)
-- [ ] Month 6: Ecosystem (Issue #15)
+- [ ] Month 1: Quick Wins (Issues #11, #13, #12, #14)
+- [ ] Month 2: Infrastructure (Issues #9, #10)
+- [ ] Month 3: Quality (Issues #15, #16, #17)
+- [ ] Month 4: DevEx (Issues #20, #21, #22)
+- [ ] Month 5: Advanced (Issues #18, #19)
+- [ ] Month 6: Ecosystem (Issue #23)
 ```
 
 ---
@@ -299,8 +302,8 @@ Create a simple dashboard to track progress:
 ### This Week:
 1. ✅ Review GITHUB_ISSUES_PROPOSAL.md
 2. ⬜ Decide on team size and budget
-3. ⬜ Create GitHub labels
-4. ⬜ Submit first 4 issues (#3, #5, #4, #6)
+3. ✅ Create GitHub labels
+4. ✅ Submit all 18 issues (#9-26)
 5. ⬜ Set up project board
 6. ⬜ Assign first issue to developer
 
@@ -311,7 +314,7 @@ Create a simple dashboard to track progress:
 4. ⬜ Recruit contributors (label issues "help-wanted")
 
 ### This Month:
-1. ⬜ Ship quick wins (Issues #3, #5, #4)
+1. ⬜ Ship quick wins (Issues #11, #13, #12)
 2. ⬜ Soft launch on social media
 3. ⬜ Gather initial feedback
 4. ⬜ Start Month 2 work (VS Code + Registry)
@@ -344,13 +347,13 @@ Create a simple dashboard to track progress:
 ### Risk 4: Security Concerns Block Adoption
 **Mitigation**:
 - Be transparent about gaps (already done)
-- Ship enhanced CLI quickly (Issue #6)
+- Ship enhanced CLI quickly (Issue #14)
 - Promote security features
 - Get third-party security audit
 
 ### Risk 5: Examples Break Over Time
 **Mitigation**:
-- Ship automated testing ASAP (Issue #8)
+- Ship automated testing ASAP (Issue #16)
 - Version pin dependencies
 - Monitor examples monthly
 - Community reports issues
