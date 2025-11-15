@@ -77,14 +77,46 @@ jobs:
           git commit -m "chore: bump version to $(cd cli && node -p 'require(\"./package.json\").version')"
           git push
 
-      - name: Publish @dossier/core
+      - name: Check if core version needs publishing
+        id: check-core
+        run: |
+          CURRENT=$(node -p "require('./packages/core/package.json').version")
+          PUBLISHED=$(npm view @imboard-ai/dossier-core version 2>/dev/null || echo "0.0.0")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "✅ Core $CURRENT already published, skipping"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "📦 Publishing core $CURRENT (current published: $PUBLISHED)"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @imboard-ai/dossier-core
+        if: steps.check-core.outputs.skip != 'true'
         run: |
           cd packages/core
           npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish @dossier/cli
+      - name: Check if CLI version needs publishing
+        id: check-cli
+        run: |
+          CURRENT=$(node -p "require('./cli/package.json').version")
+          PUBLISHED=$(npm view @imboard-ai/dossier-cli version 2>/dev/null || echo "0.0.0")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "✅ CLI $CURRENT already published, skipping"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "📦 Publishing CLI $CURRENT (current published: $PUBLISHED)"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @imboard-ai/dossier-cli
+        if: steps.check-cli.outputs.skip != 'true'
         run: |
           cd cli
           npm publish
