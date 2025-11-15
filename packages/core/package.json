@@ -4,6 +4,9 @@
   "description": "Core verification and parsing logic for dossier automation standard",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -19,6 +22,19 @@
   ],
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imboard-ai/dossier.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/imboard-ai/dossier#readme",
+  "bugs": {
+    "url": "https://github.com/imboard-ai/dossier/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.927.0",
     "tweetnacl": "^1.0.3"
