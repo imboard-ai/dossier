@@ -6,6 +6,10 @@
   "bin": {
     "dossier-verify": "./bin/dossier-verify"
   },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
   "scripts": {
     "test": "node bin/dossier-verify ../examples/devops/deploy-to-aws.ds.md"
   },
@@ -15,7 +19,8 @@
     "verification",
     "checksum",
     "signature",
-    "automation"
+    "automation",
+    "cli"
   ],
   "author": "Imboard AI",
   "license": "MIT",
@@ -24,11 +29,18 @@
     "url": "https://github.com/imboard-ai/dossier.git",
     "directory": "cli"
   },
+  "homepage": "https://github.com/imboard-ai/dossier#readme",
+  "bugs": {
+    "url": "https://github.com/imboard-ai/dossier/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
   "preferGlobal": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@dossier/core": "*"
+    "@dossier/core": "^1.0.0"
   }
 }

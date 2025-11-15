@@ -1,0 +1,30 @@
+# Development files
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+.idea
+.vscode
+.vs
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Misc
+coverage/
+.nyc_output/
+node_modules/

@@ -17,20 +17,27 @@ Even with MCP server installed and protocol documentation:
 
 ## Installation
 
-### Option 1: From Source (Current)
+### Option 1: NPM (Recommended)
+
+Install globally:
+```bash
+npm install -g @dossier/cli
+```
+
+Or use without installing:
+```bash
+npx @dossier/cli <file-or-url>
+```
+
+### Option 2: From Source (Development)
 
 ```bash
 cd cli
+npm link  # Links the CLI globally for development
+
+# Or use directly
 chmod +x bin/dossier-verify
-
-# Add to PATH or create alias
-alias dossier-verify="$(pwd)/bin/dossier-verify"
-```
-
-### Option 2: NPM (Future)
-
-```bash
-npm install -g @dossier/cli
+./bin/dossier-verify <file-or-url>
 ```
 
 ---
