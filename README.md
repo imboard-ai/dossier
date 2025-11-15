@@ -15,7 +15,7 @@
 > Dossier turns plain-text instructions into executable workflows with built-in verification.
 > Like Dockerfiles for AI automation—structured, portable, verifiable.
 
-**New here?** → [5-min Quick Start](QUICK_START.md) | **Want to try now?** → [30-sec demo](#try-it-now)
+**New here?** → [5-min Quick Start](docs/getting-started/installation.md) | **Want to try now?** → [30-sec demo](#try-it-now)
 
 ---
 
@@ -140,7 +140,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 - **OSS Maintainer**: add `/dossiers` + a CI check that runs the Reality Check on your README
 - **Platform Team**: start with init → deploy → rollback dossiers; wire secrets & scanners
 
-👉 Detailed playbooks in [docs/adopter-playbooks.md](./docs/adopter-playbooks.md)
+👉 Detailed playbooks in [docs/guides/adopter-playbooks.md](docs/guides/adopter-playbooks.md)
 
 ---
 
@@ -154,7 +154,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 
 A **dossier** is a structured instruction file (`.ds.md`) that an AI agent can execute. Instead of writing complex scripts that try to handle every edge case, dossiers provide **clear instructions** that LLM agents (like Claude Code, GPT-4, Cursor, Copilot) can follow intelligently.
 
-> **❓ Questions?** See [FAQ.md](./FAQ.md) for common objections and detailed comparisons to alternatives (AGENTS.md, scripts, CI/CD, frameworks).
+> **❓ Questions?** See [FAQ](docs/explanation/faq.md) for common objections and detailed comparisons to alternatives (AGENTS.md, scripts, CI/CD, frameworks).
 
 ### The Concept
 
@@ -179,7 +179,7 @@ Modern developers **already have access to LLMs** in their workflows—82% use C
 
 **Key difference**: AGENTS.md files provide **project-level context** (architecture, conventions), while dossiers provide **workflow-level automation** with validation and security.
 
-**They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks. See [FAQ.md](./FAQ.md) for detailed comparison with concrete examples.
+**They're complementary**: Use AGENTS.md for project understanding + dossiers for specific tasks. See [FAQ](docs/explanation/faq.md) for detailed comparison with concrete examples.
 
 ---
 
@@ -187,7 +187,7 @@ Modern developers **already have access to LLMs** in their workflows—82% use C
 
 **One of Dossier's unique features**: Dossiers can improve through execution, learning from your project's specific needs.
 
-Dossiers follow the **Dossier Execution Protocol** ([PROTOCOL.md](./PROTOCOL.md)) which includes a **self-improvement system**.[^15][^16]
+Dossiers follow the **Dossier Execution Protocol** ([PROTOCOL](docs/reference/protocol.md)) which includes a **self-improvement system**.[^15][^16]
 
 ### How It Works
 
@@ -1210,17 +1210,33 @@ If you don't have an LLM agent:
 
 ---
 
-## See Also
+## Documentation
 
-- [QUICK_START.md](./QUICK_START.md) - Get started in 5 minutes
-- [PROTOCOL.md](./PROTOCOL.md) - Dossier execution protocol
-- [SPECIFICATION.md](./SPECIFICATION.md) - Formal dossier specification
-- [SCHEMA.md](./SCHEMA.md) - Dossier schema specification (v1.0.0)
+### Getting Started
+- [Quick Start Guide](docs/getting-started/installation.md) - Get started in 5 minutes
+- [Tutorials](docs/tutorials/) - Step-by-step learning experiences
+- [FAQ](docs/explanation/faq.md) - Frequently asked questions
+
+### Reference
+- [Protocol Specification](docs/reference/protocol.md) - Dossier execution protocol
+- [Formal Specification](docs/reference/specification.md) - Complete formal specification
+- [Schema](docs/reference/schema.md) - Dossier schema specification (v1.0.0)
 - [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
-- [mcp-server/](./mcp-server/) - MCP Server for frictionless integration
-- [examples/](./examples/) - Example dossier implementations
-- [examples/validation/](./examples/validation/) - Schema validation tools
-- [Sample Implementation](./examples/sample-implementation/) - Example of organizing dossiers
+
+### Guides & Examples
+- [How-To Guides](docs/guides/) - Task-oriented guides
+- [Example Dossiers](./examples/) - Example implementations
+- [Adopter Playbooks](docs/guides/adopter-playbooks.md) - Adoption strategies
+
+### Architecture & Contributing
+- [Architecture Overview](ARCHITECTURE.md) - System architecture
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute
+- [Security](SECURITY.md) - Security policy and verification
+- [Changelog](CHANGELOG.md) - Version history
+
+### Integrations
+- [MCP Server](./mcp-server/) - Model Context Protocol integration
+- [CLI Tool](./cli/) - Command-line verification tool
 - [MI6](https://github.com/imboard-ai/mi6) - Community implementation example
 
 ---
