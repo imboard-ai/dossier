@@ -4,8 +4,7 @@
  * Returns recommendation: ALLOW, WARN, or BLOCK
  */
 
-import { parseDossierFile } from '../parsers/dossierParser';
-import { verifyIntegrity } from '../parsers/checksumVerifier';
+import { parseDossierFile, verifyIntegrity } from '@dossier/core';
 import { verifyAuthenticity } from '../parsers/signatureVerifier';
 import { VerificationResult, RiskAssessment } from '../types/dossier';
 import { logger } from '../utils/logger';

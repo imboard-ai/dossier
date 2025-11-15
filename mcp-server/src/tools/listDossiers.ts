@@ -5,8 +5,7 @@
 
 import { readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
-import { parseDossierFile } from '../parsers/dossierParser';
-import { DossierListItem } from '../types/dossier';
+import { parseDossierFile, DossierListItem } from '@dossier/core';
 import { logger } from '../utils/logger';
 
 export interface ListDossiersInput {

@@ -1,0 +1,30 @@
+{
+  "name": "@dossier/core",
+  "version": "1.0.0",
+  "description": "Core verification and parsing logic for dossier automation standard",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dossier",
+    "parsing",
+    "verification",
+    "checksum",
+    "signature",
+    "security"
+  ],
+  "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.927.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  }
+}

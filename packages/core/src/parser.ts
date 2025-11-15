@@ -1,12 +1,9 @@
 /**
  * Dossier parser - extracts frontmatter and body from dossier files
- * Based on tools/verify-dossier.js
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { DossierFrontmatter, ParsedDossier } from '../types/dossier';
-import { DossierParseError, DossierNotFoundError } from '../utils/errors';
-import { logger } from '../utils/logger';
+import { DossierFrontmatter, ParsedDossier } from './types';
 
 /**
  * Parse dossier content into frontmatter and body
@@ -17,9 +14,8 @@ export function parseDossierContent(content: string): ParsedDossier {
   const match = content.match(frontmatterRegex);
 
   if (!match) {
-    throw new DossierParseError(
-      'Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]',
-      { contentPreview: content.slice(0, 200) }
+    throw new Error(
+      'Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]'
     );
   }
 
@@ -30,16 +26,8 @@ export function parseDossierContent(content: string): ParsedDossier {
   try {
     frontmatter = JSON.parse(frontmatterJson);
   } catch (err) {
-    throw new DossierParseError(`Failed to parse frontmatter JSON: ${(err as Error).message}`, {
-      frontmatterJson: frontmatterJson.slice(0, 500),
-    });
+    throw new Error(`Failed to parse frontmatter JSON: ${(err as Error).message}`);
   }
-
-  logger.debug('Parsed dossier', {
-    title: frontmatter.title,
-    version: frontmatter.version,
-    bodyLength: body.length,
-  });
 
   return {
     frontmatter,
@@ -52,10 +40,8 @@ export function parseDossierContent(content: string): ParsedDossier {
  * Read and parse a dossier file
  */
 export function parseDossierFile(filePath: string): ParsedDossier {
-  logger.info('Reading dossier file', { filePath });
-
   if (!existsSync(filePath)) {
-    throw new DossierNotFoundError(filePath);
+    throw new Error(`Dossier file not found: ${filePath}`);
   }
 
   const content = readFileSync(filePath, 'utf8');

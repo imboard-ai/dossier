@@ -25,6 +25,7 @@
   "type": "commonjs",
   "dependencies": {
     "@aws-sdk/client-kms": "^3.927.0",
+    "@dossier/core": "*",
     "@modelcontextprotocol/sdk": "^1.21.0",
     "tweetnacl": "^1.0.3",
     "zod": "^3.25.76"

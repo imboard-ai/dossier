@@ -5,7 +5,7 @@
 
 import { AuthenticityResult, DossierFrontmatter } from '../types/dossier';
 import { logger } from '../utils/logger';
-import { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from '../../security/verifier';
+import { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from '@dossier/core';
 
 /**
  * Verify dossier authenticity (signature + trust)

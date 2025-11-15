@@ -18,6 +18,13 @@ const crypto = require('crypto');
 const https = require('https');
 const http = require('http');
 const { execSync } = require('child_process');
+const {
+  parseDossierContent,
+  verifyIntegrity,
+  loadTrustedKeys,
+  verifyWithMinisign,
+  verifyWithKms
+} = require('@dossier/core');
 
 // Colors for terminal output
 const colors = {
@@ -147,49 +154,27 @@ async function downloadFile(url) {
   });
 }
 
-// Parse dossier frontmatter
+// Parse dossier frontmatter (using @dossier/core)
 function parseDossier(content) {
-  const lines = content.split('\n');
-
-  // Find frontmatter boundaries
-  let frontmatterStart = -1;
-  let frontmatterEnd = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === '---dossier') {
-      frontmatterStart = i;
-    } else if (frontmatterStart !== -1 && lines[i].trim() === '---') {
-      frontmatterEnd = i;
-      break;
-    }
-  }
-
-  if (frontmatterStart === -1 || frontmatterEnd === -1) {
-    throw new Error('Invalid dossier format: missing frontmatter');
-  }
-
-  // Parse JSON frontmatter
-  const frontmatterJson = lines.slice(frontmatterStart + 1, frontmatterEnd).join('\n');
-  const frontmatter = JSON.parse(frontmatterJson);
-
-  // Calculate body (everything after closing ---)
-  const body = lines.slice(frontmatterEnd + 1).join('\n');
-
-  return { frontmatter, body };
-}
-
-// Verify checksum
-function verifyChecksum(body, declaredHash) {
-  const actualHash = crypto.createHash('sha256').update(body).digest('hex');
+  const parsed = parseDossierContent(content);
   return {
-    passed: actualHash === declaredHash,
-    declared: declaredHash,
-    actual: actualHash,
+    frontmatter: parsed.frontmatter,
+    body: parsed.body
   };
 }
 
-// Verify signature (simplified - full implementation would use minisign)
-function verifySignature(frontmatter) {
+// Verify checksum (using @dossier/core)
+function verifyChecksum(body, declaredHash) {
+  const result = verifyIntegrity(body, declaredHash);
+  return {
+    passed: result.status === 'valid',
+    declared: result.expectedHash,
+    actual: result.actualHash,
+  };
+}
+
+// Verify signature (using @dossier/core for real cryptographic verification)
+async function verifySignature(body, frontmatter) {
   if (!frontmatter.signature) {
     return {
       present: false,
@@ -200,35 +185,45 @@ function verifySignature(frontmatter) {
   }
 
   const signature = frontmatter.signature;
+  const trustedKeys = loadTrustedKeys();
+  const isTrusted = trustedKeys.has(signature.public_key || signature.key_id);
 
-  // Check if signature contains "invalid" (test signatures)
-  if (signature.signature && signature.signature.includes('invalid')) {
+  try {
+    let isValid = false;
+
+    // Verify based on algorithm
+    if (signature.algorithm === 'ECDSA-SHA-256') {
+      isValid = await verifyWithKms(body, signature.signature, signature.key_id);
+    } else {
+      // Default to Minisign (Ed25519)
+      isValid = verifyWithMinisign(body, signature.signature, signature.public_key);
+    }
+
+    if (!isValid) {
+      return {
+        present: true,
+        verified: false,
+        trusted: isTrusted,
+        message: 'Signature verification FAILED',
+      };
+    }
+
+    return {
+      present: true,
+      verified: true,
+      trusted: isTrusted,
+      message: isTrusted
+        ? `Verified signature from trusted source: ${trustedKeys.get(signature.public_key || signature.key_id)}`
+        : 'Valid signature but key is not in trusted list',
+    };
+  } catch (err) {
     return {
       present: true,
       verified: false,
       trusted: false,
-      message: 'Signature verification failed (test signature)',
+      message: `Verification error: ${err.message}`,
     };
   }
-
-  // Check if signature contains "fake" (test signatures)
-  if (signature.public_key && signature.public_key.includes('fake')) {
-    return {
-      present: true,
-      verified: false,
-      trusted: false,
-      message: 'Signature from untrusted key',
-    };
-  }
-
-  // For real verification, would use minisign here
-  // For now, just check if it looks valid
-  return {
-    present: true,
-    verified: false,  // Can't verify without minisign
-    trusted: false,
-    message: 'Signature present but not verified (minisign required)',
-  };
 }
 
 // Assess risk
@@ -319,7 +314,7 @@ async function verifyDossier(input, options) {
 
     // Verify signature
     console.log(`\n${colors.bright}🔏 Authenticity Check:${colors.reset}`);
-    const signatureResult = verifySignature(frontmatter);
+    const signatureResult = await verifySignature(body, frontmatter);
 
     if (signatureResult.present) {
       if (signatureResult.verified && signatureResult.trusted) {

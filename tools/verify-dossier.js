@@ -17,7 +17,13 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
-const { loadTrustedKeys, verifyWithMinisign, verifyWithKms } = require('../security/verifier');
+const {
+  parseDossierContent,
+  verifyIntegrity,
+  loadTrustedKeys,
+  verifyWithMinisign,
+  verifyWithKms
+} = require('@dossier/core');
 
 // Parse command line arguments
 function parseArgs() {
@@ -55,31 +61,13 @@ Example:
   };
 }
 
-// Extract frontmatter and body from dossier
+// Extract frontmatter and body from dossier (using @dossier/core)
 function parseDossier(content) {
-  const frontmatterRegex = /^---dossier\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/m;
-  const match = content.match(frontmatterRegex);
-
-  if (!match) {
-    throw new Error('Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]');
-  }
-
-  const frontmatterJson = match[1];
-  const body = match[2];
-
-  let frontmatter;
-  try {
-    frontmatter = JSON.parse(frontmatterJson);
-  } catch (err) {
-    throw new Error(`Failed to parse frontmatter JSON: ${err.message}`);
-  }
-
-  return { frontmatter, body };
-}
-
-// Calculate SHA256 hash of body
-function calculateChecksum(body) {
-  return crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+  const parsed = parseDossierContent(content);
+  return {
+    frontmatter: parsed.frontmatter,
+    body: parsed.body
+  };
 }
 
 // Main verification function
@@ -128,29 +116,16 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
 
   const { frontmatter, body } = parsed;
 
-  // 1. INTEGRITY CHECK (checksum)
-  if (!frontmatter.checksum) {
-    result.integrity.status = 'missing';
-    result.integrity.message = 'No checksum found in dossier';
+  // 1. INTEGRITY CHECK (checksum) - using @dossier/core
+  const integrityResult = verifyIntegrity(body, frontmatter.checksum?.hash);
+  result.integrity = integrityResult;
+
+  if (integrityResult.status === 'missing') {
     result.errors.push('Missing checksum - cannot verify integrity');
     result.recommendation = 'BLOCK';
-  } else {
-    const actualHash = calculateChecksum(body);
-    const expectedHash = frontmatter.checksum.hash;
-
-    if (actualHash === expectedHash) {
-      result.integrity.status = 'valid';
-      result.integrity.message = 'Checksum matches - content has not been tampered with';
-      result.integrity.expectedHash = expectedHash;
-      result.integrity.actualHash = actualHash;
-    } else {
-      result.integrity.status = 'invalid';
-      result.integrity.message = 'CHECKSUM MISMATCH - dossier has been tampered with!';
-      result.integrity.expectedHash = expectedHash;
-      result.integrity.actualHash = actualHash;
-      result.errors.push('Checksum verification FAILED - do not execute!');
-      result.recommendation = 'BLOCK';
-    }
+  } else if (integrityResult.status === 'invalid') {
+    result.errors.push('Checksum verification FAILED - do not execute!');
+    result.recommendation = 'BLOCK';
   }
 
   // 2. AUTHENTICITY CHECK (signature)

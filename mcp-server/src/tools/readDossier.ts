@@ -3,8 +3,7 @@
  * Should be called AFTER verify_dossier passes
  */
 
-import { parseDossierFile } from '../parsers/dossierParser';
-import { DossierFrontmatter } from '../types/dossier';
+import { parseDossierFile, DossierFrontmatter } from '@dossier/core';
 import { logger } from '../utils/logger';
 
 export interface ReadDossierInput {
