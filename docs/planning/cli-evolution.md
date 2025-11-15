@@ -2,9 +2,59 @@
 
 Planning document for redesigning the Dossier CLI from single-purpose `dossier-verify` to multi-command `dossier` CLI.
 
-## Current State
+## Status Overview
 
-### What Exists Today
+**Current Version**: v0.2.0
+**Released**: 2025-11-15
+**Status**: ✅ CLI Structure Implemented, 📋 Commands In Development
+
+### Implementation Progress
+
+| Phase | Status | Completion |
+|-------|--------|------------|
+| Phase 1: MVP | 🚧 In Progress | 25% |
+| Phase 2: Enhanced Authoring | 📋 Planned | 0% |
+| Phase 3: Advanced Features | 📋 Planned | 0% |
+
+### Command Status
+
+| Command | Status | Version | Priority |
+|---------|--------|---------|----------|
+| `verify` | ✅ Done | v0.2.0 | P0 |
+| `run` | 📋 Planned | - | P0 |
+| `create` | 📋 Planned | - | P1 |
+| `list` | 📋 Planned | - | P1 |
+| `sign` | 📋 Planned | - | P2 |
+| `publish` | 📋 Planned | - | P2 |
+| `checksum` | 📋 Planned | - | P2 |
+| `validate` | 📋 Planned | - | P2 |
+| `init` | 📋 Planned | - | P3 |
+| `info` | 📋 Planned | - | P3 |
+
+---
+
+## Evolution History
+
+### v0.2.0 - Multi-Command Structure ✅ (2025-11-15)
+
+**What Changed**:
+- ✅ Added commander.js CLI framework
+- ✅ Implemented subcommand architecture
+- ✅ Created 10 command placeholders with helpful TBD messages
+- ✅ Migrated `verify` to new structure
+- ✅ Removed `dossier-verify` standalone command (breaking change)
+- ✅ Updated package scope to `@imboard-ai/*`
+
+**Command**: `dossier <command>`
+
+```bash
+dossier verify <file|url> [--verbose]
+dossier run <file|url>    # TBD
+dossier create [file]     # TBD
+# ... 7 more commands
+```
+
+### v0.1.x - Single-Purpose Verification (Legacy)
 
 **Command**: `dossier-verify`
 
@@ -18,13 +68,12 @@ dossier-verify <file|url> [--verbose] [--help]
 - Risk assessment
 - Exit codes (0=safe, 1=unsafe, 2=error)
 
-### Limitations
-
-❌ **Single-purpose**: Only verification, no creation or execution
-❌ **Poor naming**: "verify" doesn't reflect full capabilities
-❌ **Not extensible**: Hard to add new features
-❌ **Limited workflow**: Can't create, sign, or execute dossiers
-❌ **No discovery**: Can't list or search available dossiers
+**Limitations** (Resolved in v0.2.0):
+- ❌ Single-purpose: Only verification, no creation or execution
+- ❌ Poor naming: "verify" doesn't reflect full capabilities
+- ❌ Not extensible: Hard to add new features
+- ❌ Limited workflow: Can't create, sign, or execute dossiers
+- ❌ No discovery: Can't list or search available dossiers
 
 ---
 
@@ -759,82 +808,96 @@ Exit code: 1
 
 ## Implementation Phases
 
-### Phase 1: MVP (Core Commands)
+### Phase 1: MVP (Core Commands) 🚧 25% Complete
 
 **Timeline**: 1-2 weeks
+**Status**: In Progress
+
+**Infrastructure** ✅:
+- [x] Subcommand architecture (commander.js)
+- [x] Help system with all commands
+- [x] Package publishing to GitHub Packages
+- [x] Automated workflow with version detection
+- [x] Documentation restructure
 
 **Commands**:
-1. `dossier run` - Verify + audit + execute
-2. `dossier verify` - Just verification (current behavior)
-3. `dossier create` - Basic creation (no templates)
-4. `dossier list` - Simple file discovery
+1. ✅ `dossier verify` - Done (v0.2.0) - Just verification
+2. 📋 `dossier run` - Planned - Verify + audit + execute
+3. 📋 `dossier create` - Planned - Basic creation (no templates)
+4. 📋 `dossier list` - Planned - Simple file discovery
 
 **Features**:
-- Subcommand architecture
-- Auto-detect LLM (claude-code, cursor)
-- Console audit logging (print to stdout)
-- Basic error handling
+- [x] Subcommand architecture
+- [ ] Auto-detect LLM (claude-code, cursor)
+- [ ] Console audit logging (print to stdout)
+- [ ] Basic error handling
+- [x] Helpful TBD messages for unimplemented commands
 
 **Deliverables**:
-- Refactored CLI codebase
-- Updated documentation
-- Migration guide from `dossier-verify`
-- Test coverage
+- [x] Refactored CLI codebase structure
+- [x] Updated documentation
+- [x] Migration from `dossier-verify` (removed old command)
+- [ ] Test coverage
+- [ ] `run` command implementation
+- [ ] `create` command implementation
+- [ ] `list` command implementation
 
-### Phase 2: Enhanced Authoring
+### Phase 2: Enhanced Authoring 📋 0% Complete
 
 **Timeline**: 2-3 weeks
+**Status**: Planned
 
 **Commands**:
-5. `dossier sign` - Sign dossiers
-6. `dossier publish` - Share to registry (MVP: print GUID only)
-7. `dossier init` - Scaffold projects
-8. `dossier checksum` - Checksum utilities
-9. `dossier validate` - Schema validation
+5. 📋 `dossier sign` - Sign dossiers
+6. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
+7. 📋 `dossier init` - Scaffold projects
+8. 📋 `dossier checksum` - Checksum utilities
+9. 📋 `dossier validate` - Schema validation
 
 **Features**:
-- Templates for common use cases
-- Interactive creation mode
-- Key management basics
-- Better error messages
-- **Registry publish (MVP simulation)** - Print registry ID to demonstrate workflow
+- [ ] Templates for common use cases
+- [ ] Interactive creation mode
+- [ ] Key management basics
+- [ ] Better error messages
+- [ ] **Registry publish (MVP simulation)** - Print registry ID to demonstrate workflow
 
 **Deliverables**:
-- Template library
-- Signing integration
-- Comprehensive examples
-- **Registry publish command** (simulation with GUID generation)
+- [ ] Template library
+- [ ] Signing integration
+- [ ] Comprehensive examples
+- [ ] **Registry publish command** (simulation with GUID generation)
 
-### Phase 3: Advanced Features
+### Phase 3: Advanced Features 📋 0% Complete
 
 **Timeline**: 4-6 weeks
+**Status**: Planned
 
 **Commands**:
-10. `dossier search` - Search registry for dossiers
-11. `dossier install` - Download from registry by ID
-12. `dossier info` - Metadata display
-13. `dossier diff` - Compare dossiers
-14. `dossier export` - Format conversion
-15. `dossier audit` - Deep security analysis
-16. `dossier unpublish` - Remove from registry
+10. 📋 `dossier search` - Search registry for dossiers
+11. 📋 `dossier install` - Download from registry by ID
+12. 📋 `dossier info` - Metadata display
+13. 📋 `dossier diff` - Compare dossiers
+14. 📋 `dossier export` - Format conversion
+15. 📋 `dossier audit` - Deep security analysis
+16. 📋 `dossier unpublish` - Remove from registry
 
 **Features**:
-- Remote audit server integration
-- **Full registry integration** (search, install, publish, unpublish)
-- Trust management UI
-- Advanced analytics
-- Dossier versioning in registry
-- Download statistics
+- [ ] Remote audit server integration
+- [ ] **Full registry integration** (search, install, publish, unpublish)
+- [ ] Trust management UI
+- [ ] Advanced analytics
+- [ ] Dossier versioning in registry
+- [ ] Download statistics
 
 **Deliverables**:
-- Audit server API
-- **Registry server implementation**
-  - REST API for dossier storage
-  - Search and discovery
-  - Download tracking
-  - Version management
-- Trust management system
-- Registry CLI commands (search, install, unpublish)
+- [ ] Audit server API
+- [ ] **Registry server implementation**
+  - [ ] REST API for dossier storage
+  - [ ] Search and discovery
+  - [ ] Download tracking
+  - [ ] Version management
+- [ ] Trust management system
+- [ ] Registry CLI commands (search, install, unpublish)
 
 ---
 
@@ -1134,12 +1197,23 @@ dossier verify file.ds.md
 
 ### Phase 1 Success Criteria
 
-- [ ] All 4 core commands working (run, verify, create, list)
-- [ ] LLM auto-detection for Claude Code and Cursor
-- [ ] Backward compatibility maintained
-- [ ] Documentation updated
+**Infrastructure** (5/6 complete):
+- [x] CLI structure with commander.js
+- [x] Help system
+- [x] Documentation updated
+- [x] Published to GitHub Packages
+- [x] Smart version detection in workflow
 - [ ] 90% test coverage
-- [ ] Published to GitHub Packages / npm
+
+**Commands** (1/4 complete):
+- [x] `verify` command working
+- [ ] `run` command working
+- [ ] `create` command working
+- [ ] `list` command working
+
+**Features** (0/2 complete):
+- [ ] LLM auto-detection for Claude Code and Cursor
+- [ ] Console audit logging
 
 ### User Adoption Metrics
 
@@ -1166,8 +1240,54 @@ dossier verify file.ds.md
 
 ---
 
-**Next Steps**: Review this plan, refine open questions, then create implementation issues for each phase.
+## Next Steps (Priority Order)
 
-**Status**: 📋 Planning - Awaiting review and feedback
+### Immediate (v0.2.x)
 
-**Last Updated**: 2025-11-15
+**1. Implement `dossier run` command** (P0 - Highest value)
+- [ ] Integrate with `dossier verify` logic
+- [ ] Add LLM auto-detection (claude-code, cursor)
+- [ ] Implement console audit logging
+- [ ] Add user prompts for high-risk dossiers
+- [ ] Execute via detected LLM
+- [ ] Add `--dry-run`, `--force`, `--no-prompt` options
+- **Target**: v0.2.1
+- **Effort**: 1-2 days
+- **Issue**: Create issue for implementation
+
+**2. Implement `dossier create` command** (P1 - Enable authoring)
+- [ ] Interactive mode with prompts
+- [ ] Basic template (frontmatter + structure)
+- [ ] Auto-calculate checksum
+- [ ] Option to open in $EDITOR
+- **Target**: v0.2.2
+- **Effort**: 1 day
+- **Issue**: Create issue for implementation
+
+**3. Implement `dossier list` command** (P1 - Discovery)
+- [ ] Scan directory for .ds.md files
+- [ ] Parse metadata from each
+- [ ] Display table format
+- [ ] Add --recursive option
+- **Target**: v0.2.3
+- **Effort**: 1 day
+- **Issue**: Create issue for implementation
+
+### Short Term (v0.3.x - Phase 2)
+
+**4. Implement `dossier sign` command** (P2)
+**5. Implement `dossier publish` command** (P2 - MVP simulation)
+**6. Implement `dossier checksum` command** (P2)
+**7. Implement `dossier validate` command** (P2)
+
+### Medium Term (v0.4.x - Phase 3)
+
+**8. Registry server development**
+**9. Full publish/search/install integration**
+**10. Advanced commands** (info, diff, export, audit)
+
+---
+
+**Current Status**: ✅ v0.2.0 Released - CLI structure complete, ready for feature implementation
+
+**Last Updated**: 2025-11-15 (v0.2.0 release)
