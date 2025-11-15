@@ -1,5 +1,5 @@
 {
-  "name": "@dossier/cli",
+  "name": "@imboard-ai/dossier-cli",
   "version": "0.1.0",
   "description": "Command-line tool for verifying dossier security before execution",
   "main": "bin/dossier-verify",
@@ -42,6 +42,6 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@dossier/core": "^1.0.0"
+    "@imboard-ai/dossier-core": "^1.0.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@dossier/core",
+  "name": "@imboard-ai/dossier-core",
   "version": "1.0.0",
   "description": "Core verification and parsing logic for dossier automation standard",
   "main": "dist/index.js",

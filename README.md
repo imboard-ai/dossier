@@ -43,7 +43,7 @@ Add the Dossier MCP server to enable automatic verification:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@imboard-ai/dossier-mcp"]
     }
   }
 }
@@ -407,7 +407,7 @@ This interactive dossier will guide you through configuration.
      "mcpServers": {
        "dossier": {
          "command": "npx",
-         "args": ["-y", "@dossier/mcp-server"]
+         "args": ["-y", "@imboard-ai/dossier-mcp"]
        }
      }
    }
@@ -437,7 +437,7 @@ No installation needed - downloads on first use:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@imboard-ai/dossier-mcp"]
     }
   }
 }
@@ -448,7 +448,7 @@ No installation needed - downloads on first use:
 Explicit installation:
 
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @imboard-ai/dossier-mcp
 ```
 
 ```json

@@ -21,12 +21,12 @@ Even with MCP server installed and protocol documentation:
 
 Install globally:
 ```bash
-npm install -g @dossier/cli
+npm install -g @imboard-ai/dossier-cli
 ```
 
 Or use without installing:
 ```bash
-npx @dossier/cli <file-or-url>
+npx @imboard-ai/dossier-cli <file-or-url>
 ```
 
 ### Option 2: From Source (Development)

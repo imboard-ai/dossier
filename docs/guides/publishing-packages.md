@@ -29,8 +29,8 @@ npm run publish:all
 ### First Time Setup
 
 Packages are configured to publish to GitHub Packages registry:
-- `@dossier/core` → https://github.com/imboard-ai/dossier/packages
-- `@dossier/cli` → https://github.com/imboard-ai/dossier/packages
+- `@imboard-ai/dossier-core` → https://github.com/imboard-ai/dossier/packages
+- `@imboard-ai/dossier-cli` → https://github.com/imboard-ai/dossier/packages
 
 **No additional setup needed** - GitHub Actions handles authentication automatically.
 
@@ -57,7 +57,7 @@ npm run publish:all
 
 Create/edit `~/.npmrc`:
 ```
-@dossier:registry=https://npm.pkg.github.com
+@imboard-ai:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
 ```
 
@@ -71,10 +71,10 @@ Create/edit `~/.npmrc`:
 
 ```bash
 # Install globally
-npm install -g @dossier/cli
+npm install -g @imboard-ai/dossier-cli
 
 # Or use with npx
-npx @dossier/cli --help
+npx @imboard-ai/dossier-cli --help
 ```
 
 **Step 3: Test**
@@ -113,7 +113,7 @@ npm version patch  # or minor, major
 # Bump CLI version and update dependency
 cd ../../cli
 npm version patch
-npm pkg set dependencies.@dossier/core="^$(cd ../packages/core && node -p 'require(\"./package.json\").version')"
+npm pkg set dependencies.@imboard-ai/dossier-core="^$(cd ../packages/core && node -p 'require(\"./package.json\").version')"
 
 # Commit
 git add packages/core/package.json cli/package.json
@@ -222,7 +222,7 @@ For npm, ensure:
 - `NPM_TOKEN` secret is set
 - Token has publish permissions
 
-### "Cannot find module @dossier/core"
+### "Cannot find module @imboard-ai/dossier-core"
 
 The CLI depends on core, so core must be published first:
 ```bash

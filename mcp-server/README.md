@@ -107,7 +107,7 @@ Replace `/absolute/path/to/dossier` with the full path to your dossier project.
 
 1. Install the MCP server:
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @imboard-ai/dossier-mcp
 ```
 
 2. Configure Claude (`~/Library/Application Support/Claude/claude_desktop_config.json` or Claude Code settings):
