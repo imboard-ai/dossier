@@ -10,7 +10,10 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "publish:core": "cd packages/core && npm run build && npm publish",
+    "publish:cli": "cd cli && npm publish",
+    "publish:all": "npm run publish:core && npm run publish:cli"
   },
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
   "license": "MIT",

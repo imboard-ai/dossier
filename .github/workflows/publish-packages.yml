@@ -1,0 +1,99 @@
+name: Publish Packages to GitHub Packages
+
+on:
+  # Trigger on push to main when CLI or core files change
+  push:
+    branches:
+      - main
+    paths:
+      - 'cli/**'
+      - 'packages/core/**'
+      - '.github/workflows/publish-packages.yml'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump (patch, minor, major, or skip)'
+        required: false
+        default: 'skip'
+        type: choice
+        options:
+          - skip
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@dossier'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build @dossier/core
+        run: |
+          cd packages/core
+          npm run build
+
+      - name: Bump version (if requested)
+        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+        run: |
+          # Bump core version
+          cd packages/core
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          CORE_VERSION=$(node -p "require('./package.json').version")
+          echo "CORE_VERSION=$CORE_VERSION" >> $GITHUB_ENV
+
+          # Bump CLI version
+          cd ../../cli
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+          # Update CLI dependency on core
+          npm pkg set dependencies.@dossier/core="^$CORE_VERSION"
+
+      - name: Commit version bump
+        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/core/package.json cli/package.json
+          git commit -m "chore: bump version to $(cd cli && node -p 'require(\"./package.json\").version')"
+          git push
+
+      - name: Publish @dossier/core
+        run: |
+          cd packages/core
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @dossier/cli
+        run: |
+          cd cli
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Git tag
+        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+        run: |
+          VERSION=$(cd cli && node -p "require('./package.json').version")
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
