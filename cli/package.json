@@ -1,9 +1,10 @@
 {
   "name": "@imboard-ai/dossier-cli",
-  "version": "0.1.1",
-  "description": "Command-line tool for verifying dossier security before execution",
-  "main": "bin/dossier-verify",
+  "version": "0.2.0",
+  "description": "Command-line tool for creating, verifying, and executing dossiers",
+  "main": "bin/dossier",
   "bin": {
+    "dossier": "./bin/dossier",
     "dossier-verify": "./bin/dossier-verify"
   },
   "files": [
@@ -42,6 +43,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@imboard-ai/dossier-core": "^1.0.1"
+    "@imboard-ai/dossier-core": "^1.0.1",
+    "commander": "^12.1.0"
   }
 }

@@ -1,0 +1,202 @@
+#!/usr/bin/env node
+
+/**
+ * Dossier CLI - Main entry point
+ * Multi-command CLI for creating, verifying, and executing dossiers
+ */
+
+const { program } = require('commander');
+const { execSync } = require('child_process');
+const path = require('path');
+
+// Package info
+const pkg = require('../package.json');
+
+// Setup program
+program
+  .name('dossier')
+  .description('CLI tool for creating, verifying, and executing dossiers')
+  .version(pkg.version);
+
+// ============================================================================
+// COMMAND: verify (IMPLEMENTED)
+// ============================================================================
+program
+  .command('verify')
+  .description('Verify dossier integrity and authenticity')
+  .argument('<file>', 'Dossier file or URL to verify')
+  .option('--verbose', 'Show detailed verification output')
+  .action((file, options) => {
+    // Delegate to existing dossier-verify script
+    const verifyScript = path.join(__dirname, 'dossier-verify');
+    const args = [file];
+    if (options.verbose) args.push('--verbose');
+
+    try {
+      execSync(`node "${verifyScript}" ${args.join(' ')}`, { stdio: 'inherit' });
+    } catch (error) {
+      process.exit(error.status || 1);
+    }
+  });
+
+// ============================================================================
+// COMMAND: run (TBD)
+// ============================================================================
+program
+  .command('run')
+  .description('Verify, audit, and execute dossier [TBD]')
+  .argument('<file>', 'Dossier file or URL to run')
+  .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)', 'auto')
+  .option('--dry-run', 'Show plan without executing')
+  .option('--force', 'Skip risk warnings')
+  .option('--no-prompt', 'Don\'t ask for confirmation')
+  .action((file, options) => {
+    console.log(`
+⚠️  Command 'run' is not yet implemented.
+
+This command will:
+  1. Verify dossier integrity (checksum + signature)
+  2. Log audit trail
+  3. Execute via ${options.llm} (with prompts for high-risk)
+
+See implementation plan: docs/planning/cli-evolution.md
+
+For now, use:
+  dossier verify ${file}
+    `.trim());
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: create (TBD)
+// ============================================================================
+program
+  .command('create')
+  .description('Create new dossier [TBD]')
+  .argument('[file]', 'Output file path')
+  .option('--template <name>', 'Use template (basic, devops, data-science)')
+  .option('--interactive', 'Guided creation with prompts')
+  .option('--title <title>', 'Dossier title')
+  .option('--risk <level>', 'Risk level (low, medium, high, critical)')
+  .action((file, options) => {
+    console.log('⚠️  create tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: list (TBD)
+// ============================================================================
+program
+  .command('list')
+  .description('List available dossiers [TBD]')
+  .argument('[directory]', 'Directory to search', '.')
+  .option('--recursive', 'Search subdirectories')
+  .option('--verified-only', 'Only show verified dossiers')
+  .option('--risk <level>', 'Filter by risk level')
+  .option('--format <fmt>', 'Output format (table, json, simple)', 'table')
+  .action((directory, options) => {
+    console.log('⚠️  list tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: sign (TBD)
+// ============================================================================
+program
+  .command('sign')
+  .description('Sign dossier with cryptographic key [TBD]')
+  .argument('<file>', 'Dossier file to sign')
+  .option('--key <path>', 'Path to signing key')
+  .option('--method <type>', 'Signing method (minisign, kms)', 'minisign')
+  .option('--output <file>', 'Output signed dossier')
+  .action((file, options) => {
+    console.log('⚠️  sign tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: publish (TBD)
+// ============================================================================
+program
+  .command('publish')
+  .description('Share dossier to registry [TBD]')
+  .argument('<file>', 'Dossier file to publish')
+  .option('--registry <url>', 'Registry URL')
+  .option('--name <name>', 'Custom name in registry')
+  .option('--tags <tags>', 'Comma-separated tags')
+  .option('--private', 'Private publication')
+  .action((file, options) => {
+    console.log('⚠️  publish tbd - follow docs/planning/cli-evolution.md');
+    console.log('');
+    console.log('MVP simulation would show:');
+    console.log('Registry ID:  dsr-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
+    console.log('Public URL:   https://registry.dossier.ai/dsr-xxxxxxxx');
+    console.log('Install:      dossier run dsr-xxxxxxxx');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: checksum (TBD)
+// ============================================================================
+program
+  .command('checksum')
+  .description('Calculate and update dossier checksum [TBD]')
+  .argument('<file>', 'Dossier file')
+  .option('--update', 'Update checksum in file')
+  .option('--verify', 'Just verify, don\'t update')
+  .action((file, options) => {
+    console.log('⚠️  checksum tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: validate (TBD)
+// ============================================================================
+program
+  .command('validate')
+  .description('Validate dossier against schema [TBD]')
+  .argument('<file>', 'Dossier file to validate')
+  .option('--schema <file>', 'Custom schema file')
+  .option('--fix', 'Auto-fix issues')
+  .action((file, options) => {
+    console.log('⚠️  validate tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: init (TBD)
+// ============================================================================
+program
+  .command('init')
+  .description('Initialize new dossier project [TBD]')
+  .argument('[name]', 'Project name')
+  .option('--template <name>', 'Project template')
+  .option('--git', 'Initialize git repository')
+  .action((name, options) => {
+    console.log('⚠️  init tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// COMMAND: info (TBD)
+// ============================================================================
+program
+  .command('info')
+  .description('Show dossier metadata [TBD]')
+  .argument('<file>', 'Dossier file or URL')
+  .option('--json', 'JSON output')
+  .option('--short', 'Brief summary only')
+  .action((file, options) => {
+    console.log('⚠️  info tbd - follow docs/planning/cli-evolution.md');
+    process.exit(1);
+  });
+
+// ============================================================================
+// Parse and execute
+// ============================================================================
+program.parse(process.argv);
+
+// Show help if no command provided
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
+}
