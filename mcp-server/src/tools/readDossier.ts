@@ -3,7 +3,7 @@
  * Should be called AFTER verify_dossier passes
  */
 
-import { parseDossierFile, DossierFrontmatter } from '@dossier/core';
+import { parseDossierFile, DossierFrontmatter } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 
 export interface ReadDossierInput {

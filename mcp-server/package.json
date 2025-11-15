@@ -1,6 +1,6 @@
 {
   "name": "@imboard-ai/dossier-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for dossier automation standard - enables LLMs to discover, verify, and execute dossiers",
   "main": "dist/index.js",
   "bin": {

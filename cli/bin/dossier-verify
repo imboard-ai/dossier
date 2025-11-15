@@ -24,7 +24,7 @@ const {
   loadTrustedKeys,
   verifyWithMinisign,
   verifyWithKms
-} = require('@dossier/core');
+} = require('@imboard-ai/dossier-core');
 
 // Colors for terminal output
 const colors = {
