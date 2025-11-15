@@ -7,11 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [@imboard-ai/dossier-cli@0.2.0] - 2025-11-15
+
+### Added
+- Multi-command CLI structure with 10 commands
+- Command router using commander.js framework
+- Placeholder commands: run, create, list, sign, publish, checksum, validate, init, info
+- Comprehensive help system with roadmap guidance
+- Registry sharing workflow (publish command - MVP simulation)
+
+### Changed
+- **BREAKING**: Removed `dossier-verify` command - use `dossier verify` instead
+- Command structure: `dossier <command>` instead of standalone binary
+- Package scope: `@dossier/*` → `@imboard-ai/*` (GitHub Packages requirement)
+- Updated all imports and dependencies
+
+### Fixed
+- MODULE_NOT_FOUND error from package scope migration
+- Import statements updated to new package names
+
+## [Documentation] - 2025-11-15
+
 ### Added
 - Comprehensive documentation restructure following Diataxis framework
 - Architecture Decision Records (ADRs) structure
 - Root ARCHITECTURE.md for quick reference
 - Root CHANGELOG.md for version tracking
+- CLI evolution planning document
 
 ### Changed
 - Reorganized documentation from root to `docs/` folder
