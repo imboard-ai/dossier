@@ -1,27 +1,67 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Schema Capability Check",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-16",
+  "objective": "Explore the codebase to determine if a specific feature or capability is supported by the Dossier schema and implementation",
+  "category": [
+    "development",
+    "meta"
+  ],
+  "tags": [
+    "meta",
+    "schema",
+    "exploration",
+    "analysis"
+  ],
+  "risk_level": "low",
+  "risk_factors": [],
+  "requires_approval": false,
+  "destructive_operations": [],
+  "estimated_duration": {
+    "min_minutes": 1,
+    "max_minutes": 2
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "Read-only analysis with no dependencies"
+  },
+  "inputs": {
+    "required": [
+      {
+        "name": "capability",
+        "description": "The feature or capability to check (e.g., 'composition/references', 'conditional execution', 'loops')",
+        "type": "string",
+        "example": "Does the schema support referencing other dossier files?"
+      }
+    ]
+  },
+  "outputs": {
+    "format": "markdown",
+    "sections": [
+      "Answer Summary",
+      "Evidence from Code",
+      "Usage Examples (if supported)",
+      "Recommendations"
+    ]
+  },
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "ce7c49dc85f4033c52d8e81b5c1b9f73c26157cf90f81c77f6eb9bf8fccac952"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEYCIQDk7q4zhv4WExtG9lOFJRb+T3JyJBVl5flUhF35D8MQwQIhAOkHhe11PCoK226CatFiDRXcSxtZpaDwSRtBt8eiPVw2",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:38.973Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
+}
 ---
-dossier_version: "1.0.0"
-metadata:
-  name: "Schema Capability Check"
-  description: "Explores the codebase to determine if a specific feature or capability is supported by the Dossier schema and implementation"
-  tags: ["meta", "schema", "exploration"]
-  estimated_duration: "1-2 minutes"
-  author: "Dossier Team"
-
-prompt_variables:
-  - name: "capability"
-    description: "The feature or capability to check (e.g., 'composition/references', 'conditional execution', 'loops')"
-    required: true
-    example: "Does the schema support referencing other dossier files?"
-
-output:
-  format: "markdown"
-  sections:
-    - "Answer Summary"
-    - "Evidence from Code"
-    - "Usage Examples (if supported)"
-    - "Recommendations"
----
-
 # Schema Capability Check
 
 You are analyzing the Dossier project to determine if it supports: **{{capability}}**

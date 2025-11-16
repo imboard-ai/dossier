@@ -20,5 +20,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/imboard-ai/dossier.git"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-kms": "^3.932.0"
   }
 }

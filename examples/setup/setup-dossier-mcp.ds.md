@@ -7,14 +7,23 @@
   "status": "Stable",
   "last_updated": "2025-11-07",
   "objective": "Configure Claude Code to use the dossier MCP server for streamlined, secure dossier execution with automatic verification and discovery",
-  "category": ["setup"],
-  "tags": ["mcp", "configuration", "setup", "first-time"],
+  "category": [
+    "setup"
+  ],
+  "tags": [
+    "mcp",
+    "configuration",
+    "setup",
+    "first-time"
+  ],
   "estimated_duration": {
     "min_minutes": 5,
     "max_minutes": 15
   },
   "risk_level": "low",
-  "risk_factors": ["modifies_files"],
+  "risk_factors": [
+    "modifies_files"
+  ],
   "requires_approval": false,
   "destructive_operations": [
     "Creates or modifies ~/.claude/settings.local.json configuration file"
@@ -42,10 +51,17 @@
       "check_command": "npm --version",
       "install_url": "https://nodejs.org/"
     }
-  ]
+  ],
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEYCIQDwQ/xpSUaTF3eR+Hvp7rchSDp22Md/1KgleDAeWp7oiwIhAKe2BvwGiWkHNRzAfwOaHbpLryG82TboZRD1sj//GVGj",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:34.426Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
 }
 ---
-
 # Dossier: Set Up Dossier MCP Server
 
 ## Objective

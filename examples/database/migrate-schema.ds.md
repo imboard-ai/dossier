@@ -7,8 +7,20 @@
   "status": "Stable",
   "last_updated": "2025-11-05",
   "objective": "Execute database schema migrations with comprehensive safety checks, automatic backups, and rollback capability for production-grade reliability",
-  "category": ["database", "migration", "maintenance"],
-  "tags": ["database", "migration", "sql", "postgresql", "mysql", "schema", "rollback"],
+  "category": [
+    "database",
+    "migration",
+    "maintenance"
+  ],
+  "tags": [
+    "database",
+    "migration",
+    "sql",
+    "postgresql",
+    "mysql",
+    "schema",
+    "rollback"
+  ],
   "checksum": {
     "algorithm": "sha256",
     "hash": "e45cd92ee1868a873cf39f94e9738cce47b766acbcc627f61247293eaa2bc740"
@@ -39,17 +51,27 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier", "dossier://security"],
+    "features_used": [
+      "verify_dossier",
+      "dossier://security"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic security verification before critical operations",
       "Signature validation for trusted migrations",
       "Clear risk assessment for critical database changes"
     ]
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIQDHkP85aQPGpTwTflXBzk6wn0VjLsneMazb1sy5tKmEJQIgIYuvgnV+zJ4MTwnUj+RzjrCx+5w6afp1qUAA6WF5TNI=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:30.262Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
-
 # Dossier: Database Schema Migration
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))

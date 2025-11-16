@@ -7,8 +7,19 @@
   "status": "Stable",
   "last_updated": "2025-11-05",
   "objective": "Create a production-ready React component library with TypeScript, Storybook, testing, and NPM publishing configuration",
-  "category": ["development", "setup"],
-  "tags": ["react", "typescript", "component-library", "storybook", "vite", "npm", "testing"],
+  "category": [
+    "development",
+    "setup"
+  ],
+  "tags": [
+    "react",
+    "typescript",
+    "component-library",
+    "storybook",
+    "vite",
+    "npm",
+    "testing"
+  ],
   "checksum": {
     "algorithm": "sha256",
     "hash": "62897b1b4f8b066a009707d834732035cfd2ce994346239e50d7ada7d0f3fde3"
@@ -38,16 +49,25 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier"],
+    "features_used": [
+      "verify_dossier"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic checksum verification",
       "Streamlined setup validation"
     ]
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIQDx/1g0CgiXen+dV8DsFCMjEn7U9/XvwCQRIFEh7/DJDwIgPTu9EGkLx8FqflmgfS3b3MJvDBvbhuQFXvZC31dd7HI=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:31.933Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
-
 # Dossier: Setup React Component Library
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))

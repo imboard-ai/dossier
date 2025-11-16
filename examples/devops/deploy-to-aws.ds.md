@@ -7,8 +7,20 @@
   "status": "Stable",
   "last_updated": "2025-11-05",
   "objective": "Deploy application to AWS environment using Infrastructure as Code (Terraform or CloudFormation) with validation and rollback capability",
-  "category": ["devops", "deployment", "infrastructure"],
-  "tags": ["aws", "terraform", "cloudformation", "ecs", "lambda", "deployment", "infrastructure-as-code"],
+  "category": [
+    "devops",
+    "deployment",
+    "infrastructure"
+  ],
+  "tags": [
+    "aws",
+    "terraform",
+    "cloudformation",
+    "ecs",
+    "lambda",
+    "deployment",
+    "infrastructure-as-code"
+  ],
   "tools_required": [
     {
       "name": "aws-cli",
@@ -79,7 +91,10 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier", "dossier://security"],
+    "features_used": [
+      "verify_dossier",
+      "dossier://security"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic security verification before cloud deployments",
@@ -140,13 +155,18 @@
       {
         "key": "service_endpoint",
         "description": "HTTPS endpoint of deployed service",
-        "consumed_by": ["configure-monitoring", "run-integration-tests"],
+        "consumed_by": [
+          "configure-monitoring",
+          "run-integration-tests"
+        ],
         "export_as": "env_var"
       },
       {
         "key": "stack_name",
         "description": "CloudFormation stack name or Terraform workspace",
-        "consumed_by": ["rollback-deployment"],
+        "consumed_by": [
+          "rollback-deployment"
+        ],
         "export_as": "terraform_output"
       }
     ],
@@ -221,10 +241,17 @@
     "procedure": "Execute generated rollback script or use IaC tool to revert to previous state (terraform apply with previous config, or CloudFormation auto-rollback)",
     "automated": true,
     "backup_required": true
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEYCIQDDKBeE5Fvo/8ABPDpHynaxO5Q/xbvcoaApX/Zx4Q7jlAIhAMX+azYG/iv2Ysh1zXaIZsDfQO2JzfPShd3GpLwrj0TH",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:22:22.914Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
-
 # Dossier: Deploy to AWS
 
 **Version**: 1.0.0

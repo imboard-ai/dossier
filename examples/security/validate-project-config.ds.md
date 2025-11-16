@@ -7,17 +7,28 @@
   "status": "Stable",
   "last_updated": "2025-11-07",
   "objective": "Validate project configuration files and environment setup to ensure all required settings are properly configured for development",
-  "category": ["development", "setup"],
-  "tags": ["configuration", "validation", "environment", "setup", "debugging"],
+  "category": [
+    "development",
+    "setup"
+  ],
+  "tags": [
+    "configuration",
+    "validation",
+    "environment",
+    "setup",
+    "debugging"
+  ],
   "checksum": {
     "algorithm": "sha256",
-    "hash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd"
+    "hash": "654aa5ecef4d53b3d6b9c28fa09c0b19d1bb1b6f3e1e27f98b52c7edc37a6354"
   },
   "signature": {
-    "algorithm": "minisign",
-    "public_key": "RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3",
-    "signature": "untrusted comment: signature from minisign secret key\nRWQf6LRCGA9i59mgYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73invalid",
-    "signed_by": "DevTools Community <devtools@example.com>"
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIQCTleA7rtisVgtm/Ex5yVTf4/c3AYepZLG/vwe/ebak7AIgPfdiFpLPYS4zxu9SJiSGCQHpN+j02hbkV0kH26EcKSg=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:33.595Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   },
   "risk_level": "low",
   "risk_factors": [
@@ -37,7 +48,9 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier"],
+    "features_used": [
+      "verify_dossier"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic checksum verification",
@@ -47,7 +60,6 @@
   "tools_required": []
 }
 ---
-
 # Dossier: Validate Project Configuration
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))

@@ -6,12 +6,10 @@
   "protocol_version": "1.0",
   "status": "Example",
   "objective": "Deploy application to staging environment with health checks",
-
   "checksum": {
     "algorithm": "sha256",
-    "hash": "example-checksum-not-calculated-for-demo"
+    "hash": "b01cc4b7b2209d98e986302d69663ce4bee6806fdde05167373c686339b5ed7f"
   },
-
   "risk_level": "medium",
   "risk_factors": [
     "modifies_cloud_resources",
@@ -24,12 +22,25 @@
     "Updates deployment configuration",
     "Restarts application services"
   ],
-
-  "category": ["devops", "deployment"],
-  "tags": ["deployment", "staging", "working-files-example"]
+  "category": [
+    "devops",
+    "deployment"
+  ],
+  "tags": [
+    "deployment",
+    "staging",
+    "working-files-example"
+  ],
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIC6/EuCCE0bN0DOgM+zl5xFiYadQN42EtoyplQOL3wupAiEAlorca8VTzXf+BB2Gewpji/w6vln7s1G2tBqQXNaja5I=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:35.344Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
 }
 ---
-
 # Dossier: Deploy Application to Staging
 
 **Example dossier demonstrating working file pattern**
