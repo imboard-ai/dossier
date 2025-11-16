@@ -1,11 +1,10 @@
 {
   "name": "@imboard-ai/dossier-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Command-line tool for creating, verifying, and executing dossiers",
   "main": "bin/dossier",
   "bin": {
-    "dossier": "./bin/dossier",
-    "dossier-verify": "./bin/dossier-verify"
+    "dossier": "./bin/dossier"
   },
   "files": [
     "bin/",

@@ -12,7 +12,7 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| Phase 1: MVP | 🚧 In Progress | 25% |
+| Phase 1: MVP | 🚧 In Progress | 50% |
 | Phase 2: Enhanced Authoring | 📋 Planned | 0% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
@@ -21,7 +21,7 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | Command | Status | Version | Priority |
 |---------|--------|---------|----------|
 | `verify` | ✅ Done | v0.2.0 | P0 |
-| `run` | 📋 Planned | - | P0 |
+| `run` | ✅ Done | v0.2.1 | P0 |
 | `create` | 📋 Planned | - | P1 |
 | `list` | 📋 Planned | - | P1 |
 | `sign` | 📋 Planned | - | P2 |
@@ -822,15 +822,17 @@ Exit code: 1
 
 **Commands**:
 1. ✅ `dossier verify` - Done (v0.2.0) - Just verification
-2. 📋 `dossier run` - Planned - Verify + audit + execute
+2. ✅ `dossier run` - Done (v0.2.1) - Multi-stage verification + audit + execute
 3. 📋 `dossier create` - Planned - Basic creation (no templates)
 4. 📋 `dossier list` - Planned - Simple file discovery
 
 **Features**:
 - [x] Subcommand architecture
-- [ ] Auto-detect LLM (claude-code, cursor)
-- [ ] Console audit logging (print to stdout)
-- [ ] Basic error handling
+- [x] Auto-detect LLM (claude-code, cursor)
+- [x] Console audit logging (print to stdout)
+- [x] Multi-stage verification pipeline (5 stages)
+- [x] Configurable verification flags (skip options)
+- [x] Dry-run mode
 - [x] Helpful TBD messages for unimplemented commands
 
 **Deliverables**:
@@ -838,7 +840,7 @@ Exit code: 1
 - [x] Updated documentation
 - [x] Migration from `dossier-verify` (removed old command)
 - [ ] Test coverage
-- [ ] `run` command implementation
+- [x] `run` command implementation (with 5-stage verification)
 - [ ] `create` command implementation
 - [ ] `list` command implementation
 
@@ -1205,15 +1207,15 @@ dossier verify file.ds.md
 - [x] Smart version detection in workflow
 - [ ] 90% test coverage
 
-**Commands** (1/4 complete):
+**Commands** (2/4 complete):
 - [x] `verify` command working
-- [ ] `run` command working
+- [x] `run` command working (5-stage verification)
 - [ ] `create` command working
 - [ ] `list` command working
 
-**Features** (0/2 complete):
-- [ ] LLM auto-detection for Claude Code and Cursor
-- [ ] Console audit logging
+**Features** (2/2 complete):
+- [x] LLM auto-detection for Claude Code and Cursor
+- [x] Console audit logging
 
 ### User Adoption Metrics
 

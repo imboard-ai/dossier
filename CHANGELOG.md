@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [@imboard-ai/dossier-cli@0.2.1] - 2025-11-15
+
+### Added
+- **`dossier run` command** - Complete verify, audit, and execute workflow
+  - 5-stage verification pipeline:
+    - Stage 1: Integrity (checksum + signature)
+    - Stage 2: Author whitelist/blacklist (demo mode)
+    - Stage 3: Dossier whitelist/blacklist (demo mode)
+    - Stage 4: Risk assessment
+    - Stage 5: Review dossier analysis (demo mode)
+  - LLM auto-detection (Claude Code, Cursor)
+  - Console audit logging
+  - Dry-run mode
+  - Configurable verification flags (--skip-* options)
+  - Custom review dossier support
+
+### Features
+- Multi-stage security verification with toggleable checks
+- Audit trail logging (console output for MVP)
+- LLM execution integration
+- Risk-based prompts (--force, --no-prompt)
+
 ## [@imboard-ai/dossier-cli@0.2.0] - 2025-11-15
 
 ### Added
