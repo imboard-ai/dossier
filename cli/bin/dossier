@@ -8,9 +8,64 @@
 const { program } = require('commander');
 const { execSync } = require('child_process');
 const path = require('path');
+const config = require('../lib/config');
 
 // Package info
 const pkg = require('../package.json');
+
+// ============================================================================
+// SHARED: LLM Detection and Command Building
+// ============================================================================
+
+/**
+ * Detect and resolve which LLM to use
+ * @param {string} llmOption - The LLM option (from CLI or config)
+ * @param {boolean} silent - Whether to suppress console output
+ * @returns {string} The resolved LLM name
+ */
+function detectLlm(llmOption, silent = false) {
+  if (llmOption !== 'auto') {
+    return llmOption;
+  }
+
+  // Auto-detect LLM
+  try {
+    execSync('command -v claude-code', { stdio: 'pipe' });
+    if (!silent) console.log('   Detected: Claude Code');
+    return 'claude-code';
+  } catch {
+    try {
+      execSync('command -v cursor', { stdio: 'pipe' });
+      if (!silent) console.log('   Detected: Cursor');
+      return 'cursor';
+    } catch {
+      if (!silent) {
+        console.log('❌ No supported LLM detected\n');
+        console.log('Supported LLMs:');
+        console.log('  - Claude Code (install from https://claude.com/claude-code)');
+        console.log('  - Cursor (install from https://cursor.sh)\n');
+        console.log('Or specify manually: --llm claude-code\n');
+      }
+      return null;
+    }
+  }
+}
+
+/**
+ * Build the execution command for a given LLM
+ * @param {string} llm - The LLM to use
+ * @param {string} file - The dossier file/URL
+ * @returns {string} The command to execute
+ */
+function buildLlmCommand(llm, file) {
+  if (llm === 'claude-code') {
+    return `claude-code "${file}"`;
+  } else if (llm === 'cursor') {
+    return `cursor "${file}"`;
+  } else {
+    return null;
+  }
+}
 
 // ============================================================================
 // SHARED: Multi-Stage Verification Function
@@ -150,7 +205,7 @@ program
   .command('run')
   .description('Verify, audit, and execute dossier')
   .argument('<file>', 'Dossier file or URL to run')
-  .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)', 'auto')
+  .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)')
   .option('--dry-run', 'Show plan without executing')
   .option('--force', 'Skip risk warnings')
   .option('--no-prompt', 'Don\'t ask for confirmation')
@@ -172,13 +227,16 @@ program
       process.exit(1);
     }
 
+    // Determine LLM to use (CLI option > config > auto)
+    const llmOption = options.llm || config.getConfig('defaultLlm') || 'auto';
+
     // Audit Log (console output for MVP)
     console.log('📝 Audit Log:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`   Timestamp:   ${new Date().toISOString()}`);
     console.log(`   Dossier:     ${file}`);
     console.log(`   User:        ${process.env.USER}@${require('os').hostname()}`);
-    console.log(`   LLM:         ${options.llm}`);
+    console.log(`   LLM:         ${llmOption}`);
     console.log(`   Action:      RUN`);
     console.log('   Status:      VERIFIED');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -190,23 +248,13 @@ program
       console.log('🧪 DRY RUN MODE - No execution\n');
       console.log('Would execute:');
       console.log(`   File: ${file}`);
-      console.log(`   LLM: ${options.llm}`);
+      console.log(`   LLM: ${llmOption}`);
 
-      // Detect LLM for dry run display
-      let llmCommand = 'auto-detect';
-      try {
-        execSync('command -v claude-code', { stdio: 'pipe' });
-        llmCommand = `claude-code "Execute the verified dossier at ${file}"`;
-      } catch {
-        try {
-          execSync('command -v cursor', { stdio: 'pipe' });
-          llmCommand = `cursor "${file}"`;
-        } catch {
-          llmCommand = 'No LLM detected - would show error';
-        }
-      }
+      // Detect LLM and build command
+      const llmToUse = detectLlm(llmOption, true);
+      const command = llmToUse ? buildLlmCommand(llmToUse, file) : 'No LLM detected - would show error';
 
-      console.log(`   Command: ${llmCommand}\n`);
+      console.log(`   Command: ${command}\n`);
       console.log('✅ All verifications passed - ready to execute');
       process.exit(0);
     }
@@ -214,48 +262,109 @@ program
     // LLM Detection and Execution
     console.log('🤖 Executing Dossier...\n');
 
-    let llmToUse = options.llm;
-    if (options.llm === 'auto') {
-      // Auto-detect LLM
-      try {
-        execSync('command -v claude-code', { stdio: 'pipe' });
-        llmToUse = 'claude-code';
-        console.log('   Detected: Claude Code');
-      } catch {
-        try {
-          execSync('command -v cursor', { stdio: 'pipe' });
-          llmToUse = 'cursor';
-          console.log('   Detected: Cursor');
-        } catch {
-          console.log('❌ No supported LLM detected\n');
-          console.log('Supported LLMs:');
-          console.log('  - Claude Code (install from https://claude.com/claude-code)');
-          console.log('  - Cursor (install from https://cursor.sh)\n');
-          console.log('Or specify manually: --llm claude-code\n');
-          process.exit(2);
-        }
-      }
+    const llmToUse = detectLlm(llmOption);
+    if (!llmToUse) {
+      process.exit(2);
     }
 
-    // Execute via LLM
-    try {
-      let command;
-      if (llmToUse === 'claude-code') {
-        command = `claude-code "Execute the verified dossier at ${file}"`;
-      } else if (llmToUse === 'cursor') {
-        command = `cursor "${file}"`;
-      } else {
-        console.log(`❌ Unknown LLM: ${llmToUse}\n`);
-        console.log('Supported: claude-code, cursor, auto\n');
-        process.exit(2);
-      }
+    // Build and execute command
+    const command = buildLlmCommand(llmToUse, file);
+    if (!command) {
+      console.log(`❌ Unknown LLM: ${llmToUse}\n`);
+      console.log('Supported: claude-code, cursor, auto\n');
+      process.exit(2);
+    }
 
+    try {
       console.log(`   Executing: ${command}\n`);
       execSync(command, { stdio: 'inherit' });
       console.log('\n✅ Execution completed');
     } catch (error) {
       console.log('\n❌ Execution failed');
       process.exit(error.status || 2);
+    }
+  });
+
+// ============================================================================
+// COMMAND: config (IMPLEMENTED)
+// ============================================================================
+program
+  .command('config')
+  .description('Manage dossier configuration')
+  .argument('[key]', 'Configuration key (e.g., defaultLlm)')
+  .argument('[value]', 'Value to set (omit to get current value)')
+  .option('--list', 'List all configuration')
+  .option('--reset', 'Reset to defaults')
+  .action((key, value, options) => {
+    // List all config
+    if (options.list || (!key && !options.reset)) {
+      const currentConfig = config.loadConfig();
+      console.log('📋 Current Configuration:\n');
+      console.log(`   Config file: ${config.CONFIG_FILE}\n`);
+      Object.entries(currentConfig).forEach(([k, v]) => {
+        console.log(`   ${k}: ${v}`);
+      });
+      console.log('\nTo change a setting: dossier config <key> <value>');
+      console.log('Example: dossier config defaultLlm claude-code\n');
+      process.exit(0);
+    }
+
+    // Reset config
+    if (options.reset) {
+      if (config.saveConfig(config.DEFAULT_CONFIG)) {
+        console.log('✅ Configuration reset to defaults\n');
+        Object.entries(config.DEFAULT_CONFIG).forEach(([k, v]) => {
+          console.log(`   ${k}: ${v}`);
+        });
+      } else {
+        console.log('❌ Failed to reset configuration');
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+
+    // Get single value
+    if (key && !value) {
+      const val = config.getConfig(key);
+      if (val !== undefined) {
+        console.log(`${key}: ${val}`);
+      } else {
+        console.log(`❌ Unknown configuration key: ${key}\n`);
+        console.log('Available keys:');
+        Object.keys(config.DEFAULT_CONFIG).forEach(k => console.log(`   - ${k}`));
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+
+    // Set value
+    if (key && value) {
+      // Validate known keys
+      if (!(key in config.DEFAULT_CONFIG)) {
+        console.log(`⚠️  Warning: '${key}' is not a standard config key\n`);
+        console.log('Standard keys:');
+        Object.keys(config.DEFAULT_CONFIG).forEach(k => console.log(`   - ${k}`));
+        console.log('\nContinuing anyway...\n');
+      }
+
+      // Validate defaultLlm values
+      if (key === 'defaultLlm') {
+        const validLlms = ['auto', 'claude-code', 'cursor'];
+        if (!validLlms.includes(value)) {
+          console.log(`⚠️  Warning: '${value}' may not be a supported LLM\n`);
+          console.log('Supported values:');
+          validLlms.forEach(llm => console.log(`   - ${llm}`));
+          console.log('\nContinuing anyway...\n');
+        }
+      }
+
+      if (config.setConfig(key, value)) {
+        console.log(`✅ Configuration updated: ${key} = ${value}`);
+      } else {
+        console.log('❌ Failed to update configuration');
+        process.exit(1);
+      }
+      process.exit(0);
     }
   });
 
