@@ -59,7 +59,9 @@ function detectLlm(llmOption, silent = false) {
  */
 function buildLlmCommand(llm, file) {
   if (llm === 'claude-code') {
-    return `claude-code "${file}"`;
+    // Use headless mode (-p) to execute non-interactively and exit after completion
+    // Read the dossier file and pipe it to claude-code
+    return `cat "${file}" | claude -p`;
   } else if (llm === 'cursor') {
     return `cursor "${file}"`;
   } else {
