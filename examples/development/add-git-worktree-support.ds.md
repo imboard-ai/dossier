@@ -7,8 +7,18 @@
   "status": "Stable",
   "last_updated": "2025-11-07",
   "objective": "Restructure a git project to support git worktrees by moving repository contents into a main/ subdirectory and creating a worktree registry for tracking active work",
-  "category": ["development", "git", "workflow"],
-  "tags": ["git", "worktrees", "workflow", "organization", "development-setup"],
+  "category": [
+    "development",
+    "git",
+    "workflow"
+  ],
+  "tags": [
+    "git",
+    "worktrees",
+    "workflow",
+    "organization",
+    "development-setup"
+  ],
   "tools_required": [
     {
       "name": "git",
@@ -82,7 +92,10 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier", "dossier://security"],
+    "features_used": [
+      "verify_dossier",
+      "dossier://security"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic security verification for high-risk file restructuring",
@@ -137,10 +150,17 @@
   "rollback": {
     "supported": true,
     "instructions": "Move all contents from main/ back to parent directory and delete the empty main/ directory"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIAXuEcuO1YIEz+3OjxKGuHmcZMAwyvrK8XQP83917V6FAiEAiaN7fkFlVpFGYhVRzslLYudHyc2CutNJ5Z5QBbJDUMo=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:31.103Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
-
 # Dossier: Add Git Worktree Support to Project
 
 **Protocol Version**: 1.0

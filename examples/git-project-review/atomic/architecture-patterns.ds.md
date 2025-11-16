@@ -1,28 +1,69 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Architecture & Pattern Consistency",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-16",
+  "objective": "Identify inconsistent patterns, duplicate approaches, and architectural drift in the codebase",
+  "category": [
+    "development",
+    "architecture"
+  ],
+  "tags": [
+    "architecture",
+    "consistency",
+    "tech-debt",
+    "patterns",
+    "analysis"
+  ],
+  "risk_level": "low",
+  "risk_factors": [],
+  "requires_approval": false,
+  "destructive_operations": [],
+  "estimated_duration": {
+    "min_minutes": 1,
+    "max_minutes": 1.5
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "Read-only analysis with no dependencies"
+  },
+  "inputs": {
+    "optional": [
+      {
+        "name": "focus_pattern",
+        "description": "Specific pattern to analyze (e.g., 'error-handling', 'data-fetching', 'state-management', 'all')",
+        "type": "string",
+        "default": "all"
+      }
+    ]
+  },
+  "outputs": {
+    "format": "markdown",
+    "sections": [
+      "Consistency Score",
+      "Pattern Inventory",
+      "Inconsistencies Found",
+      "Duplication Hotspots",
+      "Recommendations"
+    ]
+  },
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "3910137ed4c73d3d601844b711ff007bd775d6f9b038b7014ef6d841962d0e14"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEQCIHA0qB6lBaxz6mBZ20rAD5sjAkIzF3aSyM0vmZxbos3JAiB+5UBWfnOEZwPqsNS+E0wNtL4ghKVky5s61FQczSmeKQ==",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:38.083Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
+}
 ---
-dossier_version: "1.0.0"
-metadata:
-  name: "Architecture & Pattern Consistency"
-  description: "Identifies inconsistent patterns, duplicate approaches, and architectural drift in the codebase"
-  tags: ["architecture", "consistency", "tech-debt", "patterns"]
-  estimated_duration: "60-90 seconds"
-  author: "Dossier Team"
-
-prompt_variables:
-  - name: "focus_pattern"
-    description: "Specific pattern to analyze (e.g., 'error-handling', 'data-fetching', 'state-management', 'all')"
-    required: false
-    default: "all"
-
-output:
-  format: "markdown"
-  sections:
-    - "Consistency Score"
-    - "Pattern Inventory"
-    - "Inconsistencies Found"
-    - "Duplication Hotspots"
-    - "Recommendations"
----
-
 # Architecture & Pattern Consistency Analysis
 
 You are analyzing the codebase for architectural consistency and pattern usage.

@@ -7,8 +7,18 @@
   "status": "Stable",
   "last_updated": "2025-11-05",
   "objective": "Train a machine learning model with proper data validation, evaluation, and artifact management for reproducible experiments",
-  "category": ["data-science", "development"],
-  "tags": ["machine-learning", "python", "scikit-learn", "training", "model", "data-science"],
+  "category": [
+    "data-science",
+    "development"
+  ],
+  "tags": [
+    "machine-learning",
+    "python",
+    "scikit-learn",
+    "training",
+    "model",
+    "data-science"
+  ],
   "checksum": {
     "algorithm": "sha256",
     "hash": "98ae7bc6d566a34f55aa48bbab2d4e20ad2eaf3cce56ff4e4ccbb4a4aa263165"
@@ -38,16 +48,25 @@
     "required": false,
     "server_name": "@dossier/mcp-server",
     "min_version": "1.0.0",
-    "features_used": ["verify_dossier"],
+    "features_used": [
+      "verify_dossier"
+    ],
     "fallback": "manual_execution",
     "benefits": [
       "Automatic checksum verification",
       "Streamlined security validation"
     ]
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEUCIQDx/GGo4QeVuA5VSELptKqDkwD4Z9my48YSUHWg/+4YQgIgOvRzqIBi7KB9tYs5ZKgqQqy0M/TrqXxvPaw6nXj3XAE=",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:32.774Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
-
 # Dossier: Train ML Model
 
 **Protocol Version**: 1.0 ([PROTOCOL.md](../../PROTOCOL.md))

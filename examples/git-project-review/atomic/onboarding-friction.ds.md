@@ -1,28 +1,68 @@
+---dossier
+{
+  "dossier_schema_version": "1.0.0",
+  "title": "Onboarding Friction Assessment",
+  "version": "1.0.0",
+  "protocol_version": "1.0",
+  "status": "Stable",
+  "last_updated": "2025-11-16",
+  "objective": "Identify pain points and confusion points for new contributors trying to understand and work with the project",
+  "category": [
+    "development",
+    "documentation"
+  ],
+  "tags": [
+    "onboarding",
+    "dx",
+    "contributor-experience",
+    "analysis"
+  ],
+  "risk_level": "low",
+  "risk_factors": [],
+  "requires_approval": false,
+  "destructive_operations": [],
+  "estimated_duration": {
+    "min_minutes": 0.75,
+    "max_minutes": 1.5
+  },
+  "coupling": {
+    "level": "Loose",
+    "details": "Read-only analysis with no dependencies"
+  },
+  "inputs": {
+    "optional": [
+      {
+        "name": "focus_area",
+        "description": "Specific area to focus on (e.g., 'setup', 'testing', 'architecture', 'all')",
+        "type": "string",
+        "default": "all"
+      }
+    ]
+  },
+  "outputs": {
+    "format": "markdown",
+    "sections": [
+      "Friction Score",
+      "Critical Blockers 🚫",
+      "Confusion Points 🤔",
+      "Missing Guidance 📚",
+      "Quick Wins 🎯"
+    ]
+  },
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "faf4643c5b276c661f43c1084c25ce546310e3bc4403651a1184a9c324acaba5"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEYCIQCEouwqG8q0g35sAV9JcJgv8AMxTTAvFcfqVkq/fQ9pAwIhAKqb8J4fKPsVqFrh8a4EPyA+2FdsqTDw0bxd14NB4aPP",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-16T11:23:37.246Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
+}
 ---
-dossier_version: "1.0.0"
-metadata:
-  name: "Onboarding Friction Assessment"
-  description: "Identifies pain points and confusion points for new contributors trying to understand and work with the project"
-  tags: ["onboarding", "dx", "contributor-experience"]
-  estimated_duration: "45-90 seconds"
-  author: "Dossier Team"
-
-prompt_variables:
-  - name: "focus_area"
-    description: "Specific area to focus on (e.g., 'setup', 'testing', 'architecture', 'all')"
-    required: false
-    default: "all"
-
-output:
-  format: "markdown"
-  sections:
-    - "Friction Score"
-    - "Critical Blockers 🚫"
-    - "Confusion Points 🤔"
-    - "Missing Guidance 📚"
-    - "Quick Wins 🎯"
----
-
 # Onboarding Friction Assessment
 
 You are evaluating the new contributor experience by identifying friction points.
