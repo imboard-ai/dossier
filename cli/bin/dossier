@@ -62,7 +62,7 @@ function buildLlmCommand(llm, file) {
   const isUrl = file.startsWith('http://') || file.startsWith('https://');
 
   if (llm === 'claude-code') {
-    // Use headless mode (-p) to execute non-interactively and exit after completion
+    // Use headless mode (-p) to execute non-interactively and print output to stdout
     if (isUrl) {
       // For URLs: Download to temp file, execute, cleanup
       return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
