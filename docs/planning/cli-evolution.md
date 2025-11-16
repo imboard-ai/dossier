@@ -4,15 +4,15 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.0
-**Released**: 2025-11-15
-**Status**: ✅ CLI Structure Implemented, 📋 Commands In Development
+**Current Version**: v0.2.3
+**Released**: 2025-11-16
+**Status**: ✅ Core Commands Functional, Production-Ready Execution
 
 ### Implementation Progress
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| Phase 1: MVP | 🚧 In Progress | 50% |
+| Phase 1: MVP | ✅ Core Complete | 75% |
 | Phase 2: Enhanced Authoring | 📋 Planned | 0% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
@@ -21,7 +21,8 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | Command | Status | Version | Priority |
 |---------|--------|---------|----------|
 | `verify` | ✅ Done | v0.2.0 | P0 |
-| `run` | ✅ Done | v0.2.1 | P0 |
+| `run` | ✅ Done | v0.2.3 | P0 |
+| `config` | ✅ Done | v0.2.1 | P0 |
 | `create` | 📋 Planned | - | P1 |
 | `list` | 📋 Planned | - | P1 |
 | `sign` | 📋 Planned | - | P2 |
@@ -34,6 +35,95 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 ---
 
 ## Evolution History
+
+### v0.2.3 - Headless Mode Confirmation ✅ (2025-11-16)
+
+**What Changed**:
+- ✅ Confirmed headless mode (`-p` flag) as correct approach for dossier execution
+- ✅ Tested and validated both interactive and headless modes
+- ✅ Documented that interactive mode requires TTY and cannot work with piped input
+- ✅ Verified full end-to-end execution with real dossiers
+- ✅ Production-ready dossier execution pipeline
+
+**Key Findings**:
+- Interactive mode (`claude` without `-p`) fails with piped input (Ink raw mode error)
+- Headless mode (`claude -p`) required for automated dossier execution
+- Output correctly displayed to stdout with `-p` flag
+- Execution completes automatically and exits cleanly
+
+**Testing**:
+```bash
+# Successfully executed real dossier
+dossier run https://raw.githubusercontent.com/.../readme-reality-check.ds.md
+
+# Complete workflow verified:
+# ✅ Download from URL to temp file
+# ✅ All 5 verification stages passed
+# ✅ Execution with claude -p
+# ✅ Analysis output displayed
+# ✅ Clean exit
+```
+
+### v0.2.2 - Secure URL Handling ✅ (2025-11-16)
+
+**What Changed**:
+- ✅ Implemented secure temp file download for URL-based dossiers
+- ✅ URL detection with proper handling
+- ✅ Download verification before execution
+- ✅ Automatic cleanup of temp files
+
+**Implementation**:
+```bash
+# For URLs:
+tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && \
+curl -sL "${url}" -o "${tmpfile}" && \
+test -s "${tmpfile}" && \
+cat "${tmpfile}" | claude -p; \
+status=$?; rm -f "${tmpfile}"; exit $status
+
+# For local files:
+cat "${file}" | claude -p
+```
+
+**Benefits**:
+- Better error handling (verify download succeeded)
+- Audit trail (temp file path can be logged)
+- Debugging capability (inspect downloaded content)
+- Security (validate before execution)
+- Clean execution flow
+
+### v0.2.1 - Configuration System & LLM Support ✅ (2025-11-16)
+
+**What Changed**:
+- ✅ Added configuration system (`~/.dossier/config.json`)
+- ✅ Implemented `dossier config` command for settings management
+- ✅ Configurable default LLM (claude-code, cursor, auto)
+- ✅ DRY refactoring with helper functions
+- ✅ Fixed dossier execution to actually run (not just open for editing)
+
+**Configuration File**:
+```json
+{
+  "defaultLlm": "claude-code",
+  "theme": "auto",
+  "auditLog": true
+}
+```
+
+**Commands**:
+```bash
+# Manage configuration
+dossier config                          # List all settings
+dossier config defaultLlm               # Get specific value
+dossier config defaultLlm claude-code   # Set value
+dossier config --reset                  # Reset to defaults
+```
+
+**LLM Integration**:
+- Priority: CLI option `--llm` > config file > auto-detect
+- Auto-detection: claude-code → cursor → fail with helpful message
+- Helper functions: `detectLlm()`, `buildLlmCommand()`
+- Eliminated code duplication
 
 ### v0.2.0 - Multi-Command Structure ✅ (2025-11-15)
 
@@ -661,63 +751,73 @@ Body:
 **Detection Order**:
 ```
 1. Check for Claude Code in PATH
-   → command -v claude-code
+   → command -v claude
 
 2. Check for Cursor in PATH
    → command -v cursor
 
-3. Check for GitHub Copilot CLI
-   → command -v gh copilot
-
-4. Check environment variables
-   → $DOSSIER_LLM
-
-5. Fail with helpful message
+3. Fail with helpful message
    → "No LLM detected. Install Claude Code or use --llm <name>"
 ```
 
 ### Execution Methods
 
-**Claude Code**:
+**Claude Code** (Headless Mode - Required):
 ```bash
-claude-code "Execute the verified dossier at ${file}"
+# For URLs (download to temp file first)
+tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && \
+curl -sL "${url}" -o "${tmpfile}" && \
+test -s "${tmpfile}" && \
+cat "${tmpfile}" | claude -p; \
+status=$?; rm -f "${tmpfile}"; exit $status
+
+# For local files
+cat "${file}" | claude -p
 ```
+
+**Why Headless Mode (`-p`) is Required**:
+- Interactive mode requires a TTY (terminal) and cannot work with piped input
+- Attempting to pipe dossier content to `claude` without `-p` fails with:
+  ```
+  ERROR: Raw mode is not supported on the current process.stdin
+  ```
+- Headless mode (`-p`) outputs to stdout and exits automatically
+- Perfect for automation, CI/CD, and scripting
 
 **Cursor**:
 ```bash
 cursor "${file}"
-# or
-cursor --execute-dossier "${file}"
 ```
-
-**GitHub Copilot**:
-```bash
-gh copilot execute "${file}"
-```
-
-**Generic / Fallback**:
-```bash
-# Copy to clipboard + show instruction
-echo "📋 Dossier copied to clipboard"
-echo "Paste this into your LLM:"
-echo ""
-cat "${file}"
-```
+*Note: Cursor integration is placeholder - needs investigation for headless execution*
 
 ### Configuration File
 
-**`~/.dossier/config.json`**:
+**`~/.dossier/config.json`** (Implemented):
 ```json
 {
-  "defaultLLM": "claude-code",
-  "llmPaths": {
-    "claude-code": "/usr/local/bin/claude-code",
-    "cursor": "/Applications/Cursor.app/Contents/MacOS/cursor"
-  },
-  "auditServer": "https://audit.company.com",
-  "enableAudit": true,
-  "trustedKeys": "~/.dossier/trusted-keys.txt"
+  "defaultLlm": "claude-code",
+  "theme": "auto",
+  "auditLog": true
 }
+```
+
+**Configuration Commands**:
+```bash
+dossier config                          # List all settings
+dossier config defaultLlm               # Get specific value
+dossier config defaultLlm claude-code   # Set value
+dossier config --reset                  # Reset to defaults
+```
+
+**LLM Selection Priority**:
+1. CLI flag: `--llm claude-code` (highest priority)
+2. Config file: `~/.dossier/config.json`
+3. Auto-detection: Check PATH for `claude`, then `cursor`
+
+**Helper Functions** (Implemented):
+```javascript
+detectLlm(llmOption, silent)    // Auto-detect or validate LLM
+buildLlmCommand(llm, file)      // Build execution command
 ```
 
 ---
@@ -1290,6 +1390,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.0 Released - CLI structure complete, ready for feature implementation
+**Current Status**: ✅ v0.2.3 Released - Production-ready dossier execution with full verification pipeline
 
-**Last Updated**: 2025-11-15 (v0.2.0 release)
+**Last Updated**: 2025-11-16 (v0.2.3 release - headless mode confirmed, URL handling implemented, config system added)
