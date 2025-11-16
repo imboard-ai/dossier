@@ -230,17 +230,28 @@ async function verifySignature(body, frontmatter) {
 function assessRisk(frontmatter, checksumResult, signatureResult) {
   const issues = [];
   let riskLevel = 'low';
+  let shouldBlock = false;
 
   // Checksum failure is critical
   if (!checksumResult.passed) {
     issues.push('Checksum verification FAILED - content has been tampered with');
     riskLevel = 'critical';
+    shouldBlock = true;
   }
 
   // Signature issues
   if (signatureResult.present && !signatureResult.verified) {
     issues.push('Signature verification FAILED or could not be verified');
     if (riskLevel !== 'critical') riskLevel = 'high';
+    shouldBlock = true;
+  }
+
+  // Valid signature but not trusted - BLOCK execution
+  if (signatureResult.present && signatureResult.verified && !signatureResult.trusted) {
+    issues.push('Signature is valid but signer is not in your trusted keys list');
+    issues.push('Add the public key to ~/.dossier/trusted-keys.txt to trust this signer');
+    if (riskLevel === 'low') riskLevel = 'medium';
+    shouldBlock = true;
   }
 
   // No signature on high-risk dossier
@@ -257,7 +268,7 @@ function assessRisk(frontmatter, checksumResult, signatureResult) {
   return {
     level: riskLevel,
     issues,
-    recommendation: checksumResult.passed ? 'ALLOW' : 'BLOCK',
+    recommendation: shouldBlock ? 'BLOCK' : 'ALLOW',
   };
 }
 
@@ -319,6 +330,17 @@ async function verifyDossier(input, options) {
     if (signatureResult.present) {
       if (signatureResult.verified && signatureResult.trusted) {
         success('Signature VERIFIED - from trusted author');
+      } else if (signatureResult.verified && !signatureResult.trusted) {
+        warning(signatureResult.message);
+        if (frontmatter.signature?.signed_by) {
+          console.log(`   Signed by: ${frontmatter.signature.signed_by}`);
+        }
+        console.log(`\n   ${colors.cyan}To trust this signer, run:${colors.reset}`);
+        const publicKey = frontmatter.signature.public_key || frontmatter.signature.key_id;
+        const identifier = frontmatter.signature.signed_by
+          ? frontmatter.signature.signed_by.split('<')[0].trim().toLowerCase().replace(/\s+/g, '-')
+          : 'unknown-signer';
+        console.log(`   ${colors.bright}dossier keys add "${publicKey}" "${identifier}"${colors.reset}\n`);
       } else {
         warning(signatureResult.message);
         if (frontmatter.signature?.signed_by) {
