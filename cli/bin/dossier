@@ -58,10 +58,18 @@ function detectLlm(llmOption, silent = false) {
  * @returns {string} The command to execute
  */
 function buildLlmCommand(llm, file) {
+  // Detect if file is a URL
+  const isUrl = file.startsWith('http://') || file.startsWith('https://');
+
   if (llm === 'claude-code') {
     // Use headless mode (-p) to execute non-interactively and exit after completion
-    // Read the dossier file and pipe it to claude-code
-    return `cat "${file}" | claude -p`;
+    if (isUrl) {
+      // For URLs: Download to temp file, execute, cleanup
+      return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+    } else {
+      // For local files: Read directly
+      return `cat "${file}" | claude -p`;
+    }
   } else if (llm === 'cursor') {
     return `cursor "${file}"`;
   } else {
