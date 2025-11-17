@@ -13,7 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        # Node 18 removed: EOL April 2025, has ESM compatibility issues with Vite/Vitest
+        # Testing on Node 20 (LTS until 2026) and Node 22 (LTS until 2027)
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code
