@@ -6,7 +6,7 @@
 
 import { parseDossierFile, verifyIntegrity } from '@imboard-ai/dossier-core';
 import { verifyAuthenticity } from '../parsers/signatureVerifier';
-import { VerificationResult, RiskAssessment } from '../types/dossier';
+import { VerificationResult, RiskAssessment } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 
 export interface VerifyDossierInput {
