@@ -18,8 +18,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const { execSync } = require('child_process');
+const { parseDossierContent, calculateChecksum } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
 function parseArgs() {
@@ -66,33 +66,6 @@ Example:
     signedBy: signedByIndex !== -1 ? args[signedByIndex + 1] : null,
     dryRun
   };
-}
-
-// Extract frontmatter and body from dossier
-function parseDossier(content) {
-  const frontmatterRegex = /^---dossier\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/m;
-  const match = content.match(frontmatterRegex);
-
-  if (!match) {
-    throw new Error('Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]');
-  }
-
-  const frontmatterJson = match[1];
-  const body = match[2];
-
-  let frontmatter;
-  try {
-    frontmatter = JSON.parse(frontmatterJson);
-  } catch (err) {
-    throw new Error(`Failed to parse frontmatter JSON: ${err.message}`);
-  }
-
-  return { frontmatter, body };
-}
-
-// Calculate SHA256 hash of body
-function calculateChecksum(body) {
-  return crypto.createHash('sha256').update(body, 'utf8').digest('hex');
 }
 
 // Sign content with minisign
@@ -178,7 +151,7 @@ function main() {
   // Parse dossier
   let parsed;
   try {
-    parsed = parseDossier(content);
+    parsed = parseDossierContent(content);
   } catch (err) {
     console.error(`Error: ${err.message}`);
     process.exit(1);
@@ -225,7 +198,7 @@ function main() {
     algorithm: 'minisign',
     public_key: publicKey,
     signature: signature,
-    timestamp: new Date().toISOString()
+    signed_at: new Date().toISOString()
   };
 
   if (options.keyId) {
@@ -249,7 +222,7 @@ function main() {
   console.log(`  Public key: ${publicKey}`);
   console.log(`  Key ID: ${options.keyId || '(not specified)'}`);
   console.log(`  Signed by: ${options.signedBy || '(not specified)'}`);
-  console.log(`  Timestamp: ${frontmatter.signature.timestamp}`);
+  console.log(`  Signed at: ${frontmatter.signature.signed_at}`);
 }
 
 // Run

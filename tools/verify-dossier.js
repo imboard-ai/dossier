@@ -15,7 +15,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const os = require('os');
 const {
   parseDossierContent,
@@ -23,7 +22,7 @@ const {
   loadTrustedKeys,
   verifyWithMinisign,
   verifyWithKms
-} = require('@dossier/core');
+} = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
 function parseArgs() {
@@ -58,15 +57,6 @@ Example:
     dossierFile,
     trustedKeysFile: trustedKeysIndex !== -1 ? args[trustedKeysIndex + 1] : defaultTrustedKeys,
     jsonOutput
-  };
-}
-
-// Extract frontmatter and body from dossier (using @dossier/core)
-function parseDossier(content) {
-  const parsed = parseDossierContent(content);
-  return {
-    frontmatter: parsed.frontmatter,
-    body: parsed.body
   };
 }
 
@@ -107,7 +97,7 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
   // Parse dossier
   let parsed;
   try {
-    parsed = parseDossier(content);
+    parsed = parseDossierContent(content);
   } catch (err) {
     result.errors.push(`Parse error: ${err.message}`);
     result.recommendation = 'BLOCK';
@@ -325,5 +315,5 @@ if (require.main === module) {
   }
 }
 
-module.exports = { parseDossier, calculateChecksum, verifyDossier };
+module.exports = { verifyDossier };
 

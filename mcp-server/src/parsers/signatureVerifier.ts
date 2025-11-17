@@ -3,7 +3,7 @@
  * Uses the unified verifier module
  */
 
-import { AuthenticityResult, DossierFrontmatter } from '../types/dossier';
+import { AuthenticityResult, DossierFrontmatter } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 import { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from '@imboard-ai/dossier-core';
 
