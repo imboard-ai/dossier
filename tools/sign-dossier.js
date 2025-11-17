@@ -198,7 +198,7 @@ function main() {
     algorithm: 'minisign',
     public_key: publicKey,
     signature: signature,
-    timestamp: new Date().toISOString()
+    signed_at: new Date().toISOString()
   };
 
   if (options.keyId) {
@@ -222,7 +222,7 @@ function main() {
   console.log(`  Public key: ${publicKey}`);
   console.log(`  Key ID: ${options.keyId || '(not specified)'}`);
   console.log(`  Signed by: ${options.signedBy || '(not specified)'}`);
-  console.log(`  Timestamp: ${frontmatter.signature.timestamp}`);
+  console.log(`  Signed at: ${frontmatter.signature.signed_at}`);
 }
 
 // Run
