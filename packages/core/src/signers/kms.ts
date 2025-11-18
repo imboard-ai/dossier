@@ -1,0 +1,121 @@
+/**
+ * AWS KMS Signer and Verifier
+ */
+
+import { createHash } from 'crypto';
+import { KMSClient, SignCommand, GetPublicKeyCommand, VerifyCommand, SigningAlgorithmSpec } from '@aws-sdk/client-kms';
+import { Signer, Verifier, SignatureResult } from './index';
+
+export class KmsSigner implements Signer {
+  readonly algorithm = 'ECDSA-SHA-256';
+  private client: KMSClient;
+
+  constructor(
+    private keyId: string,
+    private region: string = 'us-east-1'
+  ) {
+    this.client = new KMSClient({ region });
+  }
+
+  async sign(content: string): Promise<SignatureResult> {
+    // Calculate SHA256 digest of content
+    const hash = createHash('sha256').update(content, 'utf8').digest();
+
+    // Sign the digest with KMS
+    const signCommand = new SignCommand({
+      KeyId: this.keyId,
+      Message: hash,
+      MessageType: 'DIGEST',
+      SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256
+    });
+
+    const signResponse = await this.client.send(signCommand);
+    if (!signResponse.Signature) {
+      throw new Error('KMS signing failed: no signature returned');
+    }
+
+    const signature = Buffer.from(signResponse.Signature).toString('base64');
+
+    // Get public key from KMS
+    const pubKeyCommand = new GetPublicKeyCommand({
+      KeyId: this.keyId
+    });
+
+    const pubKeyResponse = await this.client.send(pubKeyCommand);
+    if (!pubKeyResponse.PublicKey) {
+      throw new Error('KMS failed to return public key');
+    }
+
+    const publicKey = Buffer.from(pubKeyResponse.PublicKey).toString('base64');
+    const keyArn = pubKeyResponse.KeyId || this.keyId;
+
+    return {
+      algorithm: this.algorithm,
+      signature,
+      public_key: publicKey,
+      key_id: keyArn,
+      signed_at: new Date().toISOString()
+    };
+  }
+
+  async getPublicKey(): Promise<string> {
+    const command = new GetPublicKeyCommand({
+      KeyId: this.keyId
+    });
+
+    const response = await this.client.send(command);
+    if (!response.PublicKey) {
+      throw new Error('KMS failed to return public key');
+    }
+
+    return Buffer.from(response.PublicKey).toString('base64');
+  }
+}
+
+export class KmsVerifier implements Verifier {
+  private clients: Map<string, KMSClient> = new Map();
+
+  supports(algorithm: string): boolean {
+    return algorithm === 'ECDSA-SHA-256';
+  }
+
+  async verify(content: string, signature: SignatureResult): Promise<boolean> {
+    if (!signature.key_id) {
+      return false;
+    }
+
+    try {
+      // Extract region from key ARN if available, otherwise use default
+      const region = this.extractRegionFromArn(signature.key_id) || 'us-east-1';
+      const client = this.getClient(region);
+
+      const signatureBuffer = Buffer.from(signature.signature, 'base64');
+      const contentBuffer = Buffer.from(content, 'utf8');
+
+      const command = new VerifyCommand({
+        KeyId: signature.key_id,
+        Message: contentBuffer,
+        Signature: signatureBuffer,
+        SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256
+      });
+
+      const response = await client.send(command);
+      return response.SignatureValid === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  private getClient(region: string): KMSClient {
+    if (!this.clients.has(region)) {
+      this.clients.set(region, new KMSClient({ region }));
+    }
+    return this.clients.get(region)!;
+  }
+
+  private extractRegionFromArn(keyId: string): string | null {
+    // ARN format: arn:aws:kms:REGION:ACCOUNT:key/KEY_ID
+    const arnMatch = keyId.match(/^arn:aws:kms:([^:]+):/);
+    return arnMatch ? arnMatch[1] : null;
+  }
+}

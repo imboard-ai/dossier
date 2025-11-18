@@ -18,4 +18,17 @@ export { parseDossierContent, parseDossierFile, validateFrontmatter } from './pa
 export { calculateChecksum, verifyIntegrity } from './checksum';
 
 // Signature exports
-export { loadTrustedKeys, verifyWithEd25519, verifyWithKms } from './signature';
+export { loadTrustedKeys, verifyWithEd25519, verifyWithKms, verifySignature } from './signature';
+
+// Signer/Verifier interfaces and implementations
+export {
+  Signer,
+  Verifier,
+  SignatureResult,
+  Ed25519Signer,
+  Ed25519Verifier,
+  KmsSigner,
+  KmsVerifier,
+  VerifierRegistry,
+  getVerifierRegistry
+} from './signers';

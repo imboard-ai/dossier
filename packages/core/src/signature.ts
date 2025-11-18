@@ -10,6 +10,8 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { verify, createPublicKey } from 'crypto';
 import { KMSClient, VerifyCommand, SigningAlgorithmSpec } from '@aws-sdk/client-kms';
+import { getVerifierRegistry } from './signers';
+import type { SignatureResult } from './signers';
 
 /**
  * Load trusted keys from file
@@ -106,4 +108,20 @@ export async function verifyWithKms(
   } catch (err) {
     return false;
   }
+}
+
+/**
+ * Verify signature using the registry pattern
+ * This is a convenience function that encapsulates registry lookup
+ * @param content - The content to verify
+ * @param signature - Signature result object containing algorithm and signature data
+ * @returns Promise<boolean> - true if signature is valid, false otherwise
+ */
+export async function verifySignature(
+  content: string,
+  signature: SignatureResult
+): Promise<boolean> {
+  const verifierRegistry = getVerifierRegistry();
+  const verifier = verifierRegistry.get(signature.algorithm);
+  return await verifier.verify(content, signature);
 }

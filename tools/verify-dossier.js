@@ -20,8 +20,7 @@ const {
   parseDossierContent,
   verifyIntegrity,
   loadTrustedKeys,
-  verifyWithEd25519,
-  verifyWithKms
+  verifySignature
 } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
@@ -138,12 +137,7 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
 
     // Verify signature
     try {
-      let isValid = false;
-      if (sig.algorithm === 'ECDSA-SHA-256') {
-        isValid = await verifyWithKms(body, sig.signature, sig.key_id);
-      } else {
-        isValid = verifyWithEd25519(body, sig.signature, sig.public_key);
-      }
+      const isValid = await verifySignature(body, sig);
 
       if (isValid) {
         if (result.authenticity.isTrusted) {

@@ -21,8 +21,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
-const { parseDossierContent, calculateChecksum } = require('@imboard-ai/dossier-core');
+const { parseDossierContent, calculateChecksum, KmsSigner } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
 function parseArgs() {
@@ -68,56 +67,6 @@ Example:
     signedBy: signedByIndex !== -1 ? args[signedByIndex + 1] : null,
     dryRun
   };
-}
-
-// Sign content with AWS KMS
-async function signWithKMS(content, keyId, region) {
-  let KMSClient, SignCommand, GetPublicKeyCommand;
-
-  try {
-    const kmsModule = await import('@aws-sdk/client-kms');
-    KMSClient = kmsModule.KMSClient;
-    SignCommand = kmsModule.SignCommand;
-    GetPublicKeyCommand = kmsModule.GetPublicKeyCommand;
-  } catch (err) {
-    throw new Error('AWS SDK not found. Install it with: npm install @aws-sdk/client-kms');
-  }
-
-  const client = new KMSClient({ region });
-
-  // Calculate SHA256 digest of content
-  const hash = crypto.createHash('sha256').update(content, 'utf8').digest();
-
-  console.log(`   Message digest: ${hash.toString('hex')}`);
-
-  // Sign the digest with KMS
-  try {
-    const signCommand = new SignCommand({
-      KeyId: keyId,
-      Message: hash,
-      MessageType: 'DIGEST',
-      SigningAlgorithm: 'ECDSA_SHA_256'
-    });
-
-    const signResponse = await client.send(signCommand);
-    const signature = Buffer.from(signResponse.Signature).toString('base64');
-
-    // Get public key from KMS
-    const pubKeyCommand = new GetPublicKeyCommand({
-      KeyId: keyId
-    });
-
-    const pubKeyResponse = await client.send(pubKeyCommand);
-    const publicKey = Buffer.from(pubKeyResponse.PublicKey).toString('base64');
-    const keyArn = pubKeyResponse.KeyId; // This is the full ARN
-
-    return { signature, publicKey, keyArn };
-  } catch (err) {
-    if (err.name === 'AccessDeniedException') {
-      throw new Error(`AWS KMS Access Denied: ${err.message}\nEnsure you have kms:Sign and kms:GetPublicKey permissions for key: ${keyId}`);
-    }
-    throw new Error(`AWS KMS signing failed: ${err.message}`);
-  }
 }
 
 // Main function
@@ -169,26 +118,22 @@ async function main() {
   // Sign with AWS KMS
   console.log('\n✍️  Signing with AWS KMS...');
 
-  let signResult;
+  let signatureResult;
   try {
-    signResult = await signWithKMS(body, options.keyId, options.region);
+    const signer = new KmsSigner(options.keyId, options.region);
+    signatureResult = await signer.sign(body);
   } catch (err) {
     console.error(`\nError: ${err.message}`);
     process.exit(1);
   }
 
   console.log('   ✓ Signature created');
-  console.log(`   Key ARN: ${signResult.keyArn}`);
+  console.log(`   Key ARN: ${signatureResult.key_id}`);
 
   // Add signature to frontmatter
-  frontmatter.signature = {
-    algorithm: 'ECDSA-SHA-256',
-    signature: signResult.signature,
-    public_key: signResult.publicKey,
-    key_id: signResult.keyArn,
-    signed_at: new Date().toISOString()
-  };
+  frontmatter.signature = signatureResult;
 
+  // Add optional metadata
   if (options.signedBy) {
     frontmatter.signature.signed_by = options.signedBy;
   }
@@ -203,9 +148,9 @@ async function main() {
   console.log('\n✅ Dossier signed successfully!');
   console.log(`\nSignature details:`);
   console.log(`  Algorithm: ECDSA-SHA-256`);
-  console.log(`  Key ARN: ${signResult.keyArn}`);
+  console.log(`  Key ARN: ${frontmatter.signature.key_id}`);
   console.log(`  Signed by: ${options.signedBy || '(not specified)'}`);
-  console.log(`  Timestamp: ${frontmatter.signature.signed_at}`);
+  console.log(`  Signed at: ${frontmatter.signature.signed_at}`);
   console.log(`\nVerify with: cli/bin/dossier-verify ${options.dossierFile}`);
 }
 
@@ -216,5 +161,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
-module.exports = { parseDossier, calculateChecksum, signWithKMS };

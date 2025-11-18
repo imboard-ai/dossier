@@ -5,7 +5,7 @@
 
 import { AuthenticityResult, DossierFrontmatter } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
-import { loadTrustedKeys, verifyWithEd25519, verifyWithKms } from '@imboard-ai/dossier-core';
+import { loadTrustedKeys, verifySignature } from '@imboard-ai/dossier-core';
 
 /**
  * Verify dossier authenticity (signature + trust)
@@ -34,12 +34,7 @@ export async function verifyAuthenticity(
 
   // Verify signature
   try {
-    let isValid = false;
-    if (signature.algorithm === 'ECDSA-SHA-256') {
-      isValid = await verifyWithKms(body, signature.signature, signature.key_id);
-    } else {
-      isValid = verifyWithEd25519(body, signature.signature, signature.public_key);
-    }
+    const isValid = await verifySignature(body, signature);
 
     if (!isValid) {
       logger.error('SIGNATURE VERIFICATION FAILED');
