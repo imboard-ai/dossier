@@ -10,17 +10,16 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema,
   ListResourcesRequestSchema,
+  ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-
-import { verifyDossier, VerifyDossierInput } from './tools/verifyDossier.js';
-import { readDossier, ReadDossierInput } from './tools/readDossier.js';
-import { listDossiers, ListDossiersInput } from './tools/listDossiers.js';
+import { getConceptResource } from './resources/concept.js';
 import { getProtocolResource } from './resources/protocol.js';
 import { getSecurityResource } from './resources/security.js';
-import { getConceptResource } from './resources/concept.js';
+import { type ListDossiersInput, listDossiers } from './tools/listDossiers.js';
+import { type ReadDossierInput, readDossier } from './tools/readDossier.js';
+import { type VerifyDossierInput, verifyDossier } from './tools/verifyDossier.js';
 import { logger } from './utils/logger.js';
 
 // Create MCP server instance

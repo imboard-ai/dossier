@@ -19,8 +19,12 @@
  *   node tools/sign-dossier.js examples/devops/deploy-to-aws.md --key ~/.dossier/private-key.pem --key-id imboard-ai-2024
  */
 
-const fs = require('fs');
-const { parseDossierContent, calculateChecksum, Ed25519Signer } = require('@imboard-ai/dossier-core');
+const fs = require('node:fs');
+const {
+  parseDossierContent,
+  calculateChecksum,
+  Ed25519Signer,
+} = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
 function parseArgs() {
@@ -69,10 +73,9 @@ Example:
     keyFile: keyIndex !== -1 ? args[keyIndex + 1] : null,
     keyId: keyIdIndex !== -1 ? args[keyIdIndex + 1] : null,
     signedBy: signedByIndex !== -1 ? args[signedByIndex + 1] : null,
-    dryRun
+    dryRun,
   };
 }
-
 
 // Main function
 async function main() {
@@ -108,7 +111,7 @@ async function main() {
   // Add checksum to frontmatter
   frontmatter.checksum = {
     algorithm: 'sha256',
-    hash: checksum
+    hash: checksum,
   };
 
   if (options.dryRun) {
@@ -162,7 +165,7 @@ async function main() {
 
 // Run
 if (require.main === module) {
-  main().catch(err => {
+  main().catch((err) => {
     console.error(`\nFatal error: ${err.message}`);
     process.exit(1);
   });

@@ -13,14 +13,14 @@
  *   node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ~/.dossier/trusted-keys.txt
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
 const {
   parseDossierContent,
   verifyIntegrity,
   loadTrustedKeys,
-  verifySignature
+  verifySignature,
 } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
@@ -55,7 +55,7 @@ Example:
   return {
     dossierFile,
     trustedKeysFile: trustedKeysIndex !== -1 ? args[trustedKeysIndex + 1] : defaultTrustedKeys,
-    jsonOutput
+    jsonOutput,
   };
 }
 
@@ -65,23 +65,23 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
     dossierFile,
     integrity: {
       status: 'unknown',
-      message: ''
+      message: '',
     },
     authenticity: {
       status: 'unknown',
       message: '',
       signer: null,
       keyId: null,
-      isTrusted: false
+      isTrusted: false,
     },
     riskAssessment: {
       riskLevel: null,
       riskFactors: [],
       destructiveOperations: [],
-      requiresApproval: null
+      requiresApproval: null,
     },
     recommendation: 'UNKNOWN',
-    errors: []
+    errors: [],
   };
 
   // Read dossier
@@ -170,11 +170,20 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
   if (result.recommendation === 'UNKNOWN') {
     if (result.integrity.status === 'invalid' || result.authenticity.status === 'invalid') {
       result.recommendation = 'BLOCK';
-    } else if (result.authenticity.status === 'verified' && result.riskAssessment.riskLevel === 'low') {
+    } else if (
+      result.authenticity.status === 'verified' &&
+      result.riskAssessment.riskLevel === 'low'
+    ) {
       result.recommendation = 'ALLOW';
-    } else if (result.authenticity.status === 'unsigned' || result.authenticity.status === 'signed_unknown') {
+    } else if (
+      result.authenticity.status === 'unsigned' ||
+      result.authenticity.status === 'signed_unknown'
+    ) {
       result.recommendation = 'WARN';
-    } else if (result.riskAssessment.riskLevel === 'high' || result.riskAssessment.riskLevel === 'critical') {
+    } else if (
+      result.riskAssessment.riskLevel === 'high' ||
+      result.riskAssessment.riskLevel === 'critical'
+    ) {
       result.recommendation = 'WARN';
     } else {
       result.recommendation = 'WARN';
@@ -193,8 +202,8 @@ function printResults(result) {
 
   // Integrity
   console.log('📊 INTEGRITY CHECK (Checksum)');
-  const integrityIcon = result.integrity.status === 'valid' ? '✅' :
-                        result.integrity.status === 'invalid' ? '❌' : '⚠️';
+  const integrityIcon =
+    result.integrity.status === 'valid' ? '✅' : result.integrity.status === 'invalid' ? '❌' : '⚠️';
   console.log(`   ${integrityIcon} Status: ${result.integrity.status.toUpperCase()}`);
   console.log(`   ${result.integrity.message}`);
   if (result.integrity.expectedHash) {
@@ -205,9 +214,14 @@ function printResults(result) {
 
   // Authenticity
   console.log('🔐 AUTHENTICITY CHECK (Signature)');
-  const authIcon = result.authenticity.status === 'verified' ? '✅' :
-                   result.authenticity.status === 'signed_unknown' ? '⚠️' :
-                   result.authenticity.status === 'unsigned' ? '⚠️' : '❌';
+  const authIcon =
+    result.authenticity.status === 'verified'
+      ? '✅'
+      : result.authenticity.status === 'signed_unknown'
+        ? '⚠️'
+        : result.authenticity.status === 'unsigned'
+          ? '⚠️'
+          : '❌';
   console.log(`   ${authIcon} Status: ${result.authenticity.status.toUpperCase()}`);
   console.log(`   ${result.authenticity.message}`);
   if (result.authenticity.signer) {
@@ -219,20 +233,28 @@ function printResults(result) {
 
   // Risk Assessment
   console.log('⚠️  RISK ASSESSMENT');
-  const riskIcon = result.riskAssessment.riskLevel === 'low' ? '🟢' :
-                   result.riskAssessment.riskLevel === 'medium' ? '🟡' :
-                   result.riskAssessment.riskLevel === 'high' ? '🟠' :
-                   result.riskAssessment.riskLevel === 'critical' ? '🔴' : '⚪';
-  console.log(`   ${riskIcon} Risk Level: ${(result.riskAssessment.riskLevel || 'UNKNOWN').toUpperCase()}`);
+  const riskIcon =
+    result.riskAssessment.riskLevel === 'low'
+      ? '🟢'
+      : result.riskAssessment.riskLevel === 'medium'
+        ? '🟡'
+        : result.riskAssessment.riskLevel === 'high'
+          ? '🟠'
+          : result.riskAssessment.riskLevel === 'critical'
+            ? '🔴'
+            : '⚪';
+  console.log(
+    `   ${riskIcon} Risk Level: ${(result.riskAssessment.riskLevel || 'UNKNOWN').toUpperCase()}`
+  );
   if (result.riskAssessment.riskFactors.length > 0) {
     console.log('   Risk Factors:');
-    result.riskAssessment.riskFactors.forEach(factor => {
+    result.riskAssessment.riskFactors.forEach((factor) => {
       console.log(`     • ${factor}`);
     });
   }
   if (result.riskAssessment.destructiveOperations.length > 0) {
     console.log('   Destructive Operations:');
-    result.riskAssessment.destructiveOperations.forEach(op => {
+    result.riskAssessment.destructiveOperations.forEach((op) => {
       console.log(`     • ${op}`);
     });
   }
@@ -242,7 +264,7 @@ function printResults(result) {
   // Errors
   if (result.errors.length > 0) {
     console.log('❌ ERRORS');
-    result.errors.forEach(err => {
+    result.errors.forEach((err) => {
       console.log(`   • ${err}`);
     });
     console.log();
@@ -250,8 +272,8 @@ function printResults(result) {
 
   // Recommendation
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  const recIcon = result.recommendation === 'ALLOW' ? '✅' :
-                  result.recommendation === 'WARN' ? '⚠️' : '❌';
+  const recIcon =
+    result.recommendation === 'ALLOW' ? '✅' : result.recommendation === 'WARN' ? '⚠️' : '❌';
   console.log(`${recIcon} RECOMMENDATION: ${result.recommendation}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
@@ -266,7 +288,10 @@ function printResults(result) {
     if (result.authenticity.status === 'signed_unknown') {
       console.log('  • Signature is valid but signer is not in your trusted keys list');
     }
-    if (result.riskAssessment.riskLevel === 'high' || result.riskAssessment.riskLevel === 'critical') {
+    if (
+      result.riskAssessment.riskLevel === 'high' ||
+      result.riskAssessment.riskLevel === 'critical'
+    ) {
       console.log(`  • High risk level: ${result.riskAssessment.riskLevel}`);
     }
     console.log('\nOnly execute if you trust the source!');
@@ -310,4 +335,3 @@ if (require.main === module) {
 }
 
 module.exports = { verifyDossier };
-

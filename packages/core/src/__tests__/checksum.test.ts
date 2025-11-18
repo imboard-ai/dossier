@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { calculateChecksum, verifyIntegrity } from '../checksum';
 
 describe('calculateChecksum', () => {
@@ -152,7 +152,9 @@ describe('verifyIntegrity', () => {
     const result = verifyIntegrity(body, hash);
 
     expect(result.status).toBe('valid');
-    expect(result.actualHash).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+    expect(result.actualHash).toBe(
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    );
   });
 
   it('should be case-sensitive in verification', () => {

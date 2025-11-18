@@ -27,7 +27,7 @@ export interface DossierFrontmatter {
     signed_by: string;
     signed_at: string;
   };
-  [key: string]: any; // Allow additional fields
+  [key: string]: unknown; // Allow additional fields
 }
 
 export interface ParsedDossier {

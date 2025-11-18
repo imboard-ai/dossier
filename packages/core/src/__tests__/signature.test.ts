@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { sign as cryptoSign, generateKeyPairSync } from 'node:crypto';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 import { loadTrustedKeys, verifyWithEd25519 } from '../signature';
-import { writeFileSync, unlinkSync, mkdirSync, existsSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { generateKeyPairSync, sign as cryptoSign } from 'crypto';
 
 describe('loadTrustedKeys', () => {
   const createTempDir = () => {
@@ -22,8 +22,12 @@ describe('loadTrustedKeys', () => {
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== official-key-1
-RWTKey2== official-key-2`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `RWTKey1== official-key-1
+RWTKey2== official-key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -38,11 +42,15 @@ RWTKey2== official-key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 
 RWTKey2== key-2
 
-`, 'utf8');
+`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -57,10 +65,14 @@ RWTKey2== key-2
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `# This is a comment
+    writeFileSync(
+      keysFile,
+      `# This is a comment
 RWTKey1== key-1
 # Another comment
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -74,8 +86,12 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== Official Key Name
-RWTKey2== Another Key With Spaces`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `RWTKey1== Official Key Name
+RWTKey2== Another Key With Spaces`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -111,9 +127,13 @@ RWTKey2== Another Key With Spaces`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `# Comment 1
+    writeFileSync(
+      keysFile,
+      `# Comment 1
 # Comment 2
-# Comment 3`, 'utf8');
+# Comment 3`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -126,10 +146,14 @@ RWTKey2== Another Key With Spaces`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 
 
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -143,9 +167,13 @@ RWTKey2== key-2`, 'utf8');
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
     // Lines without space delimiter should be skipped
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 InvalidLineWithoutSpace
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -161,8 +189,12 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `  RWTKey1==   key-1
-	RWTKey2==	key-2	`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `  RWTKey1==   key-1
+	RWTKey2==	key-2	`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -177,9 +209,7 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    const manyKeys = Array.from({ length: 100 }, (_, i) =>
-      `RWTKey${i}== key-${i}`
-    ).join('\n');
+    const manyKeys = Array.from({ length: 100 }, (_, i) => `RWTKey${i}== key-${i}`).join('\n');
 
     writeFileSync(keysFile, manyKeys, 'utf8');
 
@@ -192,7 +222,6 @@ RWTKey2== key-2`, 'utf8');
     cleanup(tempDir);
   });
 });
-
 
 describe('verifyWithEd25519', () => {
   it('should verify valid Ed25519 signature', () => {
@@ -230,7 +259,7 @@ describe('verifyWithEd25519', () => {
   });
 
   it('should reject wrong public key', () => {
-    const { publicKey: publicKey1, privateKey: privateKey1 } = generateKeyPairSync('ed25519');
+    const { privateKey: privateKey1 } = generateKeyPairSync('ed25519');
     const { publicKey: publicKey2 } = generateKeyPairSync('ed25519');
 
     const publicKeyPem2 = publicKey2.export({ type: 'spki', format: 'pem' }) as string;

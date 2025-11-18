@@ -46,6 +46,6 @@ export { KmsSigner, KmsVerifier } from './kms';
 
 // Export registry
 export {
+  getVerifierRegistry,
   VerifierRegistry,
-  getVerifierRegistry
 } from './registry';

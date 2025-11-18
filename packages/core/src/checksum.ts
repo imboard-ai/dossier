@@ -3,8 +3,8 @@
  * Uses SHA256 hash of the body content (excluding frontmatter)
  */
 
-import { createHash } from 'crypto';
-import { IntegrityResult } from './types';
+import { createHash } from 'node:crypto';
+import type { IntegrityResult } from './types';
 
 /**
  * Calculate SHA256 hash of dossier body
@@ -17,10 +17,7 @@ export function calculateChecksum(body: string): string {
 /**
  * Verify dossier integrity by comparing checksums
  */
-export function verifyIntegrity(
-  body: string,
-  expectedHash: string | undefined
-): IntegrityResult {
+export function verifyIntegrity(body: string, expectedHash: string | undefined): IntegrityResult {
   if (!expectedHash) {
     return {
       status: 'missing',

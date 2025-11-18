@@ -3,9 +3,13 @@
  * Uses the unified verifier module
  */
 
-import { AuthenticityResult, DossierFrontmatter } from '@imboard-ai/dossier-core';
+import {
+  type AuthenticityResult,
+  type DossierFrontmatter,
+  loadTrustedKeys,
+  verifySignature,
+} from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
-import { loadTrustedKeys, verifySignature } from '@imboard-ai/dossier-core';
 
 /**
  * Verify dossier authenticity (signature + trust)
@@ -30,7 +34,9 @@ export async function verifyAuthenticity(
   // Load trusted keys
   const trustedKeys = loadTrustedKeys(trustedKeysPath);
   const isTrusted = trustedKeys.has(signature.public_key || signature.key_id);
-  const trustedAs = isTrusted ? trustedKeys.get(signature.public_key || signature.key_id) : undefined;
+  const trustedAs = isTrusted
+    ? trustedKeys.get(signature.public_key || signature.key_id)
+    : undefined;
 
   // Verify signature
   try {

@@ -5,13 +5,13 @@
  * supporting multiple signature schemes (Ed25519 and AWS KMS).
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-import { verify, createPublicKey } from 'crypto';
-import { KMSClient, VerifyCommand, SigningAlgorithmSpec } from '@aws-sdk/client-kms';
-import { getVerifierRegistry } from './signers';
+import { createPublicKey, verify } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { KMSClient, SigningAlgorithmSpec, VerifyCommand } from '@aws-sdk/client-kms';
 import type { SignatureResult } from './signers';
+import { getVerifierRegistry } from './signers';
 
 /**
  * Load trusted keys from file
@@ -45,7 +45,7 @@ export function loadTrustedKeys(filePath?: string): Map<string, string> {
         keys.set(publicKey, keyId);
       }
     }
-  } catch (err) {
+  } catch (_err) {
     // Silently handle errors - consumers can check the returned Map size
   }
 
@@ -58,11 +58,7 @@ export function loadTrustedKeys(filePath?: string): Map<string, string> {
  * @param signature - Base64-encoded signature
  * @param publicKey - PEM-format Ed25519 public key
  */
-export function verifyWithEd25519(
-  content: string,
-  signature: string,
-  publicKey: string
-): boolean {
+export function verifyWithEd25519(content: string, signature: string, publicKey: string): boolean {
   try {
     const signatureBuffer = Buffer.from(signature, 'base64');
     const contentBuffer = Buffer.from(content, 'utf8');
@@ -71,16 +67,15 @@ export function verifyWithEd25519(
     const publicKeyObject = createPublicKey({
       key: publicKey,
       format: 'pem',
-      type: 'spki'
+      type: 'spki',
     });
 
     // Verify Ed25519 signature (algorithm is null for Ed25519)
     return verify(null, contentBuffer, publicKeyObject, signatureBuffer);
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 }
-
 
 /**
  * Verify signature using AWS KMS (ECDSA-SHA-256)
@@ -105,7 +100,7 @@ export async function verifyWithKms(
   try {
     const response = await client.send(command);
     return response.SignatureValid === true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 }

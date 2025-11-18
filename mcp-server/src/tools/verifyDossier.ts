@@ -4,9 +4,12 @@
  * Returns recommendation: ALLOW, WARN, or BLOCK
  */
 
-import { parseDossierFile, verifyIntegrity } from '@imboard-ai/dossier-core';
+import {
+  parseDossierFile,
+  type VerificationResult,
+  verifyIntegrity,
+} from '@imboard-ai/dossier-core';
 import { verifyAuthenticity } from '../parsers/signatureVerifier';
-import { VerificationResult, RiskAssessment } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 
 export interface VerifyDossierInput {
@@ -92,10 +95,7 @@ export async function verifyDossier(input: VerifyDossierInput): Promise<Verifica
 
     // 5. RECOMMENDATION LOGIC
     // Note: integrity 'invalid' and authenticity 'invalid' already handled above with early return
-    if (
-      result.authenticity.status === 'verified' &&
-      result.riskAssessment.riskLevel === 'low'
-    ) {
+    if (result.authenticity.status === 'verified' && result.riskAssessment.riskLevel === 'low') {
       result.recommendation = 'ALLOW';
       result.message = 'Verified dossier from trusted source with low risk. Safe to execute.';
     } else if (

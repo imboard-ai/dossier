@@ -19,8 +19,8 @@
  *     --signed-by "Dossier Team <team@dossier.ai>"
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const _path = require('node:path');
 const { parseDossierContent, calculateChecksum, KmsSigner } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
@@ -65,7 +65,7 @@ Example:
     keyId: keyIdIndex !== -1 ? args[keyIdIndex + 1] : 'alias/dossier-official-prod',
     region: regionIndex !== -1 ? args[regionIndex + 1] : process.env.AWS_REGION || 'us-east-1',
     signedBy: signedByIndex !== -1 ? args[signedByIndex + 1] : null,
-    dryRun
+    dryRun,
   };
 }
 
@@ -105,7 +105,7 @@ async function main() {
   // Add checksum to frontmatter
   frontmatter.checksum = {
     algorithm: 'sha256',
-    hash: checksum
+    hash: checksum,
   };
 
   if (options.dryRun) {
@@ -156,7 +156,7 @@ async function main() {
 
 // Run
 if (require.main === module) {
-  main().catch(err => {
+  main().catch((err) => {
     console.error(`\nFatal error: ${err.message}`);
     process.exit(1);
   });

@@ -2,7 +2,7 @@
  * Registry for Verifier instances
  */
 
-import { Verifier } from './index';
+import type { Verifier } from './index';
 
 export class VerifierRegistry {
   private verifiers: Verifier[] = [];
@@ -19,7 +19,7 @@ export class VerifierRegistry {
    * @throws Error if no verifier supports the algorithm
    */
   get(algorithm: string): Verifier {
-    const verifier = this.verifiers.find(v => v.supports(algorithm));
+    const verifier = this.verifiers.find((v) => v.supports(algorithm));
     if (!verifier) {
       throw new Error(`No verifier registered for algorithm: ${algorithm}`);
     }
@@ -30,7 +30,7 @@ export class VerifierRegistry {
    * Check if any verifier supports the algorithm
    */
   has(algorithm: string): boolean {
-    return this.verifiers.some(v => v.supports(algorithm));
+    return this.verifiers.some((v) => v.supports(algorithm));
   }
 
   /**

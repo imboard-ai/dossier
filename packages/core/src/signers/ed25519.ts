@@ -2,13 +2,14 @@
  * Ed25519 Signer and Verifier using Node.js crypto
  */
 
-import { createPrivateKey, createPublicKey, sign, verify } from 'crypto';
-import { readFileSync } from 'fs';
-import { Signer, Verifier, SignatureResult } from './index';
+import type { KeyObject } from 'node:crypto';
+import { createPrivateKey, createPublicKey, sign, verify } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import type { SignatureResult, Signer, Verifier } from './index';
 
 export class Ed25519Signer implements Signer {
   readonly algorithm = 'ed25519';
-  private privateKey: any;
+  private privateKey: KeyObject;
   private publicKeyPem: string;
 
   constructor(privateKeyPath: string) {
@@ -17,14 +18,14 @@ export class Ed25519Signer implements Signer {
     this.privateKey = createPrivateKey({
       key: privateKeyPem,
       format: 'pem',
-      type: 'pkcs8'
+      type: 'pkcs8',
     });
 
     // Extract public key
     const publicKey = createPublicKey(this.privateKey);
     this.publicKeyPem = publicKey.export({
       type: 'spki',
-      format: 'pem'
+      format: 'pem',
     }) as string;
   }
 
@@ -36,7 +37,7 @@ export class Ed25519Signer implements Signer {
       algorithm: this.algorithm,
       signature: signatureBuffer.toString('base64'),
       public_key: this.publicKeyPem,
-      signed_at: new Date().toISOString()
+      signed_at: new Date().toISOString(),
     };
   }
 
@@ -59,12 +60,12 @@ export class Ed25519Verifier implements Verifier {
       const publicKeyObject = createPublicKey({
         key: signature.public_key,
         format: 'pem',
-        type: 'spki'
+        type: 'spki',
       });
 
       // Verify Ed25519 signature
       return verify(null, contentBuffer, publicKeyObject, signatureBuffer);
-    } catch (err) {
+    } catch (_err) {
       return false;
     }
   }

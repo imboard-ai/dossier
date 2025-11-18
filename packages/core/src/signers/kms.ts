@@ -2,9 +2,15 @@
  * AWS KMS Signer and Verifier
  */
 
-import { createHash } from 'crypto';
-import { KMSClient, SignCommand, GetPublicKeyCommand, VerifyCommand, SigningAlgorithmSpec } from '@aws-sdk/client-kms';
-import { Signer, Verifier, SignatureResult } from './index';
+import { createHash } from 'node:crypto';
+import {
+  GetPublicKeyCommand,
+  KMSClient,
+  SignCommand,
+  SigningAlgorithmSpec,
+  VerifyCommand,
+} from '@aws-sdk/client-kms';
+import type { SignatureResult, Signer, Verifier } from './index';
 
 export class KmsSigner implements Signer {
   readonly algorithm = 'ECDSA-SHA-256';
@@ -12,7 +18,7 @@ export class KmsSigner implements Signer {
 
   constructor(
     private keyId: string,
-    private region: string = 'us-east-1'
+    region: string = 'us-east-1'
   ) {
     this.client = new KMSClient({ region });
   }
@@ -26,7 +32,7 @@ export class KmsSigner implements Signer {
       KeyId: this.keyId,
       Message: hash,
       MessageType: 'DIGEST',
-      SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256
+      SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256,
     });
 
     const signResponse = await this.client.send(signCommand);
@@ -38,7 +44,7 @@ export class KmsSigner implements Signer {
 
     // Get public key from KMS
     const pubKeyCommand = new GetPublicKeyCommand({
-      KeyId: this.keyId
+      KeyId: this.keyId,
     });
 
     const pubKeyResponse = await this.client.send(pubKeyCommand);
@@ -54,13 +60,13 @@ export class KmsSigner implements Signer {
       signature,
       public_key: publicKey,
       key_id: keyArn,
-      signed_at: new Date().toISOString()
+      signed_at: new Date().toISOString(),
     };
   }
 
   async getPublicKey(): Promise<string> {
     const command = new GetPublicKeyCommand({
-      KeyId: this.keyId
+      KeyId: this.keyId,
     });
 
     const response = await this.client.send(command);
@@ -96,21 +102,24 @@ export class KmsVerifier implements Verifier {
         KeyId: signature.key_id,
         Message: contentBuffer,
         Signature: signatureBuffer,
-        SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256
+        SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256,
       });
 
       const response = await client.send(command);
       return response.SignatureValid === true;
-    } catch (err) {
+    } catch (_err) {
       return false;
     }
   }
 
   private getClient(region: string): KMSClient {
-    if (!this.clients.has(region)) {
-      this.clients.set(region, new KMSClient({ region }));
+    const existing = this.clients.get(region);
+    if (existing) {
+      return existing;
     }
-    return this.clients.get(region)!;
+    const client = new KMSClient({ region });
+    this.clients.set(region, client);
+    return client;
   }
 
   private extractRegionFromArn(keyId: string): string | null {

@@ -10,8 +10,8 @@
  *   node validate-dossier.js /path/to/dossier.md
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 
