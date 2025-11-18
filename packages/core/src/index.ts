@@ -8,14 +8,24 @@
  * - TypeScript type definitions
  */
 
-// Type exports
-export * from './types';
-
-// Parser exports
-export { parseDossierContent, parseDossierFile, validateFrontmatter } from './parser';
-
 // Checksum exports
 export { calculateChecksum, verifyIntegrity } from './checksum';
 
+// Parser exports
+export { parseDossierContent, parseDossierFile, validateFrontmatter } from './parser';
 // Signature exports
-export { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from './signature';
+export { loadTrustedKeys, verifySignature, verifyWithEd25519, verifyWithKms } from './signature';
+// Signer/Verifier interfaces and implementations
+export {
+  Ed25519Signer,
+  Ed25519Verifier,
+  getVerifierRegistry,
+  KmsSigner,
+  KmsVerifier,
+  SignatureResult,
+  Signer,
+  Verifier,
+  VerifierRegistry,
+} from './signers';
+// Type exports
+export * from './types';

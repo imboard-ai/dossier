@@ -39,8 +39,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@aws-sdk/client-kms": "^3.927.0",
-    "tweetnacl": "^1.0.3"
+    "@aws-sdk/client-kms": "^3.927.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

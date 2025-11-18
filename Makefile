@@ -1,7 +1,7 @@
 # Dossier Build System
 # Handles build order dependencies across npm workspaces
 
-.PHONY: all build clean test install help
+.PHONY: all build clean test install help lint format check
 .DEFAULT_GOAL := help
 
 ## help: Show this help message
@@ -23,7 +23,7 @@ install:
 	@echo "✓ Dependencies installed"
 
 ## build: Build all packages in dependency order
-build: build-core build-mcp build-cli
+build: lint build-core build-mcp build-cli
 	@echo "✓ All packages built successfully"
 
 ## build-core: Build @dossier/core package
@@ -58,6 +58,23 @@ test:
 	@echo "Running tests..."
 	npm run test --workspaces --if-present
 	@echo "✓ Tests completed"
+
+## lint: Check code for linting issues (no changes)
+lint:
+	@echo "Checking code with Biome..."
+	npx biome check .
+
+## format: Format code with Biome
+format:
+	@echo "Formatting code with Biome..."
+	npx biome format --write .
+	@echo "✓ Code formatted"
+
+## check: Format and lint code with auto-fix
+check:
+	@echo "Checking and fixing code with Biome..."
+	npx biome check --write .
+	@echo "✓ Code checked and formatted"
 
 ## verify: Verify a dossier file (usage: make verify FILE=path/to/file.ds.md)
 verify:

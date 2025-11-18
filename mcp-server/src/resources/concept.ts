@@ -3,8 +3,8 @@
  * Provides an introduction to the dossier concept (condensed README.md)
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { logger } from '../utils/logger';
 
 /**

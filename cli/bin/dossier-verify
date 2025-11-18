@@ -22,8 +22,7 @@ const {
   parseDossierContent,
   verifyIntegrity,
   loadTrustedKeys,
-  verifyWithMinisign,
-  verifyWithKms
+  verifySignature
 } = require('@imboard-ai/dossier-core');
 
 // Colors for terminal output
@@ -174,7 +173,7 @@ function verifyChecksum(body, declaredHash) {
 }
 
 // Verify signature (using @dossier/core for real cryptographic verification)
-async function verifySignature(body, frontmatter) {
+async function checkSignature(body, frontmatter) {
   if (!frontmatter.signature) {
     return {
       present: false,
@@ -189,15 +188,7 @@ async function verifySignature(body, frontmatter) {
   const isTrusted = trustedKeys.has(signature.public_key || signature.key_id);
 
   try {
-    let isValid = false;
-
-    // Verify based on algorithm
-    if (signature.algorithm === 'ECDSA-SHA-256') {
-      isValid = await verifyWithKms(body, signature.signature, signature.key_id);
-    } else {
-      // Default to Minisign (Ed25519)
-      isValid = verifyWithMinisign(body, signature.signature, signature.public_key);
-    }
+    const isValid = await verifySignature(body, signature);
 
     if (!isValid) {
       return {
@@ -325,7 +316,7 @@ async function verifyDossier(input, options) {
 
     // Verify signature
     console.log(`\n${colors.bright}🔏 Authenticity Check:${colors.reset}`);
-    const signatureResult = await verifySignature(body, frontmatter);
+    const signatureResult = await checkSignature(body, frontmatter);
 
     if (signatureResult.present) {
       if (signatureResult.verified && signatureResult.trusted) {

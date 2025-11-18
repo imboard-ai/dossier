@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { parseDossierContent, validateFrontmatter, parseDossierFile } from '../parser';
-import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { parseDossierContent, parseDossierFile, validateFrontmatter } from '../parser';
 
 describe('parseDossierContent', () => {
   it('should parse valid dossier with minimal frontmatter', () => {
@@ -174,7 +174,7 @@ describe('validateFrontmatter', () => {
       objective: 'Test validation',
       risk_level: 'low',
       risk_factors: [],
-      destructive_operations: []
+      destructive_operations: [],
     };
 
     const errors = validateFrontmatter(frontmatter);
@@ -184,7 +184,7 @@ describe('validateFrontmatter', () => {
   it('should detect missing required fields', () => {
     const frontmatter: any = {
       version: '1.0.0',
-      title: 'Incomplete Dossier'
+      title: 'Incomplete Dossier',
       // Missing: protocol_version, objective, risk_level, risk_factors, destructive_operations
     };
 
@@ -205,12 +205,14 @@ describe('validateFrontmatter', () => {
       objective: 'Test',
       risk_level: 'invalid_level',
       risk_factors: [],
-      destructive_operations: []
+      destructive_operations: [],
     };
 
     const errors = validateFrontmatter(frontmatter);
 
-    expect(errors).toContain('Invalid risk_level: invalid_level. Must be one of: low, medium, high, critical');
+    expect(errors).toContain(
+      'Invalid risk_level: invalid_level. Must be one of: low, medium, high, critical'
+    );
   });
 
   it('should accept all valid risk levels', () => {
@@ -224,7 +226,7 @@ describe('validateFrontmatter', () => {
         objective: 'Test',
         risk_level: level,
         risk_factors: [],
-        destructive_operations: []
+        destructive_operations: [],
       };
 
       const errors = validateFrontmatter(frontmatter);
@@ -241,12 +243,14 @@ describe('validateFrontmatter', () => {
       risk_level: 'low',
       risk_factors: [],
       destructive_operations: [],
-      status: 'invalid_status'
+      status: 'invalid_status',
     };
 
     const errors = validateFrontmatter(frontmatter);
 
-    expect(errors).toContain('Invalid status: invalid_status. Must be one of: draft, stable, deprecated');
+    expect(errors).toContain(
+      'Invalid status: invalid_status. Must be one of: draft, stable, deprecated'
+    );
   });
 
   it('should accept all valid statuses', () => {
@@ -261,7 +265,7 @@ describe('validateFrontmatter', () => {
         risk_level: 'low',
         risk_factors: [],
         destructive_operations: [],
-        status
+        status,
       };
 
       const errors = validateFrontmatter(frontmatter);
@@ -277,7 +281,7 @@ describe('validateFrontmatter', () => {
       objective: 'Test',
       risk_level: 'low',
       risk_factors: [],
-      destructive_operations: []
+      destructive_operations: [],
       // status is optional
     };
 

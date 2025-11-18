@@ -3,9 +3,9 @@
  * Handles reading and writing user preferences to ~/.dossier/config.json
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
 
 const CONFIG_DIR = path.join(os.homedir(), '.dossier');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
@@ -16,7 +16,7 @@ const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 const DEFAULT_CONFIG = {
   defaultLlm: 'auto',
   theme: 'auto',
-  auditLog: true
+  auditLog: true,
 };
 
 /**
@@ -43,7 +43,7 @@ function loadConfig() {
 
     // Merge with defaults to ensure all keys exist
     return { ...DEFAULT_CONFIG, ...config };
-  } catch (error) {
+  } catch (_error) {
     console.error('⚠️  Warning: Could not read config file, using defaults');
     return { ...DEFAULT_CONFIG };
   }
@@ -93,5 +93,5 @@ module.exports = {
   setConfig,
   CONFIG_DIR,
   CONFIG_FILE,
-  DEFAULT_CONFIG
+  DEFAULT_CONFIG,
 };

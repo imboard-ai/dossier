@@ -5,7 +5,7 @@
  */
 
 const { listDossiers } = require('./dist/tools/listDossiers.js');
-const path = require('path');
+const path = require('node:path');
 
 // Test with the examples directory
 const examplesPath = path.join(__dirname, '../examples');

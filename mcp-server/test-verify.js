@@ -5,7 +5,7 @@
  */
 
 const { verifyDossier } = require('./dist/tools/verifyDossier.js');
-const path = require('path');
+const path = require('node:path');
 
 // Test with the git worktree dossier
 const dossierPath = path.join(__dirname, '../examples/development/add-git-worktree-support.ds.md');

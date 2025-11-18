@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { loadTrustedKeys, verifyWithMinisign } from '../signature';
-import { writeFileSync, unlinkSync, mkdirSync, existsSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { sign as cryptoSign, generateKeyPairSync } from 'node:crypto';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { loadTrustedKeys, verifyWithEd25519 } from '../signature';
 
 describe('loadTrustedKeys', () => {
   const createTempDir = () => {
@@ -21,8 +22,12 @@ describe('loadTrustedKeys', () => {
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== official-key-1
-RWTKey2== official-key-2`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `RWTKey1== official-key-1
+RWTKey2== official-key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -37,11 +42,15 @@ RWTKey2== official-key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 
 RWTKey2== key-2
 
-`, 'utf8');
+`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -56,10 +65,14 @@ RWTKey2== key-2
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `# This is a comment
+    writeFileSync(
+      keysFile,
+      `# This is a comment
 RWTKey1== key-1
 # Another comment
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -73,8 +86,12 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== Official Key Name
-RWTKey2== Another Key With Spaces`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `RWTKey1== Official Key Name
+RWTKey2== Another Key With Spaces`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -110,9 +127,13 @@ RWTKey2== Another Key With Spaces`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `# Comment 1
+    writeFileSync(
+      keysFile,
+      `# Comment 1
 # Comment 2
-# Comment 3`, 'utf8');
+# Comment 3`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -125,10 +146,14 @@ RWTKey2== Another Key With Spaces`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 
 
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -142,9 +167,13 @@ RWTKey2== key-2`, 'utf8');
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
     // Lines without space delimiter should be skipped
-    writeFileSync(keysFile, `RWTKey1== key-1
+    writeFileSync(
+      keysFile,
+      `RWTKey1== key-1
 InvalidLineWithoutSpace
-RWTKey2== key-2`, 'utf8');
+RWTKey2== key-2`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -160,8 +189,12 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    writeFileSync(keysFile, `  RWTKey1==   key-1
-	RWTKey2==	key-2	`, 'utf8');
+    writeFileSync(
+      keysFile,
+      `  RWTKey1==   key-1
+	RWTKey2==	key-2	`,
+      'utf8'
+    );
 
     const keys = loadTrustedKeys(keysFile);
 
@@ -176,9 +209,7 @@ RWTKey2== key-2`, 'utf8');
     const tempDir = createTempDir();
     const keysFile = join(tempDir, 'trusted-keys.txt');
 
-    const manyKeys = Array.from({ length: 100 }, (_, i) =>
-      `RWTKey${i}== key-${i}`
-    ).join('\n');
+    const manyKeys = Array.from({ length: 100 }, (_, i) => `RWTKey${i}== key-${i}`).join('\n');
 
     writeFileSync(keysFile, manyKeys, 'utf8');
 
@@ -192,58 +223,105 @@ RWTKey2== key-2`, 'utf8');
   });
 });
 
-describe('verifyWithMinisign', () => {
-  it('should reject invalid signature format', () => {
-    const content = 'test content';
-    const invalidSignature = 'not-a-valid-signature';
-    const invalidPublicKey = 'not-a-valid-key';
+describe('verifyWithEd25519', () => {
+  it('should verify valid Ed25519 signature', () => {
+    // Generate a test keypair
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 
-    const result = verifyWithMinisign(content, invalidSignature, invalidPublicKey);
+    // Export keys in PEM format
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    // Sign some content
+    const content = 'This is test content for Ed25519 signature verification';
+    const contentBuffer = Buffer.from(content, 'utf8');
+    const signatureBuffer = cryptoSign(null, contentBuffer, privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    // Verify signature
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(true);
+  });
+
+  it('should reject tampered content', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const originalContent = 'Original content';
+    const tamperedContent = 'Tampered content';
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(originalContent, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(tamperedContent, signatureBase64, publicKeyPem);
 
     expect(result).toBe(false);
   });
 
-  it('should reject empty signature', () => {
-    const content = 'test content';
-    const result = verifyWithMinisign(content, '', '');
+  it('should reject wrong public key', () => {
+    const { privateKey: privateKey1 } = generateKeyPairSync('ed25519');
+    const { publicKey: publicKey2 } = generateKeyPairSync('ed25519');
+
+    const publicKeyPem2 = publicKey2.export({ type: 'spki', format: 'pem' }) as string;
+
+    const content = 'Test content';
+    const signatureBuffer = cryptoSign(null, Buffer.from(content, 'utf8'), privateKey1);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem2);
 
     expect(result).toBe(false);
   });
 
-  it('should handle malformed base64 signature gracefully', () => {
-    const content = 'test content';
-    const malformedSignature = 'not-base64!!!';
-    const malformedKey = 'also-not-base64!!!';
+  it('should handle invalid PEM format', () => {
+    const content = 'Test content';
+    const signature = 'dGVzdA==';
+    const invalidPem = 'not-a-valid-pem';
 
-    const result = verifyWithMinisign(content, malformedSignature, malformedKey);
-
-    expect(result).toBe(false);
-  });
-
-  it('should reject signature with wrong length', () => {
-    const content = 'test content';
-    // Valid base64 but wrong length for Ed25519 signature
-    const shortSignature = Buffer.from('short').toString('base64');
-    const shortKey = Buffer.from('key').toString('base64');
-
-    const result = verifyWithMinisign(content, shortSignature, shortKey);
+    const result = verifyWithEd25519(content, signature, invalidPem);
 
     expect(result).toBe(false);
   });
 
-  it('should handle empty content', () => {
-    const content = '';
-    const signature = 'dGVzdA=='; // base64 "test"
-    const publicKey = 'a2V5'; // base64 "key"
+  it('should handle invalid signature base64', () => {
+    const { publicKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
-    const result = verifyWithMinisign(content, signature, publicKey);
+    const result = verifyWithEd25519('content', 'invalid!!!base64', publicKeyPem);
 
     expect(result).toBe(false);
   });
 
-  // Note: Real minisign signature tests are in Step 2.5
-  it.skip('should verify valid minisign signature (tested in Step 2.5)', () => {
-    // This will be tested with real minisign-generated signatures
+  it('should work with multiline content', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const content = `Line 1
+Line 2
+Line 3
+With special chars: 你好 🎉`;
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(content, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(true);
+  });
+
+  it('should detect whitespace changes', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const originalContent = 'Content without trailing newline';
+    const modifiedContent = 'Content without trailing newline\n';
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(originalContent, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(modifiedContent, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(false);
   });
 });
 
