@@ -3,22 +3,24 @@
 /**
  * Dossier Signing Tool
  *
- * Signs a dossier with minisign and embeds the checksum and signature in the frontmatter.
+ * Signs a dossier with Ed25519 and embeds the checksum and signature in the frontmatter.
  *
  * Usage:
- *   node tools/sign-dossier.js <dossier-file> --key <minisign-key-file> [--key-id <id>]
+ *   node tools/sign-dossier.js <dossier-file> --key <ed25519-private-key.pem> [--key-id <id>]
  *
  * Prerequisites:
- *   - minisign must be installed (brew install minisign)
- *   - You must have a minisign private key
+ *   - Ed25519 private key in PEM format
+ *
+ * Generate a keypair with:
+ *   openssl genpkey -algorithm ED25519 -out private-key.pem
+ *   openssl pkey -in private-key.pem -pubout -out public-key.pem
  *
  * Example:
- *   node tools/sign-dossier.js examples/devops/deploy-to-aws.md --key ~/.minisign/imboard-ai-2024.key --key-id imboard-ai-2024
+ *   node tools/sign-dossier.js examples/devops/deploy-to-aws.md --key ~/.dossier/private-key.pem --key-id imboard-ai-2024
  */
 
 const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const crypto = require('crypto');
 const { parseDossierContent, calculateChecksum } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
@@ -30,18 +32,22 @@ function parseArgs() {
 Dossier Signing Tool
 
 Usage:
-  node tools/sign-dossier.js <dossier-file> --key <minisign-key-file> [options]
+  node tools/sign-dossier.js <dossier-file> --key <ed25519-private-key.pem> [options]
 
 Options:
-  --key <file>        Path to minisign private key file (REQUIRED)
+  --key <file>        Path to Ed25519 private key in PEM format (REQUIRED)
   --key-id <id>       Human-readable key identifier (e.g., 'imboard-ai-2024')
   --signed-by <name>  Signer identity (e.g., 'Imboard AI <security@imboard.ai>')
   --dry-run           Calculate checksum but don't sign
   --help, -h          Show this help message
 
+Generate keypair:
+  openssl genpkey -algorithm ED25519 -out private-key.pem
+  openssl pkey -in private-key.pem -pubout -out public-key.pem
+
 Example:
   node tools/sign-dossier.js examples/devops/deploy-to-aws.md \\
-    --key ~/.minisign/imboard-ai-2024.key \\
+    --key ~/.dossier/private-key.pem \\
     --key-id imboard-ai-2024 \\
     --signed-by "Imboard AI <security@imboard.ai>"
 `);
@@ -68,69 +74,62 @@ Example:
   };
 }
 
-// Sign content with minisign
-function signWithMinisign(content, keyFile) {
-  // Check if minisign is installed
-  try {
-    execSync('which minisign', { stdio: 'ignore' });
-  } catch (err) {
-    throw new Error('minisign not found. Install it with: brew install minisign (macOS) or apt-get install minisign (Linux)');
-  }
-
+// Sign content with Ed25519
+function signWithEd25519(content, keyFile) {
   // Check if key file exists
   if (!fs.existsSync(keyFile)) {
     throw new Error(`Key file not found: ${keyFile}`);
   }
 
-  // Create temporary file for content
-  const tempFile = '/tmp/dossier-content-' + Date.now() + '.txt';
-  fs.writeFileSync(tempFile, content, 'utf8');
-
   try {
-    // Sign with minisign
-    // Output will be tempFile.minisig
-    execSync(`minisign -S -s "${keyFile}" -m "${tempFile}" -t "dossier signature"`, {
-      stdio: 'inherit'
+    // Read private key from PEM file
+    const privateKeyPem = fs.readFileSync(keyFile, 'utf8');
+
+    // Create private key object
+    const privateKey = crypto.createPrivateKey({
+      key: privateKeyPem,
+      format: 'pem',
+      type: 'pkcs8'
     });
 
-    // Read signature file
-    const sigFile = tempFile + '.minisig';
-    if (!fs.existsSync(sigFile)) {
-      throw new Error('Signature file was not created');
-    }
+    // Sign the content (Ed25519 uses null for algorithm parameter)
+    const contentBuffer = Buffer.from(content, 'utf8');
+    const signature = crypto.sign(null, contentBuffer, privateKey);
 
-    const signature = fs.readFileSync(sigFile, 'utf8');
-
-    // Clean up temp files
-    fs.unlinkSync(tempFile);
-    fs.unlinkSync(sigFile);
-
-    return signature;
+    // Return base64-encoded signature
+    return signature.toString('base64');
   } catch (err) {
-    // Clean up on error
-    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-    if (fs.existsSync(tempFile + '.minisig')) fs.unlinkSync(tempFile + '.minisig');
+    if (err.code === 'ERR_OSSL_UNSUPPORTED') {
+      throw new Error('Key file is not a valid Ed25519 private key in PEM format');
+    }
     throw err;
   }
 }
 
-// Extract public key from minisign key file
+// Extract public key from Ed25519 private key
 function getPublicKey(keyFile) {
-  // Minisign private key files have corresponding .pub files
-  const pubFile = keyFile.replace(/\.key$/, '.pub');
+  try {
+    // Read private key
+    const privateKeyPem = fs.readFileSync(keyFile, 'utf8');
 
-  if (!fs.existsSync(pubFile)) {
-    throw new Error(`Public key file not found: ${pubFile}\nMake sure the .pub file is in the same directory as the .key file`);
+    // Create private key object
+    const privateKey = crypto.createPrivateKey({
+      key: privateKeyPem,
+      format: 'pem',
+      type: 'pkcs8'
+    });
+
+    // Export public key in PEM format
+    const publicKey = crypto.createPublicKey(privateKey);
+    const publicKeyPem = publicKey.export({
+      type: 'spki',
+      format: 'pem'
+    });
+
+    return publicKeyPem;
+  } catch (err) {
+    throw new Error(`Failed to extract public key from ${keyFile}: ${err.message}`);
   }
-
-  const pubContent = fs.readFileSync(pubFile, 'utf8');
-  // Public key is on the second line
-  const lines = pubContent.trim().split('\n');
-  if (lines.length < 2) {
-    throw new Error(`Invalid public key file format: ${pubFile}`);
-  }
-
-  return lines[1].trim();
 }
 
 // Main function
@@ -177,14 +176,14 @@ function main() {
     return;
   }
 
-  // Sign with minisign
-  console.log('\n✍️  Signing with minisign...');
+  // Sign with Ed25519
+  console.log('\n✍️  Signing with Ed25519...');
   console.log(`   Key file: ${options.keyFile}`);
 
   let signature;
   let publicKey;
   try {
-    signature = signWithMinisign(body, options.keyFile);
+    signature = signWithEd25519(body, options.keyFile);
     publicKey = getPublicKey(options.keyFile);
   } catch (err) {
     console.error(`\nError: ${err.message}`);
@@ -195,7 +194,7 @@ function main() {
 
   // Add signature to frontmatter
   frontmatter.signature = {
-    algorithm: 'minisign',
+    algorithm: 'ed25519',
     public_key: publicKey,
     signature: signature,
     signed_at: new Date().toISOString()
@@ -218,8 +217,7 @@ function main() {
   console.log('   ✓ File updated');
   console.log('\n✅ Dossier signed successfully!');
   console.log(`\nSignature details:`);
-  console.log(`  Algorithm: minisign`);
-  console.log(`  Public key: ${publicKey}`);
+  console.log(`  Algorithm: ed25519`);
   console.log(`  Key ID: ${options.keyId || '(not specified)'}`);
   console.log(`  Signed by: ${options.signedBy || '(not specified)'}`);
   console.log(`  Signed at: ${frontmatter.signature.signed_at}`);
@@ -235,4 +233,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { parseDossier, calculateChecksum, signWithMinisign };
+module.exports = { signWithEd25519, getPublicKey };

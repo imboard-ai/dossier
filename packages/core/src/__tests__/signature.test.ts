@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { loadTrustedKeys, verifyWithMinisign } from '../signature';
+import { loadTrustedKeys, verifyWithEd25519 } from '../signature';
 import { writeFileSync, unlinkSync, mkdirSync, existsSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { generateKeyPairSync, sign as cryptoSign } from 'crypto';
 
 describe('loadTrustedKeys', () => {
   const createTempDir = () => {
@@ -192,58 +193,106 @@ RWTKey2== key-2`, 'utf8');
   });
 });
 
-describe('verifyWithMinisign', () => {
-  it('should reject invalid signature format', () => {
-    const content = 'test content';
-    const invalidSignature = 'not-a-valid-signature';
-    const invalidPublicKey = 'not-a-valid-key';
 
-    const result = verifyWithMinisign(content, invalidSignature, invalidPublicKey);
+describe('verifyWithEd25519', () => {
+  it('should verify valid Ed25519 signature', () => {
+    // Generate a test keypair
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+
+    // Export keys in PEM format
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    // Sign some content
+    const content = 'This is test content for Ed25519 signature verification';
+    const contentBuffer = Buffer.from(content, 'utf8');
+    const signatureBuffer = cryptoSign(null, contentBuffer, privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    // Verify signature
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(true);
+  });
+
+  it('should reject tampered content', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const originalContent = 'Original content';
+    const tamperedContent = 'Tampered content';
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(originalContent, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(tamperedContent, signatureBase64, publicKeyPem);
 
     expect(result).toBe(false);
   });
 
-  it('should reject empty signature', () => {
-    const content = 'test content';
-    const result = verifyWithMinisign(content, '', '');
+  it('should reject wrong public key', () => {
+    const { publicKey: publicKey1, privateKey: privateKey1 } = generateKeyPairSync('ed25519');
+    const { publicKey: publicKey2 } = generateKeyPairSync('ed25519');
+
+    const publicKeyPem2 = publicKey2.export({ type: 'spki', format: 'pem' }) as string;
+
+    const content = 'Test content';
+    const signatureBuffer = cryptoSign(null, Buffer.from(content, 'utf8'), privateKey1);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem2);
 
     expect(result).toBe(false);
   });
 
-  it('should handle malformed base64 signature gracefully', () => {
-    const content = 'test content';
-    const malformedSignature = 'not-base64!!!';
-    const malformedKey = 'also-not-base64!!!';
+  it('should handle invalid PEM format', () => {
+    const content = 'Test content';
+    const signature = 'dGVzdA==';
+    const invalidPem = 'not-a-valid-pem';
 
-    const result = verifyWithMinisign(content, malformedSignature, malformedKey);
-
-    expect(result).toBe(false);
-  });
-
-  it('should reject signature with wrong length', () => {
-    const content = 'test content';
-    // Valid base64 but wrong length for Ed25519 signature
-    const shortSignature = Buffer.from('short').toString('base64');
-    const shortKey = Buffer.from('key').toString('base64');
-
-    const result = verifyWithMinisign(content, shortSignature, shortKey);
+    const result = verifyWithEd25519(content, signature, invalidPem);
 
     expect(result).toBe(false);
   });
 
-  it('should handle empty content', () => {
-    const content = '';
-    const signature = 'dGVzdA=='; // base64 "test"
-    const publicKey = 'a2V5'; // base64 "key"
+  it('should handle invalid signature base64', () => {
+    const { publicKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
-    const result = verifyWithMinisign(content, signature, publicKey);
+    const result = verifyWithEd25519('content', 'invalid!!!base64', publicKeyPem);
 
     expect(result).toBe(false);
   });
 
-  // Note: Real minisign signature tests are in Step 2.5
-  it.skip('should verify valid minisign signature (tested in Step 2.5)', () => {
-    // This will be tested with real minisign-generated signatures
+  it('should work with multiline content', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const content = `Line 1
+Line 2
+Line 3
+With special chars: 你好 🎉`;
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(content, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(content, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(true);
+  });
+
+  it('should detect whitespace changes', () => {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+    const originalContent = 'Content without trailing newline';
+    const modifiedContent = 'Content without trailing newline\n';
+
+    const signatureBuffer = cryptoSign(null, Buffer.from(originalContent, 'utf8'), privateKey);
+    const signatureBase64 = signatureBuffer.toString('base64');
+
+    const result = verifyWithEd25519(modifiedContent, signatureBase64, publicKeyPem);
+
+    expect(result).toBe(false);
   });
 });
 

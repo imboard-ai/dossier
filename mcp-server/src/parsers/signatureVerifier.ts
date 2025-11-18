@@ -5,7 +5,7 @@
 
 import { AuthenticityResult, DossierFrontmatter } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
-import { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from '@imboard-ai/dossier-core';
+import { loadTrustedKeys, verifyWithEd25519, verifyWithKms } from '@imboard-ai/dossier-core';
 
 /**
  * Verify dossier authenticity (signature + trust)
@@ -38,7 +38,7 @@ export async function verifyAuthenticity(
     if (signature.algorithm === 'ECDSA-SHA-256') {
       isValid = await verifyWithKms(body, signature.signature, signature.key_id);
     } else {
-      isValid = verifyWithMinisign(body, signature.signature, signature.public_key);
+      isValid = verifyWithEd25519(body, signature.signature, signature.public_key);
     }
 
     if (!isValid) {

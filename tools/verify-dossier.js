@@ -20,7 +20,7 @@ const {
   parseDossierContent,
   verifyIntegrity,
   loadTrustedKeys,
-  verifyWithMinisign,
+  verifyWithEd25519,
   verifyWithKms
 } = require('@imboard-ai/dossier-core');
 
@@ -142,7 +142,7 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
       if (sig.algorithm === 'ECDSA-SHA-256') {
         isValid = await verifyWithKms(body, sig.signature, sig.key_id);
       } else {
-        isValid = verifyWithMinisign(body, sig.signature, sig.public_key);
+        isValid = verifyWithEd25519(body, sig.signature, sig.public_key);
       }
 
       if (isValid) {

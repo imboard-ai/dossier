@@ -18,4 +18,4 @@ export { parseDossierContent, parseDossierFile, validateFrontmatter } from './pa
 export { calculateChecksum, verifyIntegrity } from './checksum';
 
 // Signature exports
-export { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from './signature';
+export { loadTrustedKeys, verifyWithEd25519, verifyWithKms } from './signature';
