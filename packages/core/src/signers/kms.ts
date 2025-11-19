@@ -95,12 +95,14 @@ export class KmsVerifier implements Verifier {
       const region = this.extractRegionFromArn(signature.key_id) || 'us-east-1';
       const client = this.getClient(region);
 
+      // Calculate SHA256 digest to match what was signed
+      const hash = createHash('sha256').update(content, 'utf8').digest();
       const signatureBuffer = Buffer.from(signature.signature, 'base64');
-      const contentBuffer = Buffer.from(content, 'utf8');
 
       const command = new VerifyCommand({
         KeyId: signature.key_id,
-        Message: contentBuffer,
+        Message: hash,
+        MessageType: 'DIGEST',
         Signature: signatureBuffer,
         SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256,
       });

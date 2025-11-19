@@ -185,7 +185,9 @@ async function checkSignature(body, frontmatter) {
 
   const signature = frontmatter.signature;
   const trustedKeys = loadTrustedKeys();
-  const isTrusted = trustedKeys.has(signature.public_key || signature.key_id);
+  // Check both key_id and public_key for trusted status
+  // key_id is easier to manage in trusted-keys.txt file
+  const isTrusted = trustedKeys.has(signature.key_id) || trustedKeys.has(signature.public_key);
 
   try {
     const isValid = await verifySignature(body, signature);
@@ -204,7 +206,7 @@ async function checkSignature(body, frontmatter) {
       verified: true,
       trusted: isTrusted,
       message: isTrusted
-        ? `Verified signature from trusted source: ${trustedKeys.get(signature.public_key || signature.key_id)}`
+        ? `Verified signature from trusted source: ${trustedKeys.get(signature.key_id) || trustedKeys.get(signature.public_key)}`
         : 'Valid signature but key is not in trusted list',
     };
   } catch (err) {
