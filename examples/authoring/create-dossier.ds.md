@@ -31,10 +31,11 @@
   },
   "signature": {
     "algorithm": "ECDSA-SHA-256",
-    "signature": "MEUCIAdQFeRq8k9sQ7FUpoVb9L8jic+hfWvJ8tr6aHXZxJkOAiEAibswUpF8yQkYu5cV9T731aSm+C7Lg6aKHbxZWzEc2dI=",
+    "signature": "MEUCIGjU6QCxlOubdleNSEzMnv3EwnPJTNV/G46QEpvsrDhDAiEAy7BpWeq1vQIXTBCU59TWHUQQSxI/3GRpSGWf2ZMuphk=",
     "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
     "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
-    "signed_at": "2025-11-24T17:55:04.572Z"
+    "signed_at": "2025-11-24T18:02:20.211Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
   }
 }
 ---
