@@ -79,12 +79,17 @@ export async function verifyWithKms(
   region = 'us-east-1'
 ): Promise<boolean> {
   const client = new KMSClient({ region });
+  const { createHash } = await import('crypto');
+
+  // Calculate SHA256 digest of content (must match signing process)
+  const hash = createHash('sha256').update(content, 'utf8').digest();
+
   const signatureBuffer = Buffer.from(signature, 'base64');
-  const contentBuffer = Buffer.from(content);
 
   const command = new VerifyCommand({
     KeyId: keyId,
-    Message: contentBuffer,
+    Message: hash,
+    MessageType: 'DIGEST',
     Signature: signatureBuffer,
     SigningAlgorithm: SigningAlgorithmSpec.ECDSA_SHA_256,
   });
