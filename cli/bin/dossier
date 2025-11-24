@@ -393,15 +393,6 @@ program
         process.exit(2);
       }
 
-      // Set environment variables for meta-dossier context
-      if (file) process.env.DOSSIER_CREATE_FILE = file;
-      if (options.title) process.env.DOSSIER_CREATE_TITLE = options.title;
-      if (options.objective) process.env.DOSSIER_CREATE_OBJECTIVE = options.objective;
-      if (options.risk) process.env.DOSSIER_CREATE_RISK = options.risk;
-      if (options.category) process.env.DOSSIER_CREATE_CATEGORY = options.category;
-      if (options.template) process.env.DOSSIER_CREATE_TEMPLATE = options.template;
-      if (options.tags) process.env.DOSSIER_CREATE_TAGS = options.tags;
-
       // Path to meta-dossier (relative to this script)
       const metaDossierPath = path.join(__dirname, '../../examples/authoring/create-dossier.ds.md');
 
@@ -415,17 +406,55 @@ program
         process.exit(2);
       }
 
+      // Build context header with user-provided values
+      const contextHeader = `
+# USER-PROVIDED CONTEXT
+
+The user ran the dossier create command with the following parameters:
+
+${file ? `- **Output file**: ${file}` : '- **Output file**: Not specified (prompt user)'}
+${options.title ? `- **Title**: ${options.title}` : '- **Title**: Not specified (prompt user)'}
+${options.objective ? `- **Objective**: ${options.objective}` : '- **Objective**: Not specified (prompt user)'}
+${options.risk ? `- **Risk level**: ${options.risk}` : '- **Risk level**: Not specified (prompt user)'}
+${options.category ? `- **Category**: ${options.category}` : '- **Category**: Not specified (prompt user)'}
+${options.tags ? `- **Tags**: ${options.tags}` : '- **Tags**: Not specified (optional)'}
+${options.template ? `- **Template reference**: ${options.template}` : '- **Template**: Not specified (use default structure)'}
+
+**Instructions**: Use the values provided above. For any fields marked "Not specified", prompt the user interactively. When all required information is gathered, create the dossier file according to the meta-dossier instructions below.
+
+---
+
+`;
+
+      // Read meta-dossier content
+      const metaDossierContent = fs.readFileSync(metaDossierPath, 'utf8');
+
+      // Create temp file with context + meta-dossier
+      const os = require('os');
+      const tmpFile = path.join(os.tmpdir(), `dossier-create-${Date.now()}.ds.md`);
+      fs.writeFileSync(tmpFile, contextHeader + metaDossierContent, 'utf8');
+
       console.log('🤖 Launching dossier creation assistant...\n');
 
-      // Build and execute command
-      const command = buildLlmCommand(llm, metaDossierPath);
+      // Build and execute command with temp file
+      const command = buildLlmCommand(llm, tmpFile);
       if (!command) {
         console.log(`❌ Unknown LLM: ${llm}\n`);
         console.log('Supported: claude-code, auto\n');
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
         process.exit(2);
       }
 
-      execSync(command, { stdio: 'inherit' });
+      try {
+        execSync(command, { stdio: 'inherit' });
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
+      } catch (execError) {
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
+        throw execError;
+      }
 
       console.log('\n✅ Dossier creation completed');
 
