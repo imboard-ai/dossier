@@ -2,14 +2,16 @@
  * Dossier Signature Verification
  *
  * This module provides signature verification for dossiers,
- * supporting multiple signature schemes (Minisign and AWS KMS).
+ * supporting multiple signature schemes (Ed25519 and AWS KMS).
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-import { KMSClient, VerifyCommand, SigningAlgorithmSpec } from '@aws-sdk/client-kms';
-import nacl from 'tweetnacl';
+import { createPublicKey, verify } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { KMSClient, SigningAlgorithmSpec, VerifyCommand } from '@aws-sdk/client-kms';
+import type { SignatureResult } from './signers';
+import { getVerifierRegistry } from './signers';
 
 /**
  * Load trusted keys from file
@@ -43,7 +45,7 @@ export function loadTrustedKeys(filePath?: string): Map<string, string> {
         keys.set(publicKey, keyId);
       }
     }
-  } catch (err) {
+  } catch (_err) {
     // Silently handle errors - consumers can check the returned Map size
   }
 
@@ -51,20 +53,26 @@ export function loadTrustedKeys(filePath?: string): Map<string, string> {
 }
 
 /**
- * Verify signature using Minisign (Ed25519)
+ * Verify signature using Ed25519
+ * @param content - The content to verify
+ * @param signature - Base64-encoded signature
+ * @param publicKey - PEM-format Ed25519 public key
  */
-export function verifyWithMinisign(
-  content: string,
-  signature: string,
-  publicKey: string
-): boolean {
+export function verifyWithEd25519(content: string, signature: string, publicKey: string): boolean {
   try {
     const signatureBuffer = Buffer.from(signature, 'base64');
-    const contentBuffer = Buffer.from(content);
-    const publicKeyBuffer = Buffer.from(publicKey, 'base64');
+    const contentBuffer = Buffer.from(content, 'utf8');
 
-    return nacl.sign.detached.verify(contentBuffer, signatureBuffer, publicKeyBuffer);
-  } catch (err) {
+    // Create public key object from PEM
+    const publicKeyObject = createPublicKey({
+      key: publicKey,
+      format: 'pem',
+      type: 'spki',
+    });
+
+    // Verify Ed25519 signature (algorithm is null for Ed25519)
+    return verify(null, contentBuffer, publicKeyObject, signatureBuffer);
+  } catch (_err) {
     return false;
   }
 }
@@ -97,7 +105,23 @@ export async function verifyWithKms(
   try {
     const response = await client.send(command);
     return response.SignatureValid === true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
+}
+
+/**
+ * Verify signature using the registry pattern
+ * This is a convenience function that encapsulates registry lookup
+ * @param content - The content to verify
+ * @param signature - Signature result object containing algorithm and signature data
+ * @returns Promise<boolean> - true if signature is valid, false otherwise
+ */
+export async function verifySignature(
+  content: string,
+  signature: SignatureResult
+): Promise<boolean> {
+  const verifierRegistry = getVerifierRegistry();
+  const verifier = verifierRegistry.get(signature.algorithm);
+  return await verifier.verify(content, signature);
 }

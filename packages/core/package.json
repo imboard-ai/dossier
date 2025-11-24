@@ -10,7 +10,10 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "dossier",
@@ -36,11 +39,13 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@aws-sdk/client-kms": "^3.927.0",
-    "tweetnacl": "^1.0.3"
+    "@aws-sdk/client-kms": "^3.927.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
-    "typescript": "^5.9.3"
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
   }
 }

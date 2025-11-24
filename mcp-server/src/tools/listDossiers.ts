@@ -3,9 +3,9 @@
  * Scans for *.ds.md files and returns metadata
  */
 
-import { readdirSync, statSync } from 'fs';
-import { join, relative } from 'path';
-import { parseDossierFile, DossierListItem } from '@imboard-ai/dossier-core';
+import { readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { type DossierListItem, parseDossierFile } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 
 export interface ListDossiersInput {
@@ -76,7 +76,8 @@ export function listDossiers(input: ListDossiersInput): ListDossiersOutput {
       const { frontmatter } = parsed;
 
       // Extract name from filename (without .ds.md)
-      const fileName = filePath.split('/').pop()!;
+      const fileName = filePath.split('/').pop();
+      if (!fileName) continue;
       const name = fileName.replace('.ds.md', '');
 
       dossiers.push({

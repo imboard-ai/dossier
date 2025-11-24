@@ -3,9 +3,13 @@
  * Uses the unified verifier module
  */
 
-import { AuthenticityResult, DossierFrontmatter } from '../types/dossier';
+import {
+  type AuthenticityResult,
+  type DossierFrontmatter,
+  loadTrustedKeys,
+  verifySignature,
+} from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
-import { loadTrustedKeys, verifyWithMinisign, verifyWithKms } from '@imboard-ai/dossier-core';
 
 /**
  * Verify dossier authenticity (signature + trust)
@@ -30,16 +34,13 @@ export async function verifyAuthenticity(
   // Load trusted keys
   const trustedKeys = loadTrustedKeys(trustedKeysPath);
   const isTrusted = trustedKeys.has(signature.public_key || signature.key_id);
-  const trustedAs = isTrusted ? trustedKeys.get(signature.public_key || signature.key_id) : undefined;
+  const trustedAs = isTrusted
+    ? trustedKeys.get(signature.public_key || signature.key_id)
+    : undefined;
 
   // Verify signature
   try {
-    let isValid = false;
-    if (signature.algorithm === 'ECDSA-SHA-256') {
-      isValid = await verifyWithKms(body, signature.signature, signature.key_id);
-    } else {
-      isValid = verifyWithMinisign(body, signature.signature, signature.public_key);
-    }
+    const isValid = await verifySignature(body, signature);
 
     if (!isValid) {
       logger.error('SIGNATURE VERIFICATION FAILED');

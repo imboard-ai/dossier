@@ -2,8 +2,8 @@
  * Dossier parser - extracts frontmatter and body from dossier files
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { DossierFrontmatter, ParsedDossier } from './types';
+import { existsSync, readFileSync } from 'node:fs';
+import type { DossierFrontmatter, ParsedDossier } from './types';
 
 /**
  * Parse dossier content into frontmatter and body
@@ -14,9 +14,7 @@ export function parseDossierContent(content: string): ParsedDossier {
   const match = content.match(frontmatterRegex);
 
   if (!match) {
-    throw new Error(
-      'Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]'
-    );
+    throw new Error('Invalid dossier format. Expected:\n---dossier\n{...}\n---\n[body]');
   }
 
   const frontmatterJson = match[1];
@@ -72,13 +70,17 @@ export function validateFrontmatter(frontmatter: DossierFrontmatter): string[] {
   // Validate risk_level enum
   const validRiskLevels = ['low', 'medium', 'high', 'critical'];
   if (frontmatter.risk_level && !validRiskLevels.includes(frontmatter.risk_level)) {
-    errors.push(`Invalid risk_level: ${frontmatter.risk_level}. Must be one of: ${validRiskLevels.join(', ')}`);
+    errors.push(
+      `Invalid risk_level: ${frontmatter.risk_level}. Must be one of: ${validRiskLevels.join(', ')}`
+    );
   }
 
   // Validate status enum
   const validStatuses = ['draft', 'stable', 'deprecated'];
   if (frontmatter.status && !validStatuses.includes(frontmatter.status)) {
-    errors.push(`Invalid status: ${frontmatter.status}. Must be one of: ${validStatuses.join(', ')}`);
+    errors.push(
+      `Invalid status: ${frontmatter.status}. Must be one of: ${validStatuses.join(', ')}`
+    );
   }
 
   return errors;
