@@ -19,6 +19,87 @@ This guide covers the practical steps for signing dossiers locally and in CI/CD.
 
 ## Local Signing (Development)
 
+### Two Signing Methods
+
+Dossier supports two signing methods:
+
+1. **AWS KMS** - For official imboard-ai team dossiers (requires AWS credentials)
+2. **Ed25519** - For community contributors (no special access needed)
+
+### Using Ed25519 (Community Contributors) ✅ RECOMMENDED
+
+Community contributors should use Ed25519 signing, which uses Node.js built-in crypto (no external dependencies).
+
+#### Step 1: Generate Your Key Pair
+
+```bash
+# Generate Ed25519 key pair
+node -e "
+const { generateKeyPairSync } = require('crypto');
+const fs = require('fs');
+
+const { privateKey, publicKey } = generateKeyPairSync('ed25519', {
+  privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  publicKeyEncoding: { type: 'spki', format: 'pem' }
+});
+
+// Save keys
+fs.writeFileSync('my-signing-key.pem', privateKey, { mode: 0o600 });
+fs.writeFileSync('my-public-key.pem', publicKey);
+
+console.log('✅ Keys generated:');
+console.log('   Private key: my-signing-key.pem (keep this secret!)');
+console.log('   Public key: my-public-key.pem (share this)');
+"
+```
+
+#### Step 2: Sign a Dossier
+
+```bash
+# Sign with your Ed25519 key
+node tools/sign-dossier.js path/to/your-dossier.ds.md \
+  --key my-signing-key.pem \
+  --key-id "my-name-2025" \
+  --signed-by "Your Name <your.email@example.com>"
+```
+
+#### Step 3: Verify the Signature
+
+```bash
+# Verify locally (requires adding your key to trusted keys)
+dossier keys add "$(cat my-public-key.pem | tr -d '\n')" "my-name-2025"
+dossier verify path/to/your-dossier.ds.md
+```
+
+#### Step 4: Publish Your Public Key
+
+Add your public key to your repository so others can verify your signatures:
+
+```bash
+# Create KEYS.txt in your repository
+cat > KEYS.txt << 'EOF'
+# Dossier Author Public Keys
+
+## Your Name (your.email@example.com)
+
+**Key ID**: my-name-2025
+**Algorithm**: Ed25519
+**Created**: 2025-11-24
+
+**Public Key**:
+$(cat my-public-key.pem)
+
+**Fingerprint**:
+$(openssl pkey -pubin -in my-public-key.pem -outform DER | sha256sum | cut -d' ' -f1)
+
+**Verification**:
+```bash
+# Users can add your key:
+dossier keys add "$(curl -s https://raw.githubusercontent.com/your-repo/main/KEYS.txt | grep -A 10 'Public Key' | tail -n +2 | head -n 3 | tr -d '\n')" "my-name-2025"
+```
+EOF
+```
+
 ### Using AWS KMS (Official Dossiers)
 
 AWS KMS signing requires AWS credentials with appropriate permissions.
