@@ -82,8 +82,13 @@ The meta-dossier (`create-dossier.ds.md`) is a **complete, signed dossier** that
 
 **Notes**:
 - Meta-dossier created with comprehensive instructions for LLM agents
-- Signed with AWS KMS (signature verification will work in CI/CD with AWS access)
-- Manual testing will be done after CLI wrapper implementation (Phase 3)
+- Signed with AWS KMS using `tools/sign-dossier-kms.js`
+- **Bug Found & Fixed**: AWS KMS signature verification mode mismatch
+  - Issue: Signing used `MessageType: 'DIGEST'` but verification used `MessageType: 'RAW'`
+  - Fix: Updated `packages/core/src/signature.ts` to use `DIGEST` mode
+  - Result: All AWS KMS signatures now verify successfully locally
+- Meta-dossier passes all 5 verification stages
+- Verification works from both local file and GitHub URL
 
 **Meta-Dossier Requirements**:
 
