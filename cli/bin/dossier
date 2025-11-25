@@ -437,10 +437,12 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
       console.log('🤖 Launching dossier creation assistant (interactive mode)...\n');
 
       // For create command, use interactive mode (not headless -p)
-      // This allows proper file creation with user approval
+      // Pass the content as the initial prompt by reading the temp file
       let command;
       if (llm === 'claude-code') {
-        command = `claude "${tmpFile}"`;
+        // Read content and pass as prompt argument
+        // Use shell command substitution to pass file content as prompt
+        command = `claude "$(cat '${tmpFile}')"`;
       } else {
         console.log(`❌ Unknown LLM: ${llm}\n`);
         console.log('Supported: claude-code, auto\n');
@@ -450,7 +452,7 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
       }
 
       try {
-        execSync(command, { stdio: 'inherit' });
+        execSync(command, { stdio: 'inherit', shell: '/bin/bash' });
         // Clean up temp file
         try { fs.unlinkSync(tmpFile); } catch {}
       } catch (execError) {
