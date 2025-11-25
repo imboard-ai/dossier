@@ -4,15 +4,15 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.3
-**Released**: 2025-11-16
-**Status**: ✅ Core Commands Functional, Production-Ready Execution
+**Current Version**: v0.2.4
+**Released**: 2025-11-25
+**Status**: ✅ Phase 1 Complete - Core Commands Functional, Production-Ready Execution
 
 ### Implementation Progress
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| Phase 1: MVP | ✅ Core Complete | 75% |
+| Phase 1: MVP | ✅ Complete | 100% |
 | Phase 2: Enhanced Authoring | 📋 Planned | 0% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
@@ -23,7 +23,7 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | `verify` | ✅ Done | v0.2.0 | P0 |
 | `run` | ✅ Done | v0.2.3 | P0 |
 | `config` | ✅ Done | v0.2.1 | P0 |
-| `create` | 📋 Planned | - | P1 |
+| `create` | ✅ Done | v0.2.4 | P1 |
 | `list` | 📋 Planned | - | P1 |
 | `sign` | 📋 Planned | - | P2 |
 | `publish` | 📋 Planned | - | P2 |
@@ -35,6 +35,62 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 ---
 
 ## Evolution History
+
+### v0.2.4 - Create Command Implementation ✅ (2025-11-25)
+
+**What Changed**:
+- ✅ Implemented `dossier create` command with meta-dossier approach
+- ✅ Created and signed meta-dossier for dossier creation (`examples/authoring/create-dossier.ds.md`)
+- ✅ Single-path architecture: always executes meta-dossier via Claude Code
+- ✅ Context prepending approach: builds markdown header with user-provided flags
+- ✅ Removed Cursor support (simplified to Claude Code only)
+- ✅ Interactive mode execution for better UX and file creation
+- ✅ Fixed critical AWS KMS signature verification bug (DIGEST mode mismatch)
+
+**Command Syntax**:
+```bash
+dossier create [file] [options]
+
+Options:
+  --title <title>           Dossier title
+  --objective <text>        Primary objective
+  --risk <level>            Risk level (low/medium/high/critical)
+  --category <category>     Category
+  --tags <tags>            Comma-separated tags
+  --llm <name>             LLM to use (claude-code, auto)
+```
+
+**Implementation Approach**:
+- Meta-dossier handles all validation and file generation
+- CLI wrapper prepends user context to meta-dossier content
+- Writes to temp file and launches Claude Code with content as prompt
+- Meta-dossier reads context from prepended header
+- Prompts for missing metadata interactively
+- Generates valid dossier with proper frontmatter and sections
+
+**Key Technical Decisions**:
+1. Context passing: Prepended markdown header (not environment variables)
+2. Execution mode: Interactive mode (not headless `-p`)
+3. LLM support: Claude Code only (removed Cursor)
+4. Command: `claude "$(cat 'tmpFile')"` to pass content as prompt
+
+**Testing**:
+```bash
+# Successfully created test dossier with all metadata
+dossier create test-complete.ds.md \
+  --title "Test Dossier Creation" \
+  --objective "Verify that the create command works end-to-end" \
+  --risk low \
+  --category development \
+  --tags "test,cli,verification"
+
+# Result: Valid dossier with proper frontmatter and structure
+```
+
+**Documentation**:
+- Created comprehensive planning document: `docs/planning/create-command-implementation.md`
+- Created signing guide: `docs/guides/signing-dossiers.md`
+- Updated CLI evolution document with create command status
 
 ### v0.2.3 - Headless Mode Confirmation ✅ (2025-11-16)
 
@@ -908,10 +964,10 @@ Exit code: 1
 
 ## Implementation Phases
 
-### Phase 1: MVP (Core Commands) 🚧 25% Complete
+### Phase 1: MVP (Core Commands) ✅ 100% Complete
 
-**Timeline**: 1-2 weeks
-**Status**: In Progress
+**Timeline**: 2025-11-15 to 2025-11-25
+**Status**: ✅ Complete
 
 **Infrastructure** ✅:
 - [x] Subcommand architecture (commander.js)
@@ -921,28 +977,34 @@ Exit code: 1
 - [x] Documentation restructure
 
 **Commands**:
-1. ✅ `dossier verify` - Done (v0.2.0) - Just verification
-2. ✅ `dossier run` - Done (v0.2.1) - Multi-stage verification + audit + execute
-3. 📋 `dossier create` - Planned - Basic creation (no templates)
-4. 📋 `dossier list` - Planned - Simple file discovery
+1. ✅ `dossier verify` - Done (v0.2.0) - Multi-stage verification
+2. ✅ `dossier run` - Done (v0.2.3) - Multi-stage verification + audit + execute
+3. ✅ `dossier config` - Done (v0.2.1) - Configuration management
+4. ✅ `dossier create` - Done (v0.2.4) - Meta-dossier-based creation
 
 **Features**:
 - [x] Subcommand architecture
-- [x] Auto-detect LLM (claude-code, cursor)
+- [x] Auto-detect LLM (claude-code only, cursor removed)
 - [x] Console audit logging (print to stdout)
 - [x] Multi-stage verification pipeline (5 stages)
 - [x] Configurable verification flags (skip options)
 - [x] Dry-run mode
-- [x] Helpful TBD messages for unimplemented commands
+- [x] Configuration system with ~/.dossier/config.json
+- [x] Meta-dossier approach for dossier creation
+- [x] Context prepending for user-provided metadata
+- [x] Interactive mode execution
 
 **Deliverables**:
 - [x] Refactored CLI codebase structure
 - [x] Updated documentation
 - [x] Migration from `dossier-verify` (removed old command)
-- [ ] Test coverage
 - [x] `run` command implementation (with 5-stage verification)
-- [ ] `create` command implementation
-- [ ] `list` command implementation
+- [x] `config` command implementation
+- [x] `create` command implementation (meta-dossier approach)
+- [x] Comprehensive planning documents
+- [x] Signing guide documentation
+- [ ] Test coverage (deferred to Phase 2)
+- [ ] `list` command implementation (moved to Phase 2)
 
 ### Phase 2: Enhanced Authoring 📋 0% Complete
 
@@ -950,11 +1012,12 @@ Exit code: 1
 **Status**: Planned
 
 **Commands**:
-5. 📋 `dossier sign` - Sign dossiers
-6. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
-7. 📋 `dossier init` - Scaffold projects
-8. 📋 `dossier checksum` - Checksum utilities
-9. 📋 `dossier validate` - Schema validation
+5. 📋 `dossier list` - List and discover dossiers (moved from Phase 1)
+6. 📋 `dossier sign` - Sign dossiers
+7. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
+8. 📋 `dossier init` - Scaffold projects
+9. 📋 `dossier checksum` - Checksum utilities
+10. 📋 `dossier validate` - Schema validation
 
 **Features**:
 - [ ] Templates for common use cases
@@ -1390,6 +1453,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.3 Released - Production-ready dossier execution with full verification pipeline
+**Current Status**: ✅ v0.2.4 Released - Phase 1 Complete: All core commands implemented
 
-**Last Updated**: 2025-11-16 (v0.2.3 release - headless mode confirmed, URL handling implemented, config system added)
+**Last Updated**: 2025-11-25 (v0.2.4 release - create command implemented with meta-dossier approach, Phase 1 100% complete)

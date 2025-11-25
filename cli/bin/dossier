@@ -30,24 +30,17 @@ function detectLlm(llmOption, silent = false) {
 
   // Auto-detect LLM
   try {
-    execSync('command -v claude-code', { stdio: 'pipe' });
+    execSync('command -v claude', { stdio: 'pipe' });
     if (!silent) console.log('   Detected: Claude Code');
     return 'claude-code';
   } catch {
-    try {
-      execSync('command -v cursor', { stdio: 'pipe' });
-      if (!silent) console.log('   Detected: Cursor');
-      return 'cursor';
-    } catch {
-      if (!silent) {
-        console.log('❌ No supported LLM detected\n');
-        console.log('Supported LLMs:');
-        console.log('  - Claude Code (install from https://claude.com/claude-code)');
-        console.log('  - Cursor (install from https://cursor.sh)\n');
-        console.log('Or specify manually: --llm claude-code\n');
-      }
-      return null;
+    if (!silent) {
+      console.log('❌ No supported LLM detected\n');
+      console.log('Supported LLM:');
+      console.log('  - Claude Code (install from https://claude.com/claude-code)\n');
+      console.log('Or specify manually: --llm claude-code\n');
     }
+    return null;
   }
 }
 
@@ -57,21 +50,33 @@ function detectLlm(llmOption, silent = false) {
  * @param {string} file - The dossier file/URL
  * @returns {string} The command to execute
  */
-function buildLlmCommand(llm, file) {
+function buildLlmCommand(llm, file, headless = false) {
   // Detect if file is a URL
   const isUrl = file.startsWith('http://') || file.startsWith('https://');
 
   if (llm === 'claude-code') {
-    // Use headless mode (-p) to execute non-interactively and print output to stdout
+    // Interactive mode (default): Opens Claude Code UI for user interaction
+    // Headless mode (--headless): Executes non-interactively for automation/CI
+    const claudeCommand = headless ? 'claude -p' : 'claude';
+
     if (isUrl) {
       // For URLs: Download to temp file, execute, cleanup
-      return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      if (headless) {
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      } else {
+        // Interactive mode: Download and pass path to claude
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && claude "\${tmpfile}"; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      }
     } else {
-      // For local files: Read directly
-      return `cat "${file}" | claude -p`;
+      // For local files
+      if (headless) {
+        // Headless: Pipe content
+        return `cat "${file}" | claude -p`;
+      } else {
+        // Interactive: Pass file path
+        return `claude "${file}"`;
+      }
     }
-  } else if (llm === 'cursor') {
-    return `cursor "${file}"`;
   } else {
     return null;
   }
@@ -215,7 +220,8 @@ program
   .command('run')
   .description('Verify, audit, and execute dossier')
   .argument('<file>', 'Dossier file or URL to run')
-  .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)')
+  .option('--llm <name>', 'LLM to use (claude-code, auto)')
+  .option('--headless', 'Run in headless mode (non-interactive, for CI/CD)')
   .option('--dry-run', 'Show plan without executing')
   .option('--force', 'Skip risk warnings')
   .option('--no-prompt', 'Don\'t ask for confirmation')
@@ -262,7 +268,7 @@ program
 
       // Detect LLM and build command
       const llmToUse = detectLlm(llmOption, true);
-      const command = llmToUse ? buildLlmCommand(llmToUse, file) : 'No LLM detected - would show error';
+      const command = llmToUse ? buildLlmCommand(llmToUse, file, options.headless) : 'No LLM detected - would show error';
 
       console.log(`   Command: ${command}\n`);
       console.log('✅ All verifications passed - ready to execute');
@@ -277,15 +283,17 @@ program
       process.exit(2);
     }
 
-    // Build and execute command
-    const command = buildLlmCommand(llmToUse, file);
+    // Build and execute command (interactive by default, headless if flag set)
+    const command = buildLlmCommand(llmToUse, file, options.headless);
     if (!command) {
       console.log(`❌ Unknown LLM: ${llmToUse}\n`);
-      console.log('Supported: claude-code, cursor, auto\n');
+      console.log('Supported: claude-code, auto\n');
       process.exit(2);
     }
 
     try {
+      const mode = options.headless ? 'headless' : 'interactive';
+      console.log(`   Mode: ${mode}`);
       console.log(`   Executing: ${command}\n`);
       execSync(command, { stdio: 'inherit' });
       console.log('\n✅ Execution completed');
@@ -359,7 +367,7 @@ program
 
       // Validate defaultLlm values
       if (key === 'defaultLlm') {
-        const validLlms = ['auto', 'claude-code', 'cursor'];
+        const validLlms = ['auto', 'claude-code'];
         if (!validLlms.includes(value)) {
           console.log(`⚠️  Warning: '${value}' may not be a supported LLM\n`);
           console.log('Supported values:');
@@ -379,19 +387,104 @@ program
   });
 
 // ============================================================================
-// COMMAND: create (TBD)
+// COMMAND: create (IMPLEMENTED)
 // ============================================================================
 program
   .command('create')
-  .description('Create new dossier [TBD]')
+  .description('Create new dossier')
   .argument('[file]', 'Output file path')
-  .option('--template <name>', 'Use template (basic, devops, data-science)')
-  .option('--interactive', 'Guided creation with prompts')
+  .option('--template <name>', 'Reference template/example to use as pattern')
   .option('--title <title>', 'Dossier title')
+  .option('--objective <text>', 'Primary objective')
   .option('--risk <level>', 'Risk level (low, medium, high, critical)')
-  .action((file, options) => {
-    console.log('⚠️  create tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+  .option('--category <category>', 'Category (devops, data-science, development, etc.)')
+  .option('--tags <tags>', 'Comma-separated tags')
+  .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)', 'auto')
+  .action(async (file, options) => {
+    try {
+      // Determine LLM to use (CLI option > config > auto)
+      const llmOption = options.llm || config.getConfig('defaultLlm') || 'auto';
+      const llm = detectLlm(llmOption, false);
+
+      if (!llm) {
+        process.exit(2);
+      }
+
+      // Path to meta-dossier (relative to this script)
+      const metaDossierPath = path.join(__dirname, '../../examples/authoring/create-dossier.ds.md');
+
+      // Check if meta-dossier exists
+      const fs = require('fs');
+      if (!fs.existsSync(metaDossierPath)) {
+        console.error('❌ Error: Meta-dossier not found');
+        console.error(`   Expected: ${metaDossierPath}`);
+        console.error('\nThis is likely a package installation issue.');
+        console.error('Please report this at: https://github.com/imboard-ai/dossier/issues\n');
+        process.exit(2);
+      }
+
+      // Build context header with user-provided values
+      const contextHeader = `
+# USER-PROVIDED CONTEXT
+
+The user ran the dossier create command with the following parameters:
+
+${file ? `- **Output file**: ${file}` : '- **Output file**: Not specified (prompt user)'}
+${options.title ? `- **Title**: ${options.title}` : '- **Title**: Not specified (prompt user)'}
+${options.objective ? `- **Objective**: ${options.objective}` : '- **Objective**: Not specified (prompt user)'}
+${options.risk ? `- **Risk level**: ${options.risk}` : '- **Risk level**: Not specified (prompt user)'}
+${options.category ? `- **Category**: ${options.category}` : '- **Category**: Not specified (prompt user)'}
+${options.tags ? `- **Tags**: ${options.tags}` : '- **Tags**: Not specified (optional)'}
+${options.template ? `- **Template reference**: ${options.template}` : '- **Template**: Not specified (use default structure)'}
+
+**Instructions**: Use the values provided above. For any fields marked "Not specified", prompt the user interactively. When all required information is gathered, create the dossier file according to the meta-dossier instructions below.
+
+---
+
+`;
+
+      // Read meta-dossier content
+      const metaDossierContent = fs.readFileSync(metaDossierPath, 'utf8');
+
+      // Create temp file with context + meta-dossier
+      const os = require('os');
+      const tmpFile = path.join(os.tmpdir(), `dossier-create-${Date.now()}.ds.md`);
+      fs.writeFileSync(tmpFile, contextHeader + metaDossierContent, 'utf8');
+
+      console.log('🤖 Launching dossier creation assistant (interactive mode)...\n');
+
+      // For create command, use interactive mode (not headless -p)
+      // Pass the content as the initial prompt by reading the temp file
+      let command;
+      if (llm === 'claude-code') {
+        // Read content and pass as prompt argument
+        // Use shell command substitution to pass file content as prompt
+        command = `claude "$(cat '${tmpFile}')"`;
+      } else {
+        console.log(`❌ Unknown LLM: ${llm}\n`);
+        console.log('Supported: claude-code, auto\n');
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
+        process.exit(2);
+      }
+
+      try {
+        execSync(command, { stdio: 'inherit', shell: '/bin/bash' });
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
+      } catch (execError) {
+        // Clean up temp file
+        try { fs.unlinkSync(tmpFile); } catch {}
+        throw execError;
+      }
+
+      console.log('\n✅ Dossier creation completed');
+
+    } catch (error) {
+      console.error('\n❌ Dossier creation failed');
+      console.error(`   Error: ${error.message}`);
+      process.exit(error.status || 2);
+    }
   });
 
 // ============================================================================
