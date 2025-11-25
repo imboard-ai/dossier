@@ -434,11 +434,14 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
       const tmpFile = path.join(os.tmpdir(), `dossier-create-${Date.now()}.ds.md`);
       fs.writeFileSync(tmpFile, contextHeader + metaDossierContent, 'utf8');
 
-      console.log('🤖 Launching dossier creation assistant...\n');
+      console.log('🤖 Launching dossier creation assistant (interactive mode)...\n');
 
-      // Build and execute command with temp file
-      const command = buildLlmCommand(llm, tmpFile);
-      if (!command) {
+      // For create command, use interactive mode (not headless -p)
+      // This allows proper file creation with user approval
+      let command;
+      if (llm === 'claude-code') {
+        command = `claude "${tmpFile}"`;
+      } else {
         console.log(`❌ Unknown LLM: ${llm}\n`);
         console.log('Supported: claude-code, auto\n');
         // Clean up temp file
