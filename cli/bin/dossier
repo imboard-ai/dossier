@@ -9,6 +9,7 @@ const { program } = require('commander');
 const { execSync } = require('child_process');
 const path = require('path');
 const config = require('../lib/config');
+const { convertGitHubBlobToRaw } = require('../lib/github-url');
 
 // Package info
 const pkg = require('../package.json');
@@ -51,8 +52,9 @@ function detectLlm(llmOption, silent = false) {
  * @returns {string} The command to execute
  */
 function buildLlmCommand(llm, file, headless = false) {
-  // Detect if file is a URL
+  // Detect if file is a URL and convert GitHub blob URLs to raw URLs
   const isUrl = file.startsWith('http://') || file.startsWith('https://');
+  const resolvedFile = isUrl ? convertGitHubBlobToRaw(file) : file;
 
   if (llm === 'claude-code') {
     // Interactive mode (default): Opens Claude Code UI for user interaction
@@ -62,19 +64,19 @@ function buildLlmCommand(llm, file, headless = false) {
     if (isUrl) {
       // For URLs: Download to temp file, execute, cleanup
       if (headless) {
-        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${resolvedFile}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
       } else {
         // Interactive mode: Download and pass path to claude
-        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && claude "\${tmpfile}"; status=$?; rm -f "\${tmpfile}"; exit $status`;
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${resolvedFile}" -o "\${tmpfile}" && test -s "\${tmpfile}" && claude "\${tmpfile}"; status=$?; rm -f "\${tmpfile}"; exit $status`;
       }
     } else {
       // For local files
       if (headless) {
         // Headless: Pipe content
-        return `cat "${file}" | claude -p`;
+        return `cat "${resolvedFile}" | claude -p`;
       } else {
         // Interactive: Pass file path
-        return `claude "${file}"`;
+        return `claude "${resolvedFile}"`;
       }
     }
   } else {
