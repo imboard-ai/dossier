@@ -7,16 +7,40 @@
   "status": "Draft",
   "last_updated": "2025-11-25",
   "objective": "Create a workflow for GitHub issues that fetches issue details, creates appropriately named branches, sets up git worktrees, and generates PLANNING.md files for structured development",
-  "category": ["development"],
-  "tags": ["github", "issues", "workflow", "worktree", "branch-management", "planning"],
+  "category": [
+    "development"
+  ],
+  "tags": [
+    "github",
+    "issues",
+    "workflow",
+    "worktree",
+    "branch-management",
+    "planning"
+  ],
   "risk_level": "medium",
   "requires_approval": false,
-  "risk_factors": ["modifies_files", "network_access"],
+  "risk_factors": [
+    "modifies_files",
+    "network_access"
+  ],
   "destructive_operations": [
     "Creates new git branch in the repository",
     "Creates new git worktree directory",
     "Creates PLANNING.md file in worktree"
-  ]
+  ],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "5a800a378868e9114dd7a3046a0517b68eaf802255acf4a228832f73f0567a4c"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEQCIE5+OWD8WmwGJ/lE5p7dqMNwF/dOa3/61nXvqsKgQdlPAiAred5lvSQL2Mw0P2rgjax6FOtX48R9BAgNtdL8o5rIXA==",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-25T11:11:38.819Z",
+    "signed_by": "Dossier Team <team@dossier.ai>"
+  }
 }
 ---
 # Setup Issue Workflow
