@@ -50,18 +50,32 @@ function detectLlm(llmOption, silent = false) {
  * @param {string} file - The dossier file/URL
  * @returns {string} The command to execute
  */
-function buildLlmCommand(llm, file) {
+function buildLlmCommand(llm, file, headless = false) {
   // Detect if file is a URL
   const isUrl = file.startsWith('http://') || file.startsWith('https://');
 
   if (llm === 'claude-code') {
-    // Use headless mode (-p) to execute non-interactively and print output to stdout
+    // Interactive mode (default): Opens Claude Code UI for user interaction
+    // Headless mode (--headless): Executes non-interactively for automation/CI
+    const claudeCommand = headless ? 'claude -p' : 'claude';
+
     if (isUrl) {
       // For URLs: Download to temp file, execute, cleanup
-      return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      if (headless) {
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && cat "\${tmpfile}" | claude -p; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      } else {
+        // Interactive mode: Download and pass path to claude
+        return `tmpfile=$(mktemp /tmp/dossier.XXXXXX.ds.md) && curl -sL "${file}" -o "\${tmpfile}" && test -s "\${tmpfile}" && claude "\${tmpfile}"; status=$?; rm -f "\${tmpfile}"; exit $status`;
+      }
     } else {
-      // For local files: Read directly
-      return `cat "${file}" | claude -p`;
+      // For local files
+      if (headless) {
+        // Headless: Pipe content
+        return `cat "${file}" | claude -p`;
+      } else {
+        // Interactive: Pass file path
+        return `claude "${file}"`;
+      }
     }
   } else {
     return null;
@@ -207,6 +221,7 @@ program
   .description('Verify, audit, and execute dossier')
   .argument('<file>', 'Dossier file or URL to run')
   .option('--llm <name>', 'LLM to use (claude-code, auto)')
+  .option('--headless', 'Run in headless mode (non-interactive, for CI/CD)')
   .option('--dry-run', 'Show plan without executing')
   .option('--force', 'Skip risk warnings')
   .option('--no-prompt', 'Don\'t ask for confirmation')
@@ -253,7 +268,7 @@ program
 
       // Detect LLM and build command
       const llmToUse = detectLlm(llmOption, true);
-      const command = llmToUse ? buildLlmCommand(llmToUse, file) : 'No LLM detected - would show error';
+      const command = llmToUse ? buildLlmCommand(llmToUse, file, options.headless) : 'No LLM detected - would show error';
 
       console.log(`   Command: ${command}\n`);
       console.log('✅ All verifications passed - ready to execute');
@@ -268,8 +283,8 @@ program
       process.exit(2);
     }
 
-    // Build and execute command
-    const command = buildLlmCommand(llmToUse, file);
+    // Build and execute command (interactive by default, headless if flag set)
+    const command = buildLlmCommand(llmToUse, file, options.headless);
     if (!command) {
       console.log(`❌ Unknown LLM: ${llmToUse}\n`);
       console.log('Supported: claude-code, auto\n');
@@ -277,6 +292,8 @@ program
     }
 
     try {
+      const mode = options.headless ? 'headless' : 'interactive';
+      console.log(`   Mode: ${mode}`);
       console.log(`   Executing: ${command}\n`);
       execSync(command, { stdio: 'inherit' });
       console.log('\n✅ Execution completed');
