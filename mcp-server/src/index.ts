@@ -10,6 +10,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
@@ -32,6 +34,7 @@ const server = new Server(
     capabilities: {
       tools: {},
       resources: {},
+      prompts: {},
     },
   }
 );
@@ -242,6 +245,123 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     });
 
     throw error;
+  }
+});
+
+// Register prompts
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  logger.debug('Listing prompts');
+  return {
+    prompts: [
+      {
+        name: 'execute-dossier',
+        description: 'Run a dossier with verification and protocol',
+        arguments: [
+          {
+            name: 'dossier_path',
+            description: 'Path or URL to the dossier file',
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'create-dossier',
+        description: 'Author a new dossier with proper structure',
+        arguments: [
+          {
+            name: 'title',
+            description: 'Title for the new dossier',
+            required: true,
+          },
+          {
+            name: 'category',
+            description: 'Category (e.g., devops, authoring)',
+            required: false,
+          },
+          {
+            name: 'risk_level',
+            description: 'Risk level: low, medium, high, critical',
+            required: false,
+          },
+        ],
+      },
+    ],
+  };
+});
+
+// Handle prompt requests
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  logger.info('Prompt requested', { prompt: name, arguments: args });
+
+  switch (name) {
+    case 'execute-dossier': {
+      const dossierPath = args?.dossier_path as string;
+      if (!dossierPath) {
+        throw new Error('dossier_path argument is required');
+      }
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Execute the dossier at: ${dossierPath}
+
+Follow the Dossier Execution Protocol:
+
+1. **VERIFY** - Run \`dossier verify ${dossierPath}\` to check integrity and signature
+   - If verification fails, STOP and report the issue
+   - If signature is from untrusted source, ask user whether to proceed
+
+2. **READ** - Use the read_dossier tool to get the dossier content
+
+3. **EXECUTE** - Follow the instructions in the dossier body
+   - Respect any risk_level warnings
+   - Ask for confirmation before destructive operations
+   - Report progress as you complete each step
+
+4. **REPORT** - Summarize what was accomplished`,
+            },
+          },
+        ],
+      };
+    }
+
+    case 'create-dossier': {
+      const title = args?.title as string;
+      if (!title) {
+        throw new Error('title argument is required');
+      }
+      const category = args?.category as string | undefined;
+      const riskLevel = args?.risk_level as string | undefined;
+      const filename = title.toLowerCase().replace(/\s+/g, '-') + '.ds.md';
+
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Create a new dossier: "${title}"
+${category ? `Category: ${category}` : ''}
+${riskLevel ? `Risk level: ${riskLevel}` : ''}
+Suggested filename: ${filename}
+
+**Instructions**: Execute the meta-dossier at:
+https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/authoring/create-dossier.ds.md
+
+This meta-dossier contains the official template and authoring instructions.
+Follow its guidance to create "${title}" with proper structure.`,
+            },
+          },
+        ],
+      };
+    }
+
+    default:
+      throw new Error(`Unknown prompt: ${name}`);
   }
 });
 

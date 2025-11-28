@@ -4,9 +4,9 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.8
+**Current Version**: v0.2.9
 **Released**: 2025-11-28
-**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Validate Command Added
+**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - MCP Prompts Added
 
 ### Implementation Progress
 
@@ -35,6 +35,37 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 ---
 
 ## Evolution History
+
+### v0.2.9 - MCP Prompts Implementation ✅ (2025-11-28)
+
+**What Changed**:
+- ✅ Implemented MCP prompts for Claude Code integration
+- ✅ Added `execute-dossier` prompt - guided execution with verification
+- ✅ Added `create-dossier` prompt - delegates to meta-dossier template
+- ✅ Added prompts capability to MCP server
+- ✅ Created Claude Code integration guide (`docs/guides/claude-code-integration.md`)
+- ✅ Updated MCP server README with prompts status
+
+**Prompts**:
+
+1. **`execute-dossier`**
+   - Arguments: `dossier_path` (required)
+   - Guides Claude through: VERIFY → READ → EXECUTE → REPORT protocol
+
+2. **`create-dossier`**
+   - Arguments: `title` (required), `category` (optional), `risk_level` (optional)
+   - Delegates to meta-dossier at `examples/authoring/create-dossier.ds.md`
+   - Single source of truth - template updates automatically propagate
+
+**Files Modified**:
+- `mcp-server/src/index.ts` - Added ListPrompts and GetPrompt handlers
+- `mcp-server/README.md` - Updated prompts status to implemented
+- `docs/guides/claude-code-integration.md` - New user guide
+
+**Design Decisions**:
+- Prompts use user role messages (not assistant) per MCP spec
+- `create-dossier` references meta-dossier instead of embedding template
+- Deferred `suggest-dossier` to future (requires LLM-based matching)
 
 ### v0.2.8 - Validate Command Implementation ✅ (2025-11-28)
 
@@ -1626,6 +1657,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.8 Released - Phase 2 66% Complete: List + Sign + Checksum + Validate commands
+**Current Status**: ✅ v0.2.9 Released - Phase 2 75% Complete: MCP Prompts + List + Sign + Checksum + Validate
 
-**Last Updated**: 2025-11-28 (v0.2.8 release - validate command implemented for frontmatter validation)
+**Last Updated**: 2025-11-28 (v0.2.9 release - MCP prompts for Claude Code integration)
