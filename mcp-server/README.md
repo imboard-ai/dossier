@@ -55,11 +55,10 @@ LLM:  "Found project-init dossier v1.0.0. Analyzing prerequisites..."
 - **`dossier://security`** - 🔒 Security architecture and trust model
 - **`dossier://keys`** - 🔒 Official and community public keys
 
-### 💡 Prompts
+### 💡 Prompts ✅ Implemented
 
-- **`execute-dossier`** - Run a dossier following protocol
-- **`create-dossier`** - Author a new dossier
-- **`improve-dossier`** - Enhance existing dossiers
+- **`execute-dossier`** - Run a dossier following the verification → execution protocol
+- **`create-dossier`** - Author a new dossier using the official meta-dossier template
 
 ---
 
@@ -337,6 +336,7 @@ Contributions welcome! This is a critical piece of infrastructure for making dos
 - [x] Working locally with Claude Code ✅
 
 ### Phase 2: Testing & Publishing (v1.1.0) - 🚧 NEXT
+- [x] MCP Prompts (execute-dossier, create-dossier) ✅
 - [ ] Integration testing with Claude Code
 - [ ] Test with all example dossiers
 - [ ] NPM package preparation
@@ -349,7 +349,7 @@ Contributions welcome! This is a critical piece of infrastructure for making dos
 ### Phase 3: Ecosystem (v1.2.0) - Target: Future
 - [ ] NPM package published
 - [ ] Journey map support
-- [ ] Create/improve dossier prompts
+- [ ] suggest-dossier prompt (LLM-based discovery)
 - [ ] VS Code extension
 - [ ] Web documentation
 - [ ] Community templates
@@ -407,13 +407,13 @@ This transforms dossiers from "interesting idea" to "production-ready automation
 - ✅ MCP protocol integration
 - ✅ Resource serving (protocol, security, concept)
 - ✅ Structured logging and error handling
+- ✅ **MCP Prompts** (execute-dossier, create-dossier)
 
 **Next Steps**:
-1. Test integration with Claude Code
-2. NPM package preparation
-3. Advanced validation tool
-4. Registry support
-5. Publish to NPM
+1. NPM package preparation
+2. Advanced validation tool
+3. Registry support
+4. Publish to NPM
 
 **Contributors Welcome!** This is a community-driven effort to make LLM automation truly accessible.
 
