@@ -11,42 +11,53 @@ The Dossier MCP Server integrates directly with Claude Code, enabling you to exe
 
 ## Quick Start
 
-### 1. Install the MCP Server
+### 1. Build the MCP Server (for local development)
 
-Add to your Claude Code settings (Settings → Extensions → MCP Servers):
+```bash
+cd /path/to/dossier/mcp-server
+npm install
+npm run build
+```
 
-**Option A: Local Development** (if you have the repository cloned)
+### 2. Install the MCP Server
+
+Use the Claude Code CLI to add the MCP server:
+
+**Option A: Global Installation** (available across all projects)
+
+```bash
+# For local development (replace path with your actual path)
+claude mcp add dossier --scope user -- node /path/to/dossier/mcp-server/dist/index.js
+
+# After NPM package is published
+claude mcp add dossier --scope user -- npx @imboard-ai/dossier-mcp
+```
+
+**Option B: Project-Only Installation** (for a specific project)
+
+Create a `.mcp.json` file in your project root:
+
 ```json
 {
   "mcpServers": {
     "dossier": {
+      "type": "stdio",
       "command": "node",
-      "args": ["/path/to/dossier/mcp-server/dist/index.js"],
-      "cwd": "/path/to/dossier"
+      "args": ["/path/to/dossier/mcp-server/dist/index.js"]
     }
   }
 }
 ```
-
-**Option B: NPM Package** (after package is published)
-```json
-{
-  "mcpServers": {
-    "dossier": {
-      "command": "npx",
-      "args": ["@imboard-ai/dossier-mcp"]
-    }
-  }
-}
-```
-
-### 2. Restart Claude Code
-
-After adding the configuration, restart Claude Code to load the MCP server.
 
 ### 3. Verify Installation
 
-Ask Claude:
+Check that the server is configured:
+
+```bash
+claude mcp list
+```
+
+Then ask Claude:
 ```
 What dossier tools are available?
 ```
@@ -207,9 +218,9 @@ Ask the dossier author for an updated, properly signed version.
 
 ### "MCP server not responding"
 
-1. Check Claude Code settings for correct path
+1. Check the server is configured: `claude mcp list`
 2. Verify the MCP server is built: `cd mcp-server && npm run build`
-3. Restart Claude Code
+3. Remove and re-add: `claude mcp remove dossier && claude mcp add dossier --scope user -- node /path/to/dist/index.js`
 4. Check logs for errors
 
 ### "Unknown tool/prompt"
@@ -277,6 +288,7 @@ First verify, then execute the dossier at ./my-automation.ds.md
 - Initial guide created
 - Documented execute-dossier and create-dossier prompts
 - Added troubleshooting section
+- Updated installation to use `claude mcp add` CLI command
 
 ---
 

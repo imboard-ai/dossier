@@ -75,24 +75,17 @@ npm install
 npm run build
 ```
 
-2. **Configure Claude Code** (Settings → Extensions → MCP Servers):
-
-Add this configuration:
-```json
-{
-  "mcpServers": {
-    "dossier": {
-      "command": "node",
-      "args": ["/absolute/path/to/dossier/mcp-server/dist/index.js"],
-      "cwd": "/absolute/path/to/dossier"
-    }
-  }
-}
+2. **Add MCP server globally** (available across all projects):
+```bash
+claude mcp add dossier --scope user -- node /absolute/path/to/dossier/mcp-server/dist/index.js
 ```
 
 Replace `/absolute/path/to/dossier` with the full path to your dossier project.
 
-3. **Restart Claude Code**
+3. **Verify installation:**
+```bash
+claude mcp list
+```
 
 4. **Test it:**
 ```
@@ -102,27 +95,22 @@ Replace `/absolute/path/to/dossier` with the full path to your dossier project.
 
 ### For End Users (Future - After NPM Publish)
 
-**Using with Claude Desktop/Code:**
+**Using with Claude Code:**
 
-1. Install the MCP server:
 ```bash
-npm install -g @imboard-ai/dossier-mcp
+# Global installation (available across all projects)
+claude mcp add dossier --scope user -- npx @imboard-ai/dossier-mcp
+
+# Or project-only installation
+claude mcp add dossier -- npx @imboard-ai/dossier-mcp
 ```
 
-2. Configure Claude (`~/Library/Application Support/Claude/claude_desktop_config.json` or Claude Code settings):
-```json
-{
-  "mcpServers": {
-    "dossier": {
-      "command": "dossier-mcp-server"
-    }
-  }
-}
+Verify with:
+```bash
+claude mcp list
 ```
 
-3. Restart Claude
-
-4. Try it:
+Then try it:
 ```
 "List available dossiers in this project"
 "Execute the project-init dossier"
