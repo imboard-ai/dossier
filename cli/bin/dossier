@@ -1318,17 +1318,184 @@ program
   });
 
 // ============================================================================
-// COMMAND: validate (TBD)
+// COMMAND: validate (IMPLEMENTED)
 // ============================================================================
+
+// Required fields per schema spec
+const REQUIRED_FIELDS = ['dossier_schema_version', 'title', 'version'];
+
+// Recommended fields (warn if missing)
+const RECOMMENDED_FIELDS = ['objective', 'risk_level', 'status'];
+
+// Valid values for certain fields
+const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
+const VALID_STATUSES = ['Draft', 'Stable', 'Deprecated', 'Experimental'];
+
 program
   .command('validate')
-  .description('Validate dossier against schema [TBD]')
+  .description('Validate dossier frontmatter structure')
   .argument('<file>', 'Dossier file to validate')
-  .option('--schema <file>', 'Custom schema file')
-  .option('--fix', 'Auto-fix issues')
+  .option('--strict', 'Treat warnings as errors')
+  .option('--quiet', 'Only output errors (no warnings)')
+  .option('--json', 'Output results as JSON')
   .action((file, options) => {
-    console.log('⚠️  validate tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+    const fs = require('fs');
+    const path = require('path');
+
+    // Resolve file path
+    const dossierFile = path.resolve(file);
+
+    if (!fs.existsSync(dossierFile)) {
+      if (options.json) {
+        console.log(JSON.stringify({ valid: false, errors: [`File not found: ${dossierFile}`], warnings: [] }));
+      } else {
+        console.log(`❌ File not found: ${dossierFile}`);
+      }
+      process.exit(1);
+    }
+
+    const content = fs.readFileSync(dossierFile, 'utf8');
+    const errors = [];
+    const warnings = [];
+    let frontmatter = null;
+
+    // Try to parse frontmatter
+    // Format 1: ---dossier\n{JSON}\n---
+    const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---/);
+
+    // Format 2: ---\nYAML\n--- (future support)
+    const yamlMatch = !jsonMatch && content.match(/^---\s*\n([\s\S]*?)\n---/);
+
+    if (jsonMatch) {
+      try {
+        frontmatter = JSON.parse(jsonMatch[1]);
+      } catch (err) {
+        errors.push(`Invalid JSON in frontmatter: ${err.message}`);
+      }
+    } else if (yamlMatch) {
+      // Basic YAML support (simple key: value parsing)
+      // TODO: Add full YAML parser when format is finalized
+      warnings.push('YAML frontmatter detected - basic validation only');
+      frontmatter = {};
+      const lines = yamlMatch[1].split('\n');
+      for (const line of lines) {
+        const match = line.match(/^(\w+):\s*(.*)$/);
+        if (match) {
+          let value = match[2].trim();
+          if ((value.startsWith('"') && value.endsWith('"')) ||
+              (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+          }
+          frontmatter[match[1]] = value;
+        }
+      }
+    } else {
+      errors.push('No frontmatter found. Expected ---dossier or --- at start of file.');
+    }
+
+    // Validate frontmatter if parsed successfully
+    if (frontmatter && errors.length === 0) {
+      // Check required fields
+      for (const field of REQUIRED_FIELDS) {
+        if (!frontmatter[field]) {
+          errors.push(`Missing required field: ${field}`);
+        }
+      }
+
+      // Check recommended fields
+      if (!options.quiet) {
+        for (const field of RECOMMENDED_FIELDS) {
+          if (!frontmatter[field]) {
+            warnings.push(`Missing recommended field: ${field}`);
+          }
+        }
+      }
+
+      // Validate field values
+      if (frontmatter.risk_level && !VALID_RISK_LEVELS.includes(frontmatter.risk_level.toLowerCase())) {
+        warnings.push(`Unknown risk_level: "${frontmatter.risk_level}" (expected: ${VALID_RISK_LEVELS.join(', ')})`);
+      }
+
+      if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status)) {
+        warnings.push(`Unknown status: "${frontmatter.status}" (expected: ${VALID_STATUSES.join(', ')})`);
+      }
+
+      // Check version format (semver-like)
+      if (frontmatter.version && !/^\d+\.\d+(\.\d+)?(-[\w.]+)?$/.test(frontmatter.version)) {
+        warnings.push(`Version "${frontmatter.version}" doesn't follow semver format (e.g., 1.0.0)`);
+      }
+
+      // Check schema version
+      if (frontmatter.dossier_schema_version && frontmatter.dossier_schema_version !== '1.0.0') {
+        warnings.push(`Unknown schema version: ${frontmatter.dossier_schema_version} (current: 1.0.0)`);
+      }
+
+      // Check for checksum (recommended for signed dossiers)
+      if (frontmatter.signature && !frontmatter.checksum) {
+        warnings.push('Dossier is signed but has no checksum');
+      }
+
+      // High-risk dossiers should be signed
+      if (!options.quiet && frontmatter.risk_level) {
+        const risk = frontmatter.risk_level.toLowerCase();
+        if ((risk === 'high' || risk === 'critical') && !frontmatter.signature) {
+          warnings.push(`${risk}-risk dossier is not signed`);
+        }
+      }
+    }
+
+    // Determine validity
+    const hasErrors = errors.length > 0;
+    const hasWarnings = warnings.length > 0;
+    const valid = options.strict ? (!hasErrors && !hasWarnings) : !hasErrors;
+
+    // Output results
+    if (options.json) {
+      console.log(JSON.stringify({
+        valid,
+        file: dossierFile,
+        errors,
+        warnings,
+        frontmatter: frontmatter ? {
+          title: frontmatter.title,
+          version: frontmatter.version,
+          schema_version: frontmatter.dossier_schema_version
+        } : null
+      }, null, 2));
+    } else {
+      console.log(`\n📋 Dossier Validation\n`);
+      console.log(`   File: ${path.basename(dossierFile)}`);
+
+      if (frontmatter?.title) {
+        console.log(`   Title: ${frontmatter.title}`);
+      }
+      if (frontmatter?.version) {
+        console.log(`   Version: ${frontmatter.version}`);
+      }
+
+      if (errors.length > 0) {
+        console.log(`\n❌ Errors (${errors.length}):`);
+        for (const err of errors) {
+          console.log(`   • ${err}`);
+        }
+      }
+
+      if (warnings.length > 0 && !options.quiet) {
+        console.log(`\n⚠️  Warnings (${warnings.length}):`);
+        for (const warn of warnings) {
+          console.log(`   • ${warn}`);
+        }
+      }
+
+      if (valid) {
+        console.log(`\n✅ Valid${hasWarnings ? ' (with warnings)' : ''}`);
+      } else {
+        console.log(`\n❌ Invalid`);
+      }
+      console.log('');
+    }
+
+    process.exit(valid ? 0 : 1);
   });
 
 // ============================================================================
