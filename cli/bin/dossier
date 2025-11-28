@@ -1187,17 +1187,134 @@ program
   });
 
 // ============================================================================
-// COMMAND: checksum (TBD)
+// COMMAND: checksum (IMPLEMENTED)
 // ============================================================================
 program
   .command('checksum')
-  .description('Calculate and update dossier checksum [TBD]')
+  .description('Calculate, verify, or update dossier checksum')
   .argument('<file>', 'Dossier file')
-  .option('--update', 'Update checksum in file')
-  .option('--verify', 'Just verify, don\'t update')
+  .option('--update', 'Update checksum in frontmatter')
+  .option('--verify', 'Verify existing checksum (exit 0 if valid, 1 if invalid)')
+  .option('--quiet', 'Only output the hash (for scripting)')
   .action((file, options) => {
-    console.log('⚠️  checksum tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+    const fs = require('fs');
+    const path = require('path');
+    const crypto = require('crypto');
+
+    // Resolve file path
+    const dossierFile = path.resolve(file);
+
+    if (!fs.existsSync(dossierFile)) {
+      console.log(`❌ File not found: ${dossierFile}`);
+      process.exit(1);
+    }
+
+    // Read and parse dossier
+    const content = fs.readFileSync(dossierFile, 'utf8');
+
+    // Parse frontmatter
+    const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!jsonMatch) {
+      console.log('❌ Invalid dossier format: missing ---dossier frontmatter');
+      process.exit(1);
+    }
+
+    let frontmatter;
+    try {
+      frontmatter = JSON.parse(jsonMatch[1]);
+    } catch (err) {
+      console.log(`❌ Invalid JSON in frontmatter: ${err.message}`);
+      process.exit(1);
+    }
+
+    const body = jsonMatch[2];
+
+    // Calculate checksum of body only
+    const calculatedHash = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+
+    // Get existing checksum if present
+    const existingHash = frontmatter.checksum?.hash;
+
+    // Quiet mode - just output the hash
+    if (options.quiet && !options.verify && !options.update) {
+      console.log(calculatedHash);
+      process.exit(0);
+    }
+
+    // Verify mode
+    if (options.verify) {
+      if (!existingHash) {
+        if (!options.quiet) {
+          console.log('❌ No checksum found in frontmatter');
+        }
+        process.exit(1);
+      }
+
+      if (existingHash === calculatedHash) {
+        if (!options.quiet) {
+          console.log('✅ Checksum valid');
+          console.log(`   SHA256: ${calculatedHash}`);
+        }
+        process.exit(0);
+      } else {
+        if (!options.quiet) {
+          console.log('❌ Checksum mismatch - content has been modified');
+          console.log(`   Expected: ${existingHash}`);
+          console.log(`   Actual:   ${calculatedHash}`);
+        }
+        process.exit(1);
+      }
+    }
+
+    // Update mode
+    if (options.update) {
+      // Update frontmatter
+      frontmatter.checksum = {
+        algorithm: 'sha256',
+        hash: calculatedHash
+      };
+
+      // Write back
+      const updatedContent = `---dossier\n${JSON.stringify(frontmatter, null, 2)}\n---\n${body}`;
+      fs.writeFileSync(dossierFile, updatedContent, 'utf8');
+
+      if (!options.quiet) {
+        if (existingHash === calculatedHash) {
+          console.log('✅ Checksum unchanged');
+        } else if (existingHash) {
+          console.log('✅ Checksum updated');
+          console.log(`   Old: ${existingHash}`);
+          console.log(`   New: ${calculatedHash}`);
+        } else {
+          console.log('✅ Checksum added');
+        }
+        console.log(`   SHA256: ${calculatedHash}`);
+      } else {
+        console.log(calculatedHash);
+      }
+      process.exit(0);
+    }
+
+    // Default: just show the checksum
+    console.log(`\n📊 Dossier Checksum\n`);
+    console.log(`   File: ${path.basename(dossierFile)}`);
+    console.log(`   SHA256: ${calculatedHash}`);
+
+    if (existingHash) {
+      if (existingHash === calculatedHash) {
+        console.log(`\n   ✅ Matches frontmatter checksum`);
+      } else {
+        console.log(`\n   ⚠️  Does NOT match frontmatter checksum`);
+        console.log(`   Frontmatter: ${existingHash}`);
+        console.log(`\n   Run 'dossier checksum ${file} --update' to fix`);
+      }
+    } else {
+      console.log(`\n   ⚠️  No checksum in frontmatter`);
+      console.log(`\n   Run 'dossier checksum ${file} --update' to add`);
+    }
+
+    console.log('');
+    process.exit(0);
   });
 
 // ============================================================================

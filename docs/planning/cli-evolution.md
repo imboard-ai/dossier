@@ -4,16 +4,16 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.6
+**Current Version**: v0.2.7
 **Released**: 2025-11-28
-**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Sign Command Added
+**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Checksum Command Added
 
 ### Implementation Progress
 
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 1: MVP | ✅ Complete | 100% |
-| Phase 2: Enhanced Authoring | 🚧 In Progress | 40% |
+| Phase 2: Enhanced Authoring | 🚧 In Progress | 50% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
 ### Command Status
@@ -26,8 +26,8 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | `create` | ✅ Done | v0.2.4 | P1 |
 | `list` | ✅ Done | v0.2.5 | P1 |
 | `sign` | ✅ Done | v0.2.6 | P2 |
+| `checksum` | ✅ Done | v0.2.7 | P2 |
 | `publish` | 📋 Planned | - | P2 |
-| `checksum` | 📋 Planned | - | P2 |
 | `validate` | 📋 Planned | - | P2 |
 | `init` | 📋 Planned | - | P3 |
 | `info` | 📋 Planned | - | P3 |
@@ -35,6 +35,40 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 ---
 
 ## Evolution History
+
+### v0.2.7 - Checksum Command Implementation ✅ (2025-11-28)
+
+**What Changed**:
+- ✅ Implemented `dossier checksum` command for integrity management
+- ✅ Calculate SHA256 checksum of dossier body
+- ✅ Verify existing checksum against content
+- ✅ Update checksum in frontmatter
+- ✅ Quiet mode for scripting (`--quiet`)
+
+**Command Syntax**:
+```bash
+dossier checksum <file> [options]
+
+Options:
+  --update    Update checksum in frontmatter
+  --verify    Verify existing checksum (exit 0 if valid, 1 if invalid)
+  --quiet     Only output the hash (for scripting)
+```
+
+**Examples**:
+```bash
+# Show checksum and compare with frontmatter
+dossier checksum file.ds.md
+
+# Verify checksum (useful in CI/CD)
+dossier checksum file.ds.md --verify
+
+# Update checksum after editing
+dossier checksum file.ds.md --update
+
+# Get just the hash for scripting
+dossier checksum file.ds.md --quiet
+```
 
 ### v0.2.6 - Sign Command Implementation ✅ (2025-11-28)
 
@@ -1106,7 +1140,7 @@ Exit code: 1
 - [ ] Test coverage (deferred to Phase 2)
 - [ ] `list` command implementation (moved to Phase 2)
 
-### Phase 2: Enhanced Authoring 🚧 40% Complete
+### Phase 2: Enhanced Authoring 🚧 50% Complete
 
 **Timeline**: 2-3 weeks
 **Status**: In Progress
@@ -1114,10 +1148,10 @@ Exit code: 1
 **Commands**:
 5. ✅ `dossier list` - List and discover dossiers (v0.2.5)
 6. ✅ `dossier sign` - Sign dossiers with KMS or Ed25519 (v0.2.6)
-7. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
-8. 📋 `dossier init` - Scaffold projects
-9. 📋 `dossier checksum` - Checksum utilities
-10. 📋 `dossier validate` - Schema validation
+7. ✅ `dossier checksum` - Checksum utilities (v0.2.7)
+8. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
+9. 📋 `dossier validate` - Schema validation
+10. 📋 `dossier init` - Scaffold projects
 
 **Features**:
 - [ ] Templates for common use cases
@@ -1553,6 +1587,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.6 Released - Phase 2 40% Complete: List + Sign commands
+**Current Status**: ✅ v0.2.7 Released - Phase 2 50% Complete: List + Sign + Checksum commands
 
-**Last Updated**: 2025-11-28 (v0.2.6 release - sign command implemented as wrapper around existing tools)
+**Last Updated**: 2025-11-28 (v0.2.7 release - checksum command implemented for integrity management)
