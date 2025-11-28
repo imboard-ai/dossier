@@ -4,16 +4,16 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.7
+**Current Version**: v0.2.8
 **Released**: 2025-11-28
-**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Checksum Command Added
+**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Validate Command Added
 
 ### Implementation Progress
 
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 1: MVP | ✅ Complete | 100% |
-| Phase 2: Enhanced Authoring | 🚧 In Progress | 50% |
+| Phase 2: Enhanced Authoring | 🚧 In Progress | 66% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
 ### Command Status
@@ -27,14 +27,53 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | `list` | ✅ Done | v0.2.5 | P1 |
 | `sign` | ✅ Done | v0.2.6 | P2 |
 | `checksum` | ✅ Done | v0.2.7 | P2 |
+| `validate` | ✅ Done | v0.2.8 | P2 |
 | `publish` | 📋 Planned | - | P2 |
-| `validate` | 📋 Planned | - | P2 |
 | `init` | 📋 Planned | - | P3 |
 | `info` | 📋 Planned | - | P3 |
 
 ---
 
 ## Evolution History
+
+### v0.2.8 - Validate Command Implementation ✅ (2025-11-28)
+
+**What Changed**:
+- ✅ Implemented `dossier validate` command for frontmatter validation
+- ✅ Validates required fields: `dossier_schema_version`, `title`, `version`
+- ✅ Warns on missing recommended fields: `objective`, `risk_level`, `status`
+- ✅ Validates field values (risk levels, statuses, semver format)
+- ✅ Supports both JSON and basic YAML frontmatter
+- ✅ JSON output for CI/CD integration
+- ✅ Strict mode treats warnings as errors
+
+**Command Syntax**:
+```bash
+dossier validate <file> [options]
+
+Options:
+  --strict    Treat warnings as errors
+  --quiet     Only output errors (no warnings)
+  --json      Output results as JSON
+```
+
+**Examples**:
+```bash
+# Validate a dossier
+dossier validate file.ds.md
+
+# Strict mode for CI/CD
+dossier validate file.ds.md --strict
+
+# JSON output for automation
+dossier validate file.ds.md --json
+```
+
+**Validation Rules**:
+- Required: `dossier_schema_version`, `title`, `version`
+- Recommended: `objective`, `risk_level`, `status`
+- Warns on invalid risk levels, statuses, version format
+- Warns if high-risk dossier is unsigned
 
 ### v0.2.7 - Checksum Command Implementation ✅ (2025-11-28)
 
@@ -1140,7 +1179,7 @@ Exit code: 1
 - [ ] Test coverage (deferred to Phase 2)
 - [ ] `list` command implementation (moved to Phase 2)
 
-### Phase 2: Enhanced Authoring 🚧 50% Complete
+### Phase 2: Enhanced Authoring 🚧 66% Complete
 
 **Timeline**: 2-3 weeks
 **Status**: In Progress
@@ -1149,8 +1188,8 @@ Exit code: 1
 5. ✅ `dossier list` - List and discover dossiers (v0.2.5)
 6. ✅ `dossier sign` - Sign dossiers with KMS or Ed25519 (v0.2.6)
 7. ✅ `dossier checksum` - Checksum utilities (v0.2.7)
-8. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
-9. 📋 `dossier validate` - Schema validation
+8. ✅ `dossier validate` - Schema validation (v0.2.8)
+9. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
 10. 📋 `dossier init` - Scaffold projects
 
 **Features**:
@@ -1587,6 +1626,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.7 Released - Phase 2 50% Complete: List + Sign + Checksum commands
+**Current Status**: ✅ v0.2.8 Released - Phase 2 66% Complete: List + Sign + Checksum + Validate commands
 
-**Last Updated**: 2025-11-28 (v0.2.7 release - checksum command implemented for integrity management)
+**Last Updated**: 2025-11-28 (v0.2.8 release - validate command implemented for frontmatter validation)
