@@ -490,34 +490,679 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
   });
 
 // ============================================================================
-// COMMAND: list (TBD)
+// COMMAND: list (IMPLEMENTED)
 // ============================================================================
+
+/**
+ * Recursively find all .ds.md files in a local directory
+ */
+function findDossierFilesLocal(dir, recursive = false) {
+  const fs = require('fs');
+  const path = require('path');
+  const results = [];
+
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        // Skip node_modules and hidden directories
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+          continue;
+        }
+        if (recursive) {
+          results.push(...findDossierFilesLocal(fullPath, recursive));
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.ds.md')) {
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    // Silently skip directories we can't read
+  }
+
+  return results;
+}
+
+/**
+ * Parse source string to determine type and details
+ * Supports:
+ *   - Local path: ./examples, /path/to/dir
+ *   - GitHub: github:owner/repo, github:owner/repo/path, github:owner/repo@branch
+ *   - GitHub URL: https://github.com/owner/repo
+ */
+function parseListSource(source) {
+  // GitHub shorthand: github:owner/repo or github:owner/repo/path@branch
+  if (source.startsWith('github:')) {
+    const rest = source.slice(7);
+    const [pathPart, branch] = rest.split('@');
+    const parts = pathPart.split('/');
+    const owner = parts[0];
+    const repo = parts[1];
+    const subpath = parts.slice(2).join('/') || '';
+    return {
+      type: 'github',
+      owner,
+      repo,
+      path: subpath,
+      branch: branch || 'main'
+    };
+  }
+
+  // GitHub URL: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path
+  if (source.startsWith('https://github.com/') || source.startsWith('http://github.com/')) {
+    const url = new URL(source);
+    const parts = url.pathname.split('/').filter(p => p);
+    const owner = parts[0];
+    const repo = parts[1];
+
+    // Check for /tree/branch/path format
+    if (parts[2] === 'tree' && parts.length >= 4) {
+      const branch = parts[3];
+      const subpath = parts.slice(4).join('/');
+      return {
+        type: 'github',
+        owner,
+        repo,
+        path: subpath,
+        branch
+      };
+    }
+
+    return {
+      type: 'github',
+      owner,
+      repo,
+      path: '',
+      branch: 'main'
+    };
+  }
+
+  // TODO: Add GitLab support (gitlab:group/project, https://gitlab.com/...)
+
+  // Default: local path
+  return {
+    type: 'local',
+    path: source
+  };
+}
+
+/**
+ * Fetch GitHub repository tree and find .ds.md files
+ * TODO: Consider using GitHub API with authentication for private repos and higher rate limits
+ * TODO: Add caching to avoid repeated fetches
+ */
+async function findDossierFilesGitHub(owner, repo, subpath, branch) {
+  const https = require('https');
+
+  // Use GitHub API to get repository tree
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      headers: {
+        'User-Agent': 'dossier-cli',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    };
+
+    https.get(apiUrl, options, (res) => {
+      if (res.statusCode === 404) {
+        return reject(new Error(`Repository not found: ${owner}/${repo} (branch: ${branch})`));
+      }
+      if (res.statusCode === 403) {
+        return reject(new Error('GitHub API rate limit exceeded. Try again later or use a local clone.'));
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`GitHub API error: ${res.statusCode} ${res.statusMessage}`));
+      }
+
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const tree = JSON.parse(data);
+          if (!tree.tree) {
+            return reject(new Error('Invalid response from GitHub API'));
+          }
+
+          // Filter for .ds.md files, optionally within subpath
+          const dossierFiles = tree.tree
+            .filter(item => {
+              if (item.type !== 'blob') return false;
+              if (!item.path.endsWith('.ds.md')) return false;
+              if (subpath && !item.path.startsWith(subpath + '/') && item.path !== subpath) return false;
+              // Skip node_modules
+              if (item.path.includes('node_modules/')) return false;
+              return true;
+            })
+            .map(item => ({
+              path: item.path,
+              rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`,
+              githubUrl: `https://github.com/${owner}/${repo}/blob/${branch}/${item.path}`
+            }));
+
+          resolve(dossierFiles);
+        } catch (err) {
+          reject(new Error(`Failed to parse GitHub response: ${err.message}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+/**
+ * Fetch and parse dossier metadata from a URL
+ * TODO: Add caching to avoid re-fetching the same file
+ */
+async function fetchDossierMetadata(url, displayPath) {
+  const https = require('https');
+  const http = require('http');
+  const path = require('path');
+
+  return new Promise((resolve) => {
+    const protocol = url.startsWith('https://') ? https : http;
+
+    protocol.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        resolve({
+          path: displayPath,
+          filename: path.basename(displayPath),
+          title: path.basename(displayPath, '.ds.md'),
+          error: `HTTP ${res.statusCode}`
+        });
+        return;
+      }
+
+      let content = '';
+      res.on('data', chunk => { content += chunk; });
+      res.on('end', () => {
+        resolve(parseDossierMetadataFromContent(content, displayPath));
+      });
+    }).on('error', (err) => {
+      resolve({
+        path: displayPath,
+        filename: path.basename(displayPath),
+        title: path.basename(displayPath, '.ds.md'),
+        error: err.message
+      });
+    });
+  });
+}
+
+/**
+ * Parse dossier metadata from file content
+ */
+function parseDossierMetadataFromContent(content, filePath) {
+  const path = require('path');
+
+  try {
+    // Check for ---dossier JSON frontmatter format
+    const jsonFrontmatterMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---/);
+    if (jsonFrontmatterMatch) {
+      try {
+        const frontmatter = JSON.parse(jsonFrontmatterMatch[1]);
+        return {
+          path: filePath,
+          filename: path.basename(filePath),
+          title: frontmatter.title || path.basename(filePath, '.ds.md'),
+          version: frontmatter.version || '-',
+          risk_level: frontmatter.risk_level || 'unknown',
+          category: Array.isArray(frontmatter.category) ? frontmatter.category.join(', ') : (frontmatter.category || '-'),
+          status: frontmatter.status || '-',
+          signed: !!frontmatter.signature,
+          checksum: !!frontmatter.checksum,
+          objective: frontmatter.objective || '',
+          error: null
+        };
+      } catch (parseErr) {
+        return {
+          path: filePath,
+          filename: path.basename(filePath),
+          title: path.basename(filePath, '.ds.md'),
+          error: 'Invalid JSON frontmatter'
+        };
+      }
+    }
+
+    // Check for standard YAML frontmatter format
+    const yamlFrontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+    if (yamlFrontmatterMatch) {
+      // Simple YAML parsing (key: value)
+      const frontmatter = {};
+      const lines = yamlFrontmatterMatch[1].split('\n');
+      for (const line of lines) {
+        const match = line.match(/^(\w+):\s*(.*)$/);
+        if (match) {
+          let value = match[2].trim();
+          // Remove quotes
+          if ((value.startsWith('"') && value.endsWith('"')) ||
+              (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+          }
+          frontmatter[match[1]] = value;
+        }
+      }
+
+      return {
+        path: filePath,
+        filename: path.basename(filePath),
+        title: frontmatter.title || path.basename(filePath, '.ds.md'),
+        version: frontmatter.version || '-',
+        risk_level: frontmatter.risk_level || 'unknown',
+        category: frontmatter.category || '-',
+        status: frontmatter.status || '-',
+        signed: !!frontmatter.signature,
+        checksum: !!frontmatter.checksum,
+        objective: frontmatter.objective || '',
+        error: null
+      };
+    }
+
+    // No frontmatter found
+    return {
+      path: filePath,
+      filename: path.basename(filePath),
+      title: path.basename(filePath, '.ds.md'),
+      error: 'No frontmatter found'
+    };
+
+  } catch (err) {
+    return {
+      path: filePath,
+      filename: path.basename(filePath),
+      title: path.basename(filePath, '.ds.md'),
+      error: err.message
+    };
+  }
+}
+
+/**
+ * Parse dossier metadata from a local file
+ */
+function parseDossierMetadataLocal(filePath) {
+  const fs = require('fs');
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return parseDossierMetadataFromContent(content, filePath);
+  } catch (err) {
+    const path = require('path');
+    return {
+      path: filePath,
+      filename: path.basename(filePath),
+      title: path.basename(filePath, '.ds.md'),
+      error: err.message
+    };
+  }
+}
+
+/**
+ * Verify a dossier file using the verify script
+ */
+function verifyDossierQuick(filePath) {
+  const verifyScript = path.join(__dirname, 'dossier-verify');
+  try {
+    execSync(`node "${verifyScript}" "${filePath}" --exit-code-only 2>/dev/null`, { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Format output as table
+ */
+function formatTable(dossiers, showPath = false) {
+  if (dossiers.length === 0) {
+    return 'No dossiers found.';
+  }
+
+  // Calculate column widths
+  const titleWidth = Math.min(30, Math.max(5, ...dossiers.map(d => (d.title || '').length)));
+  const riskWidth = 8;
+  const signedWidth = 6;
+
+  // Header
+  let output = '\n';
+  output += 'TITLE'.padEnd(titleWidth + 2);
+  output += 'RISK'.padEnd(riskWidth + 2);
+  output += 'SIGNED'.padEnd(signedWidth + 2);
+  output += showPath ? 'PATH' : 'FILE';
+  output += '\n';
+  output += '─'.repeat(titleWidth + riskWidth + signedWidth + 50) + '\n';
+
+  // Rows
+  for (const d of dossiers) {
+    const title = (d.title || d.filename).substring(0, titleWidth);
+    const risk = (d.risk_level || 'unknown').toUpperCase().substring(0, riskWidth);
+    const signed = d.signed ? '✅' : '⚠️';
+    const pathOrFile = showPath ? d.path : d.filename;
+
+    output += title.padEnd(titleWidth + 2);
+    output += risk.padEnd(riskWidth + 2);
+    output += signed.padEnd(signedWidth + 2);
+    output += pathOrFile;
+    output += '\n';
+  }
+
+  return output;
+}
+
 program
   .command('list')
-  .description('List available dossiers [TBD]')
-  .argument('[directory]', 'Directory to search', '.')
-  .option('--recursive', 'Search subdirectories')
-  .option('--verified-only', 'Only show verified dossiers')
-  .option('--risk <level>', 'Filter by risk level')
+  .description('List available dossiers in a directory or repository')
+  .argument('[source]', 'Directory, GitHub repo (github:owner/repo), or URL', '.')
+  .option('-r, --recursive', 'Search subdirectories recursively (default for remote)')
+  .option('--signed-only', 'Only show signed dossiers')
+  .option('--risk <level>', 'Filter by risk level (low, medium, high, critical)')
+  .option('--category <category>', 'Filter by category')
   .option('--format <fmt>', 'Output format (table, json, simple)', 'table')
-  .action((directory, options) => {
-    console.log('⚠️  list tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+  .option('--show-path', 'Show full path instead of filename')
+  .action(async (source, options) => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // Parse the source to determine type
+    const parsed = parseListSource(source);
+    let dossiers = [];
+
+    if (parsed.type === 'github') {
+      // Remote GitHub repository
+      console.log(`\n🔍 Fetching dossiers from GitHub: ${parsed.owner}/${parsed.repo}`);
+      if (parsed.path) {
+        console.log(`   Path: ${parsed.path}`);
+      }
+      console.log(`   Branch: ${parsed.branch}\n`);
+
+      try {
+        const files = await findDossierFilesGitHub(parsed.owner, parsed.repo, parsed.path, parsed.branch);
+
+        if (files.length === 0) {
+          console.log('⚠️  No dossiers found (*.ds.md files)');
+          process.exit(0);
+        }
+
+        console.log(`   Found ${files.length} dossier file(s)\n`);
+        console.log('📥 Fetching metadata...\n');
+
+        // Fetch metadata for each file (in parallel with limit)
+        const batchSize = 5;
+        for (let i = 0; i < files.length; i += batchSize) {
+          const batch = files.slice(i, i + batchSize);
+          const results = await Promise.all(
+            batch.map(f => fetchDossierMetadata(f.rawUrl, f.path))
+          );
+          dossiers.push(...results);
+        }
+
+      } catch (err) {
+        console.log(`❌ Error: ${err.message}`);
+        process.exit(1);
+      }
+
+    } else {
+      // Local directory
+      const searchDir = path.resolve(parsed.path);
+
+      if (!fs.existsSync(searchDir)) {
+        console.log(`❌ Directory not found: ${searchDir}`);
+        process.exit(1);
+      }
+
+      if (!fs.statSync(searchDir).isDirectory()) {
+        console.log(`❌ Not a directory: ${searchDir}`);
+        process.exit(1);
+      }
+
+      console.log(`\n🔍 Searching for dossiers in: ${searchDir}`);
+      if (options.recursive) {
+        console.log('   (recursive search enabled)');
+      }
+
+      // Find all .ds.md files
+      const files = findDossierFilesLocal(searchDir, options.recursive);
+
+      if (files.length === 0) {
+        console.log('\n⚠️  No dossiers found (*.ds.md files)');
+        console.log('\nTips:');
+        console.log('  - Use --recursive to search subdirectories');
+        console.log('  - Ensure files have the .ds.md extension');
+        console.log('  - Try: dossier list github:owner/repo\n');
+        process.exit(0);
+      }
+
+      console.log(`   Found ${files.length} dossier file(s)\n`);
+
+      // Parse metadata from each file
+      dossiers = files.map(f => parseDossierMetadataLocal(f));
+    }
+
+    // Apply filters
+    if (options.signedOnly) {
+      dossiers = dossiers.filter(d => d.signed === true);
+    }
+
+    if (options.risk) {
+      const riskLevel = options.risk.toLowerCase();
+      dossiers = dossiers.filter(d => (d.risk_level || '').toLowerCase() === riskLevel);
+    }
+
+    if (options.category) {
+      const category = options.category.toLowerCase();
+      dossiers = dossiers.filter(d => (d.category || '').toLowerCase().includes(category));
+    }
+
+    // Output based on format
+    if (options.format === 'json') {
+      console.log(JSON.stringify(dossiers, null, 2));
+    } else if (options.format === 'simple') {
+      for (const d of dossiers) {
+        console.log(d.path);
+      }
+    } else {
+      // Table format (default)
+      console.log(formatTable(dossiers, options.showPath));
+
+      // Summary
+      console.log(`\nTotal: ${dossiers.length} dossier(s)`);
+
+      const signed = dossiers.filter(d => d.signed).length;
+      const unsigned = dossiers.length - signed;
+      if (signed > 0 || unsigned > 0) {
+        console.log(`   Signed: ${signed}  |  Unsigned: ${unsigned}`);
+      }
+
+      // Risk level breakdown
+      const riskCounts = {};
+      for (const d of dossiers) {
+        const risk = (d.risk_level || 'unknown').toLowerCase();
+        riskCounts[risk] = (riskCounts[risk] || 0) + 1;
+      }
+      const riskSummary = Object.entries(riskCounts)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('  |  ');
+      if (riskSummary) {
+        console.log(`   Risk: ${riskSummary}`);
+      }
+
+      console.log('');
+    }
+
+    process.exit(0);
   });
 
 // ============================================================================
-// COMMAND: sign (TBD)
+// COMMAND: sign (IMPLEMENTED)
 // ============================================================================
+// Official KMS keys that require CI/CD signing (not direct CLI use)
+const OFFICIAL_KMS_KEYS = [
+  'alias/dossier-official-prod',
+  'alias/dossier-official',
+  'arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d'
+];
+
 program
   .command('sign')
-  .description('Sign dossier with cryptographic key [TBD]')
+  .description('Sign dossier with cryptographic key (supports any AWS KMS key)')
   .argument('<file>', 'Dossier file to sign')
-  .option('--key <path>', 'Path to signing key')
-  .option('--method <type>', 'Signing method (minisign, kms)', 'minisign')
-  .option('--output <file>', 'Output signed dossier')
-  .action((file, options) => {
-    console.log('⚠️  sign tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+  .option('--method <type>', 'Signing method: kms (AWS KMS) or ed25519 (local key)', 'kms')
+  .option('--key <path>', 'Path to Ed25519 private key (required for ed25519 method)')
+  .option('--key-id <id>', 'KMS key alias/ARN (e.g., alias/my-key or arn:aws:kms:...) or ed25519 key ID')
+  .option('--region <region>', 'AWS region for KMS (default: us-east-1 or AWS_REGION env)')
+  .option('--signed-by <name>', 'Signer identity (e.g., "Name <email@example.com>")')
+  .option('--dry-run', 'Calculate checksum only, do not sign')
+  .option('--force', 'Bypass official key restriction (not recommended)')
+  .action(async (file, options) => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // Resolve file path
+    const dossierFile = path.resolve(file);
+
+    if (!fs.existsSync(dossierFile)) {
+      console.log(`❌ File not found: ${dossierFile}`);
+      process.exit(1);
+    }
+
+    console.log('\n🔐 Dossier Signing Tool\n');
+    console.log(`   File: ${dossierFile}`);
+    console.log(`   Method: ${options.method}`);
+
+    // Determine which signing tool to use
+    const toolsDir = path.join(__dirname, '../../tools');
+    let signTool;
+    let signArgs = [dossierFile];
+
+    if (options.method === 'kms') {
+      signTool = path.join(toolsDir, 'sign-dossier-kms.js');
+
+      // Determine the effective key ID
+      const effectiveKeyId = options.keyId || 'alias/dossier-official-prod';
+
+      // Check if trying to use official key directly
+      const isOfficialKey = OFFICIAL_KMS_KEYS.some(key =>
+        effectiveKeyId === key || effectiveKeyId.includes(key)
+      );
+
+      if (isOfficialKey && !options.force && !options.dryRun) {
+        console.log(`\n⚠️  Official Dossier Key Detected: ${effectiveKeyId}\n`);
+        console.log('   Official dossier signatures should be created through CI/CD,');
+        console.log('   not directly via the CLI. This ensures:');
+        console.log('   - Only merged PRs from authorized contributors are signed');
+        console.log('   - Audit trail via GitHub Actions');
+        console.log('   - Consistent signing identity\n');
+        console.log('   To sign official dossiers:');
+        console.log('   1. Create a PR in the imboard-ai/dossier repository');
+        console.log('   2. Get approval from a maintainer');
+        console.log('   3. Merge to main - CI will sign automatically\n');
+        console.log('   For your own organization, use your own KMS key:');
+        console.log(`   dossier sign ${file} --key-id alias/your-org-key\n`);
+        console.log('   Or use Ed25519 local signing:');
+        console.log(`   dossier sign ${file} --method ed25519 --key your-key.pem\n`);
+        console.log('   To bypass this check (not recommended):');
+        console.log(`   dossier sign ${file} --force\n`);
+        process.exit(1);
+      }
+
+      if (isOfficialKey && options.force && !options.dryRun) {
+        console.log(`\n⚠️  WARNING: Using official key with --force`);
+        console.log('   This should only be done by authorized maintainers.\n');
+      }
+
+      // KMS options
+      if (options.keyId) {
+        signArgs.push('--key-id', options.keyId);
+      }
+      if (options.region) {
+        signArgs.push('--region', options.region);
+      }
+      if (options.signedBy) {
+        signArgs.push('--signed-by', options.signedBy);
+      }
+      if (options.dryRun) {
+        signArgs.push('--dry-run');
+      }
+
+      console.log(`   KMS Key: ${effectiveKeyId}`);
+      console.log(`   Region: ${options.region || process.env.AWS_REGION || 'us-east-1'}`);
+
+    } else if (options.method === 'ed25519') {
+      signTool = path.join(toolsDir, 'sign-dossier.js');
+
+      // Ed25519 requires a key file
+      if (!options.key && !options.dryRun) {
+        console.log('\n❌ Error: --key is required for ed25519 signing');
+        console.log('\nGenerate a key pair with:');
+        console.log('  openssl genpkey -algorithm ED25519 -out private-key.pem');
+        console.log('  openssl pkey -in private-key.pem -pubout -out public-key.pem');
+        console.log('\nThen sign with:');
+        console.log(`  dossier sign ${file} --method ed25519 --key private-key.pem`);
+        process.exit(1);
+      }
+
+      if (options.key) {
+        const keyPath = path.resolve(options.key);
+        if (!fs.existsSync(keyPath)) {
+          console.log(`\n❌ Key file not found: ${keyPath}`);
+          process.exit(1);
+        }
+        signArgs.push('--key', keyPath);
+        console.log(`   Key: ${keyPath}`);
+      }
+
+      if (options.keyId) {
+        signArgs.push('--key-id', options.keyId);
+      }
+      if (options.signedBy) {
+        signArgs.push('--signed-by', options.signedBy);
+      }
+      if (options.dryRun) {
+        signArgs.push('--dry-run');
+      }
+
+    } else {
+      console.log(`\n❌ Unknown signing method: ${options.method}`);
+      console.log('\nSupported methods:');
+      console.log('  kms      - AWS KMS signing (requires AWS credentials)');
+      console.log('  ed25519  - Local Ed25519 key signing');
+      process.exit(1);
+    }
+
+    // Check if signing tool exists
+    if (!fs.existsSync(signTool)) {
+      console.log(`\n❌ Signing tool not found: ${signTool}`);
+      console.log('\nThis may be a package installation issue.');
+      console.log('Please report at: https://github.com/imboard-ai/dossier/issues');
+      process.exit(1);
+    }
+
+    if (options.signedBy) {
+      console.log(`   Signed by: ${options.signedBy}`);
+    }
+
+    if (options.dryRun) {
+      console.log('\n   [DRY RUN - will not sign]');
+    }
+
+    console.log('');
+
+    // Execute signing tool
+    try {
+      const { spawnSync } = require('child_process');
+      const result = spawnSync('node', [signTool, ...signArgs], {
+        stdio: 'inherit',
+        cwd: path.join(__dirname, '../..')
+      });
+
+      if (result.status !== 0) {
+        process.exit(result.status || 1);
+      }
+    } catch (err) {
+      console.log(`\n❌ Signing failed: ${err.message}`);
+      process.exit(1);
+    }
   });
 
 // ============================================================================

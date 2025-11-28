@@ -4,16 +4,16 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 
 ## Status Overview
 
-**Current Version**: v0.2.4
-**Released**: 2025-11-25
-**Status**: ✅ Phase 1 Complete - Core Commands Functional, Production-Ready Execution
+**Current Version**: v0.2.6
+**Released**: 2025-11-28
+**Status**: ✅ Phase 1 Complete + Phase 2 In Progress - Sign Command Added
 
 ### Implementation Progress
 
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 1: MVP | ✅ Complete | 100% |
-| Phase 2: Enhanced Authoring | 📋 Planned | 0% |
+| Phase 2: Enhanced Authoring | 🚧 In Progress | 40% |
 | Phase 3: Advanced Features | 📋 Planned | 0% |
 
 ### Command Status
@@ -24,8 +24,8 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 | `run` | ✅ Done | v0.2.3 | P0 |
 | `config` | ✅ Done | v0.2.1 | P0 |
 | `create` | ✅ Done | v0.2.4 | P1 |
-| `list` | 📋 Planned | - | P1 |
-| `sign` | 📋 Planned | - | P2 |
+| `list` | ✅ Done | v0.2.5 | P1 |
+| `sign` | ✅ Done | v0.2.6 | P2 |
 | `publish` | 📋 Planned | - | P2 |
 | `checksum` | 📋 Planned | - | P2 |
 | `validate` | 📋 Planned | - | P2 |
@@ -35,6 +35,106 @@ Planning document for redesigning the Dossier CLI from single-purpose `dossier-v
 ---
 
 ## Evolution History
+
+### v0.2.6 - Sign Command Implementation ✅ (2025-11-28)
+
+**What Changed**:
+- ✅ Implemented `dossier sign` command as CLI wrapper around existing signing tools
+- ✅ AWS KMS signing support (default method)
+- ✅ Ed25519 local key signing support
+- ✅ Dry-run mode for checksum-only calculation
+- ✅ Helpful error messages with key generation instructions
+
+**Command Syntax**:
+```bash
+dossier sign <file> [options]
+
+Options:
+  --method <type>     Signing method: kms (default) or ed25519
+  --key <path>        Path to Ed25519 private key (required for ed25519)
+  --key-id <id>       Key identifier
+  --region <region>   AWS region for KMS (default: us-east-1)
+  --signed-by <name>  Signer identity (e.g., "Name <email@example.com>")
+  --dry-run           Calculate checksum only, do not sign
+```
+
+**Examples**:
+```bash
+# Sign with AWS KMS (default)
+dossier sign examples/my-dossier.ds.md --signed-by "Team <team@example.com>"
+
+# Sign with custom KMS key
+dossier sign file.ds.md --key-id alias/my-key --region us-west-2
+
+# Sign with Ed25519 local key
+dossier sign file.ds.md --method ed25519 --key private-key.pem --key-id my-key-2025
+
+# Dry run (checksum only)
+dossier sign file.ds.md --dry-run
+```
+
+**Implementation Notes**:
+- Wraps existing `tools/sign-dossier-kms.js` and `tools/sign-dossier.js`
+- KMS requires AWS credentials configured
+- Ed25519 requires generating a keypair with `openssl genpkey -algorithm ED25519`
+
+### v0.2.5 - List Command Implementation ✅ (2025-11-28)
+
+**What Changed**:
+- ✅ Implemented `dossier list` command with local and remote support
+- ✅ Local directory scanning with optional recursive search
+- ✅ GitHub repository support via `github:owner/repo` shorthand
+- ✅ GitHub URL support (`https://github.com/owner/repo/tree/branch/path`)
+- ✅ Metadata parsing from JSON and YAML frontmatter
+- ✅ Multiple output formats: table (default), json, simple
+- ✅ Filtering options: `--risk`, `--category`, `--signed-only`
+- ✅ Summary statistics: signed/unsigned count, risk level breakdown
+
+**Command Syntax**:
+```bash
+dossier list [source] [options]
+
+# Local directory
+dossier list ./examples --recursive
+
+# GitHub repository
+dossier list github:owner/repo
+dossier list github:owner/repo/path@branch
+dossier list https://github.com/owner/repo/tree/main/examples
+
+Options:
+  -r, --recursive        Search subdirectories recursively
+  --signed-only          Only show signed dossiers
+  --risk <level>         Filter by risk level (low, medium, high, critical)
+  --category <category>  Filter by category
+  --format <fmt>         Output format (table, json, simple)
+  --show-path            Show full path instead of filename
+```
+
+**Example Output**:
+```
+🔍 Fetching dossiers from GitHub: imboard-ai/dossier
+   Path: examples
+   Branch: main
+
+   Found 15 dossier file(s)
+
+TITLE                           RISK      SIGNED  FILE
+──────────────────────────────────────────────────────────────────────────
+Deploy to AWS                   HIGH      ✅       deploy-to-aws.ds.md
+Train ML Model                  MEDIUM    ✅       train-ml-model.ds.md
+...
+
+Total: 15 dossier(s)
+   Signed: 15  |  Unsigned: 0
+   Risk: low: 8  |  medium: 4  |  critical: 1  |  high: 2
+```
+
+**Implementation Notes**:
+- Uses GitHub API for repository tree fetching (unauthenticated, rate-limited)
+- TODO: Add authentication support for private repos and higher rate limits
+- TODO: Add caching to avoid repeated fetches
+- TODO: Add GitLab support
 
 ### v0.2.4 - Create Command Implementation ✅ (2025-11-25)
 
@@ -1006,14 +1106,14 @@ Exit code: 1
 - [ ] Test coverage (deferred to Phase 2)
 - [ ] `list` command implementation (moved to Phase 2)
 
-### Phase 2: Enhanced Authoring 📋 0% Complete
+### Phase 2: Enhanced Authoring 🚧 40% Complete
 
 **Timeline**: 2-3 weeks
-**Status**: Planned
+**Status**: In Progress
 
 **Commands**:
-5. 📋 `dossier list` - List and discover dossiers (moved from Phase 1)
-6. 📋 `dossier sign` - Sign dossiers
+5. ✅ `dossier list` - List and discover dossiers (v0.2.5)
+6. ✅ `dossier sign` - Sign dossiers with KMS or Ed25519 (v0.2.6)
 7. 📋 `dossier publish` - Share to registry (MVP: print GUID only)
 8. 📋 `dossier init` - Scaffold projects
 9. 📋 `dossier checksum` - Checksum utilities
@@ -1453,6 +1553,6 @@ dossier verify file.ds.md
 
 ---
 
-**Current Status**: ✅ v0.2.4 Released - Phase 1 Complete: All core commands implemented
+**Current Status**: ✅ v0.2.6 Released - Phase 2 40% Complete: List + Sign commands
 
-**Last Updated**: 2025-11-25 (v0.2.4 release - create command implemented with meta-dossier approach, Phase 1 100% complete)
+**Last Updated**: 2025-11-28 (v0.2.6 release - sign command implemented as wrapper around existing tools)
