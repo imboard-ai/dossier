@@ -13,7 +13,6 @@
  *   node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ~/.dossier/trusted-keys.txt
  */
 
-const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const {
@@ -23,42 +22,32 @@ const {
   verifySignature,
   readFileIfExists,
 } = require('@imboard-ai/dossier-core');
+const { createCliParser } = require('./lib/cli-parser');
 
-// Parse command line arguments
-function parseArgs() {
-  const args = process.argv.slice(2);
-
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
-    console.log(`
-Dossier Verification Tool
-
-Usage:
-  node tools/verify-dossier.js <dossier-file> [options]
-
-Options:
-  --trusted-keys <file>  Path to trusted keys file (default: ~/.dossier/trusted-keys.txt)
-  --json                 Output result as JSON
-  --help, -h             Show this help message
-
+// Configure CLI parser
+const parseArgs = createCliParser({
+  name: 'Dossier Verification Tool',
+  description: 'Verifies the integrity (checksum) and authenticity (signature) of a dossier.',
+  usage: 'node tools/verify-dossier.js <dossier-file> [options]',
+  options: [
+    {
+      name: 'trustedKeysFile',
+      flag: 'trusted-keys',
+      description: 'Path to trusted keys file',
+      defaultFn: () => path.join(os.homedir(), '.dossier', 'trusted-keys.txt'),
+    },
+    {
+      name: 'jsonOutput',
+      flag: 'json',
+      description: 'Output result as JSON',
+      isBoolean: true,
+    },
+  ],
+  extraHelp: `
 Example:
   node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md
-  node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ./my-keys.txt
-`);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
-  }
-
-  const dossierFile = args[0];
-  const trustedKeysIndex = args.indexOf('--trusted-keys');
-  const jsonOutput = args.includes('--json');
-
-  const defaultTrustedKeys = path.join(os.homedir(), '.dossier', 'trusted-keys.txt');
-
-  return {
-    dossierFile,
-    trustedKeysFile: trustedKeysIndex !== -1 ? args[trustedKeysIndex + 1] : defaultTrustedKeys,
-    jsonOutput,
-  };
-}
+  node tools/verify-dossier.js examples/devops/deploy-to-aws.ds.md --trusted-keys ./my-keys.txt`,
+});
 
 // Main verification function
 async function verifyDossier(dossierFile, trustedKeysFile) {

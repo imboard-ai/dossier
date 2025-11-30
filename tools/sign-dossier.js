@@ -26,25 +26,38 @@ const {
   handleDryRun,
   writeDossier,
 } = require('./lib/signing-common');
+const { createCliParser } = require('./lib/cli-parser');
 
-// Parse command line arguments
-function parseArgs() {
-  const args = process.argv.slice(2);
-
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
-    console.log(`
-Dossier Signing Tool
-
-Usage:
-  node tools/sign-dossier.js <dossier-file> --key <ed25519-private-key.pem> [options]
-
-Options:
-  --key <file>        Path to Ed25519 private key in PEM format (REQUIRED)
-  --key-id <id>       Human-readable key identifier (e.g., 'imboard-ai-2024')
-  --signed-by <name>  Signer identity (e.g., 'Imboard AI <security@imboard.ai>')
-  --dry-run           Calculate checksum but don't sign
-  --help, -h          Show this help message
-
+// Configure CLI parser
+const parseArgs = createCliParser({
+  name: 'Dossier Signing Tool',
+  description: 'Signs a dossier with Ed25519 and embeds the checksum and signature in the frontmatter.',
+  usage: 'node tools/sign-dossier.js <dossier-file> --key <ed25519-private-key.pem> [options]',
+  options: [
+    {
+      name: 'keyFile',
+      flag: 'key',
+      description: 'Path to Ed25519 private key in PEM format',
+      required: true,
+    },
+    {
+      name: 'keyId',
+      flag: 'key-id',
+      description: "Human-readable key identifier (e.g., 'imboard-ai-2024')",
+    },
+    {
+      name: 'signedBy',
+      flag: 'signed-by',
+      description: "Signer identity (e.g., 'Imboard AI <security@imboard.ai>')",
+    },
+    {
+      name: 'dryRun',
+      flag: 'dry-run',
+      description: "Calculate checksum but don't sign",
+      isBoolean: true,
+    },
+  ],
+  extraHelp: `
 Generate keypair:
   openssl genpkey -algorithm ED25519 -out private-key.pem
   openssl pkey -in private-key.pem -pubout -out public-key.pem
@@ -53,30 +66,8 @@ Example:
   node tools/sign-dossier.js examples/devops/deploy-to-aws.md \\
     --key ~/.dossier/private-key.pem \\
     --key-id imboard-ai-2024 \\
-    --signed-by "Imboard AI <security@imboard.ai>"
-`);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
-  }
-
-  const dossierFile = args[0];
-  const keyIndex = args.indexOf('--key');
-  const keyIdIndex = args.indexOf('--key-id');
-  const signedByIndex = args.indexOf('--signed-by');
-  const dryRun = args.includes('--dry-run');
-
-  if (!dryRun && keyIndex === -1) {
-    console.error('Error: --key is required (unless using --dry-run)');
-    process.exit(1);
-  }
-
-  return {
-    dossierFile,
-    keyFile: keyIndex !== -1 ? args[keyIndex + 1] : null,
-    keyId: keyIdIndex !== -1 ? args[keyIdIndex + 1] : null,
-    signedBy: signedByIndex !== -1 ? args[signedByIndex + 1] : null,
-    dryRun,
-  };
-}
+    --signed-by "Imboard AI <security@imboard.ai>"`,
+});
 
 // Main function
 async function main() {
