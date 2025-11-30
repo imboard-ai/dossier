@@ -3,11 +3,7 @@
  * Provides the Dossier Execution Protocol to LLM context
  */
 
-import { loadMarkdownResource } from '../utils/resourceLoader';
+import { createResourceLoader } from '../utils/resourceLoader';
 
-/**
- * Get PROTOCOL.md content
- */
-export function getProtocolResource(): string {
-  return loadMarkdownResource('PROTOCOL.md', 'protocol');
-}
+/** Get PROTOCOL.md content */
+export const getProtocolResource = createResourceLoader('PROTOCOL.md', 'protocol');

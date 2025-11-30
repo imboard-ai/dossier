@@ -24,6 +24,7 @@ import { type ListDossiersInput, listDossiers } from './tools/listDossiers.js';
 import { type ReadDossierInput, readDossier } from './tools/readDossier.js';
 import { type VerifyDossierInput, verifyDossier } from './tools/verifyDossier.js';
 import { logger } from './utils/logger.js';
+import { createToolResponse } from './utils/response.js';
 
 // Create MCP server instance
 const server = new Server(
@@ -111,38 +112,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case 'verify_dossier': {
         const result = await verifyDossier(args as unknown as VerifyDossierInput);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
+        return createToolResponse(result);
       }
 
       case 'read_dossier': {
         const result = readDossier(args as unknown as ReadDossierInput);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
+        return createToolResponse(result);
       }
 
       case 'list_dossiers': {
         const result = listDossiers(args as unknown as ListDossiersInput);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
+        return createToolResponse(result);
       }
 
       default:
@@ -155,24 +135,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       stack: getErrorStack(error),
     });
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              error: {
-                message: getErrorMessage(error),
-                tool: name,
-              },
-            },
-            null,
-            2
-          ),
-        },
-      ],
-      isError: true,
-    };
+    return createToolResponse(
+      { error: { message: getErrorMessage(error), tool: name } },
+      true
+    );
   }
 });
 

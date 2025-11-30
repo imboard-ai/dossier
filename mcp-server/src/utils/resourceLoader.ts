@@ -33,3 +33,14 @@ export function loadMarkdownResource(relativePath: string, resourceName: string)
     throw new Error(`Failed to load ${relativePath}: ${getErrorMessage(err)}`);
   }
 }
+
+/**
+ * Factory to create resource loader functions
+ * @param relativePath - Path relative to project root
+ * @param resourceName - Human-readable name for logging
+ * @returns A function that loads the resource when called
+ */
+export const createResourceLoader = (
+  relativePath: string,
+  resourceName: string
+): (() => string) => (): string => loadMarkdownResource(relativePath, resourceName);

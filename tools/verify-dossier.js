@@ -21,6 +21,7 @@ const {
   verifyIntegrity,
   loadTrustedKeys,
   verifySignature,
+  readFileIfExists,
 } = require('@imboard-ai/dossier-core');
 
 // Parse command line arguments
@@ -85,13 +86,12 @@ async function verifyDossier(dossierFile, trustedKeysFile) {
   };
 
   // Read dossier
-  if (!fs.existsSync(dossierFile)) {
+  const content = readFileIfExists(dossierFile);
+  if (!content) {
     result.errors.push(`File not found: ${dossierFile}`);
     result.recommendation = 'BLOCK';
     return result;
   }
-
-  const content = fs.readFileSync(dossierFile, 'utf8');
 
   // Parse dossier
   let parsed;

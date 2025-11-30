@@ -4,7 +4,7 @@
  */
 
 const fs = require('node:fs');
-const { parseDossierContent, calculateChecksum } = require('@imboard-ai/dossier-core');
+const { parseDossierContent, calculateChecksum, readFileIfExists } = require('@imboard-ai/dossier-core');
 
 /**
  * Read and parse a dossier file
@@ -12,12 +12,11 @@ const { parseDossierContent, calculateChecksum } = require('@imboard-ai/dossier-
  * @returns {{ frontmatter: object, body: string }} Parsed dossier
  */
 function readAndParseDossier(dossierFile) {
-  if (!fs.existsSync(dossierFile)) {
+  const content = readFileIfExists(dossierFile);
+  if (!content) {
     console.error(`Error: File not found: ${dossierFile}`);
     process.exit(1);
   }
-
-  const content = fs.readFileSync(dossierFile, 'utf8');
 
   let parsed;
   try {

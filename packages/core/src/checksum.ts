@@ -3,15 +3,15 @@
  * Uses SHA256 hash of the body content (excluding frontmatter)
  */
 
-import { createHash } from 'node:crypto';
 import type { IntegrityResult } from './types';
+import { sha256Hex } from './utils/crypto';
 
 /**
  * Calculate SHA256 hash of dossier body
  * CRITICAL: Hash is of the BODY only (after ---), not the entire file
  */
 export function calculateChecksum(body: string): string {
-  return createHash('sha256').update(body, 'utf8').digest('hex');
+  return sha256Hex(body);
 }
 
 /**

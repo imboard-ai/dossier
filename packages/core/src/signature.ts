@@ -6,8 +6,9 @@
  */
 
 import { createPublicKey, verify } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { sha256Hash } from './utils/crypto';
+import { readFileIfExists } from './utils/fs';
 import { join } from 'node:path';
 import { KMSClient, SigningAlgorithmSpec, VerifyCommand } from '@aws-sdk/client-kms';
 import type { SignatureResult } from './signers';
@@ -22,13 +23,12 @@ export function loadTrustedKeys(filePath?: string): Map<string, string> {
   const keysPath = filePath || join(homedir(), '.dossier', 'trusted-keys.txt');
   const keys = new Map<string, string>();
 
-  if (!existsSync(keysPath)) {
+  const content = readFileIfExists(keysPath);
+  if (!content) {
     return keys;
   }
 
   try {
-    const content = readFileSync(keysPath, 'utf8');
-
     for (const line of content.split('\n')) {
       const trimmed = line.trim();
 
@@ -87,10 +87,9 @@ export async function verifyWithKms(
   region = 'us-east-1'
 ): Promise<boolean> {
   const client = new KMSClient({ region });
-  const { createHash } = await import('crypto');
 
   // Calculate SHA256 digest of content (must match signing process)
-  const hash = createHash('sha256').update(content, 'utf8').digest();
+  const hash = sha256Hash(content);
 
   const signatureBuffer = Buffer.from(signature, 'base64');
 

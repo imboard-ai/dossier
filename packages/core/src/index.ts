@@ -33,3 +33,7 @@ export * from './types';
 export { getErrorMessage, getErrorStack } from './utils/errors';
 // Verification utilities
 export { createDefaultVerificationResult } from './utils/verification';
+// Crypto utilities
+export { sha256Hash, sha256Hex } from './utils/crypto';
+// File system utilities
+export { readFileIfExists } from './utils/fs';

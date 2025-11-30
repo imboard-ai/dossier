@@ -2,7 +2,6 @@
  * AWS KMS Signer and Verifier
  */
 
-import { createHash } from 'node:crypto';
 import {
   GetPublicKeyCommand,
   KMSClient,
@@ -11,6 +10,7 @@ import {
   VerifyCommand,
 } from '@aws-sdk/client-kms';
 import type { SignatureResult, Signer, Verifier } from './index';
+import { sha256Hash } from '../utils/crypto';
 
 export class KmsSigner implements Signer {
   readonly algorithm = 'ECDSA-SHA-256';
@@ -25,7 +25,7 @@ export class KmsSigner implements Signer {
 
   async sign(content: string): Promise<SignatureResult> {
     // Calculate SHA256 digest of content
-    const hash = createHash('sha256').update(content, 'utf8').digest();
+    const hash = sha256Hash(content);
 
     // Sign the digest with KMS
     const signCommand = new SignCommand({
@@ -96,7 +96,7 @@ export class KmsVerifier implements Verifier {
       const client = this.getClient(region);
 
       // Calculate SHA256 digest to match what was signed
-      const hash = createHash('sha256').update(content, 'utf8').digest();
+      const hash = sha256Hash(content);
       const signatureBuffer = Buffer.from(signature.signature, 'base64');
 
       const command = new VerifyCommand({

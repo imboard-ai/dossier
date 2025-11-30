@@ -2,9 +2,9 @@
  * Dossier parser - extracts frontmatter and body from dossier files
  */
 
-import { existsSync, readFileSync } from 'node:fs';
 import type { DossierFrontmatter, ParsedDossier } from './types';
 import { getErrorMessage } from './utils/errors';
+import { readFileIfExists } from './utils/fs';
 
 /**
  * Parse dossier content into frontmatter and body
@@ -39,11 +39,7 @@ export function parseDossierContent(content: string): ParsedDossier {
  * Read and parse a dossier file
  */
 export function parseDossierFile(filePath: string): ParsedDossier {
-  if (!existsSync(filePath)) {
-    throw new Error(`Dossier file not found: ${filePath}`);
-  }
-
-  const content = readFileSync(filePath, 'utf8');
+  const content = readFileIfExists(filePath, 'Dossier file not found: {path}')!;
   return parseDossierContent(content);
 }
 
