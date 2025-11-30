@@ -25,7 +25,18 @@
   ],
   "destructive_operations": [
     "Creates output files in specified directory (project-map.md, project-map.json, changelog.md)"
-  ]
+  ],
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "b765c7223b53bf1911ec9f39d60463c80794c73d439e303a70a4612aaf10a467"
+  },
+  "signature": {
+    "algorithm": "ECDSA-SHA-256",
+    "signature": "MEQCIBANO4ulGq+zBr6JyWA830ZvUCkP7ffwCTesmSeqTfzzAiBO/hRPV5yH7mEioSH4iMAmmeTkPOPXrnQxVTkbb91mmA==",
+    "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqIbQGqW1Jdh97TxQ5ZvnSVvvOcN5NWhfWwXRAaDDuKK1pv8F+kz+uo1W8bNn+8ObgdOBecFTFizkRa/g+QJ8kA==",
+    "key_id": "arn:aws:kms:us-east-1:942039714848:key/d9ccd3fc-b190-49fd-83f7-e94df6620c1d",
+    "signed_at": "2025-11-30T11:35:56.304Z"
+  }
 }
 ---
 # Project Exploration
