@@ -5,6 +5,9 @@
  */
 
 import {
+  createDefaultVerificationResult,
+  getErrorMessage,
+  getErrorStack,
   parseDossierFile,
   type VerificationResult,
   verifyIntegrity,
@@ -25,27 +28,7 @@ export async function verifyDossier(input: VerifyDossierInput): Promise<Verifica
 
   logger.info('Starting dossier verification', { dossierFile: path });
 
-  const result: VerificationResult = {
-    dossierFile: path,
-    integrity: {
-      status: 'missing',
-      message: '',
-    },
-    authenticity: {
-      status: 'unsigned',
-      message: '',
-      isTrusted: false,
-    },
-    riskAssessment: {
-      riskLevel: 'unknown',
-      riskFactors: [],
-      destructiveOperations: [],
-      requiresApproval: true,
-    },
-    recommendation: 'BLOCK',
-    message: '',
-    errors: [],
-  };
+  const result: VerificationResult = createDefaultVerificationResult(path);
 
   try {
     // 1. Parse dossier
@@ -135,13 +118,13 @@ export async function verifyDossier(input: VerifyDossierInput): Promise<Verifica
       riskLevel: result.riskAssessment.riskLevel,
     });
   } catch (err) {
-    result.errors.push(`Verification error: ${(err as Error).message}`);
+    result.errors.push(`Verification error: ${getErrorMessage(err)}`);
     result.recommendation = 'BLOCK';
-    result.message = `DO NOT EXECUTE - Verification failed: ${(err as Error).message}`;
+    result.message = `DO NOT EXECUTE - Verification failed: ${getErrorMessage(err)}`;
     logger.error('Verification FAILED with exception', {
       dossierFile: path,
-      error: (err as Error).message,
-      stack: (err as Error).stack,
+      error: getErrorMessage(err),
+      stack: getErrorStack(err),
     });
   }
 

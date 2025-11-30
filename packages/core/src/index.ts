@@ -29,3 +29,7 @@ export {
 } from './signers';
 // Type exports
 export * from './types';
+// Error utilities
+export { getErrorMessage, getErrorStack } from './utils/errors';
+// Verification utilities
+export { createDefaultVerificationResult } from './utils/verification';

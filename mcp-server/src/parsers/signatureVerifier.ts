@@ -6,6 +6,7 @@
 import {
   type AuthenticityResult,
   type DossierFrontmatter,
+  getErrorMessage,
   loadTrustedKeys,
   verifySignature,
 } from '@imboard-ai/dossier-core';
@@ -80,11 +81,11 @@ export async function verifyAuthenticity(
     }
   } catch (err) {
     logger.error('Signature verification error', {
-      error: (err as Error).message,
+      error: getErrorMessage(err),
     });
     return {
       status: 'error',
-      message: `Verification error: ${(err as Error).message}`,
+      message: `Verification error: ${getErrorMessage(err)}`,
       signer: signature.signed_by,
       keyId: signature.key_id,
       publicKey: signature.public_key,

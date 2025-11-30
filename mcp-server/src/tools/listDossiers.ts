@@ -5,7 +5,7 @@
 
 import { readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { type DossierListItem, parseDossierFile } from '@imboard-ai/dossier-core';
+import { type DossierListItem, getErrorMessage, parseDossierFile } from '@imboard-ai/dossier-core';
 import { logger } from '../utils/logger';
 
 export interface ListDossiersInput {
@@ -48,11 +48,11 @@ function findDossierFiles(dir: string, basePath: string, recursive: boolean): st
         }
       } catch (err) {
         // Skip files we can't stat (permission errors, etc.)
-        logger.warn('Could not stat file', { path: fullPath, error: (err as Error).message });
+        logger.warn('Could not stat file', { path: fullPath, error: getErrorMessage(err) });
       }
     }
   } catch (err) {
-    logger.error('Could not read directory', { dir, error: (err as Error).message });
+    logger.error('Could not read directory', { dir, error: getErrorMessage(err) });
   }
 
   return files;
@@ -98,7 +98,7 @@ export function listDossiers(input: ListDossiersInput): ListDossiersOutput {
     } catch (err) {
       logger.warn('Could not parse dossier file', {
         path: filePath,
-        error: (err as Error).message,
+        error: getErrorMessage(err),
       });
     }
   }

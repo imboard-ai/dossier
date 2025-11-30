@@ -16,6 +16,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { getErrorMessage, getErrorStack } from '@imboard-ai/dossier-core';
 import { getConceptResource } from './resources/concept.js';
 import { getProtocolResource } from './resources/protocol.js';
 import { getSecurityResource } from './resources/security.js';
@@ -150,8 +151,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   } catch (error) {
     logger.error('Tool execution error', {
       tool: name,
-      error: (error as Error).message,
-      stack: (error as Error).stack,
+      error: getErrorMessage(error),
+      stack: getErrorStack(error),
     });
 
     return {
@@ -161,7 +162,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           text: JSON.stringify(
             {
               error: {
-                message: (error as Error).message,
+                message: getErrorMessage(error),
                 tool: name,
               },
             },
@@ -240,8 +241,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   } catch (error) {
     logger.error('Resource read error', {
       uri,
-      error: (error as Error).message,
-      stack: (error as Error).stack,
+      error: getErrorMessage(error),
+      stack: getErrorStack(error),
     });
 
     throw error;
@@ -381,8 +382,8 @@ async function main() {
     process.stdin.resume();
   } catch (error) {
     logger.error('Failed to start server', {
-      error: (error as Error).message,
-      stack: (error as Error).stack,
+      error: getErrorMessage(error),
+      stack: getErrorStack(error),
     });
     process.exit(1);
   }
@@ -402,8 +403,8 @@ process.on('SIGTERM', () => {
 // Run server
 main().catch((error) => {
   logger.error('Fatal error', {
-    error: error.message,
-    stack: error.stack,
+    error: getErrorMessage(error),
+    stack: getErrorStack(error),
   });
   process.exit(1);
 });

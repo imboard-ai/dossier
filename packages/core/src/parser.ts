@@ -4,6 +4,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import type { DossierFrontmatter, ParsedDossier } from './types';
+import { getErrorMessage } from './utils/errors';
 
 /**
  * Parse dossier content into frontmatter and body
@@ -24,7 +25,7 @@ export function parseDossierContent(content: string): ParsedDossier {
   try {
     frontmatter = JSON.parse(frontmatterJson);
   } catch (err) {
-    throw new Error(`Failed to parse frontmatter JSON: ${(err as Error).message}`);
+    throw new Error(`Failed to parse frontmatter JSON: ${getErrorMessage(err)}`);
   }
 
   return {

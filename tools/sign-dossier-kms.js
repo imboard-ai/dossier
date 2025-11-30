@@ -19,9 +19,13 @@
  *     --signed-by "Dossier Team <team@dossier.ai>"
  */
 
-const fs = require('node:fs');
-const _path = require('node:path');
-const { parseDossierContent, calculateChecksum, KmsSigner } = require('@imboard-ai/dossier-core');
+const { KmsSigner } = require('@imboard-ai/dossier-core');
+const {
+  readAndParseDossier,
+  addChecksum,
+  handleDryRun,
+  writeDossier,
+} = require('./lib/signing-common');
 
 // Parse command line arguments
 function parseArgs() {
@@ -78,40 +82,14 @@ async function main() {
   console.log(`KMS Key: ${options.keyId}`);
   console.log(`Region: ${options.region}`);
 
-  // Read dossier file
-  if (!fs.existsSync(options.dossierFile)) {
-    console.error(`Error: File not found: ${options.dossierFile}`);
-    process.exit(1);
-  }
+  // Read and parse dossier
+  const { frontmatter, body } = readAndParseDossier(options.dossierFile);
 
-  const content = fs.readFileSync(options.dossierFile, 'utf8');
-
-  // Parse dossier
-  let parsed;
-  try {
-    parsed = parseDossierContent(content);
-  } catch (err) {
-    console.error(`Error: ${err.message}`);
-    process.exit(1);
-  }
-
-  const { frontmatter, body } = parsed;
-
-  // Calculate checksum
-  console.log('\n📊 Calculating checksum...');
-  const checksum = calculateChecksum(body);
-  console.log(`   SHA256: ${checksum}`);
-
-  // Add checksum to frontmatter
-  frontmatter.checksum = {
-    algorithm: 'sha256',
-    hash: checksum,
-  };
+  // Calculate and add checksum
+  addChecksum(frontmatter, body);
 
   if (options.dryRun) {
-    console.log('\n✅ Dry run complete (checksum calculated, no signature)');
-    console.log('\nUpdated frontmatter:');
-    console.log(JSON.stringify(frontmatter, null, 2));
+    handleDryRun(frontmatter);
     return;
   }
 
@@ -139,12 +117,7 @@ async function main() {
   }
 
   // Write updated dossier
-  console.log('\n💾 Updating dossier file...');
-
-  const updatedContent = `---dossier\n${JSON.stringify(frontmatter, null, 2)}\n---\n${body}`;
-  fs.writeFileSync(options.dossierFile, updatedContent, 'utf8');
-
-  console.log('   ✓ File updated');
+  writeDossier(options.dossierFile, frontmatter, body);
   console.log('\n✅ Dossier signed successfully!');
   console.log(`\nSignature details:`);
   console.log(`  Algorithm: ECDSA-SHA-256`);
