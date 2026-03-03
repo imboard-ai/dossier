@@ -2405,17 +2405,304 @@ cacheCmd
   });
 
 // ============================================================================
-// COMMAND: info (TBD)
+// COMMAND: install-skill (IMPLEMENTED)
+// ============================================================================
+program
+  .command('install-skill')
+  .description('Install a registry dossier as a Claude Code skill')
+  .argument('[name]', 'Dossier name to install (use name@version for specific version)')
+  .option('--force', 'Overwrite if skill already exists')
+  .option('--list', 'List currently installed skills')
+  .option('--remove <skill>', 'Remove an installed skill')
+  .action(async (name, options) => {
+    const fs = require('fs');
+    const os = require('os');
+    const { getClient, parseNameVersion } = require('../dist/registry-client');
+
+    const skillsDir = path.join(os.homedir(), '.claude', 'skills');
+
+    // --list: show installed skills
+    if (options.list) {
+      if (!fs.existsSync(skillsDir)) {
+        console.log('\nNo installed skills.\n');
+        process.exit(0);
+      }
+
+      const entries = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .filter(e => fs.existsSync(path.join(skillsDir, e.name, 'SKILL.md')));
+
+      if (entries.length === 0) {
+        console.log('\nNo installed skills.\n');
+        process.exit(0);
+      }
+
+      console.log(`\n📋 Installed skills (${entries.length}):\n`);
+      for (const e of entries) {
+        const skillFile = path.join(skillsDir, e.name, 'SKILL.md');
+        const content = fs.readFileSync(skillFile, 'utf8');
+
+        // Extract description from YAML frontmatter
+        let description = '';
+        const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        if (yamlMatch) {
+          const descMatch = yamlMatch[1].match(/description:\s*(.+?)(?:\n|$)/);
+          if (descMatch) description = descMatch[1].trim();
+        }
+
+        console.log(`  ${e.name}`);
+        if (description) {
+          const snippet = description.length > 80 ? description.slice(0, 80) + '...' : description;
+          console.log(`  ${snippet}`);
+        }
+        console.log('');
+      }
+      process.exit(0);
+    }
+
+    // --remove: uninstall a skill
+    if (options.remove) {
+      const skillDir = path.join(skillsDir, options.remove);
+      if (!fs.existsSync(skillDir)) {
+        console.error(`\n❌ Skill not found: ${options.remove}\n`);
+        process.exit(1);
+      }
+      fs.rmSync(skillDir, { recursive: true, force: true });
+      console.log(`\n✅ Removed skill: ${options.remove}\n`);
+      process.exit(0);
+    }
+
+    // Install a skill
+    if (!name) {
+      console.error('\n❌ Please provide a dossier name to install, or use --list / --remove\n');
+      process.exit(1);
+    }
+
+    const [dossierName, version] = parseNameVersion(name);
+
+    // Extract skill name from dossier path (last segment)
+    const skillName = dossierName.split('/').pop();
+    const skillDir = path.join(skillsDir, skillName);
+    const skillFile = path.join(skillDir, 'SKILL.md');
+
+    // Check if already installed
+    if (!options.force && fs.existsSync(skillFile)) {
+      console.error(`\n❌ Skill '${skillName}' already installed at ${skillDir}`);
+      console.error('   Use --force to overwrite\n');
+      process.exit(1);
+    }
+
+    try {
+      // Try cache first, then registry
+      const cacheDir = path.join(os.homedir(), '.dossier', 'cache');
+      let content = null;
+      let resolvedVersion = version;
+
+      if (!version) {
+        // Check cache for any version
+        const dossierCacheDir = path.join(cacheDir, ...dossierName.split('/'));
+        if (fs.existsSync(dossierCacheDir)) {
+          const metaFiles = fs.readdirSync(dossierCacheDir).filter(f => f.endsWith('.meta.json'));
+          if (metaFiles.length > 0) {
+            // Use most recent cached version
+            const ver = metaFiles[0].replace('.meta.json', '');
+            const contentFile = path.join(dossierCacheDir, `${ver}.ds.md`);
+            if (fs.existsSync(contentFile)) {
+              content = fs.readFileSync(contentFile, 'utf8');
+              resolvedVersion = ver;
+            }
+          }
+        }
+      } else {
+        // Check cache for specific version
+        const contentFile = path.join(cacheDir, ...dossierName.split('/'), `${version}.ds.md`);
+        if (fs.existsSync(contentFile)) {
+          content = fs.readFileSync(contentFile, 'utf8');
+          resolvedVersion = version;
+        }
+      }
+
+      // Fetch from registry if not cached
+      if (!content) {
+        const client = getClient();
+        if (!resolvedVersion) {
+          const meta = await client.getDossier(dossierName);
+          resolvedVersion = meta.version || 'latest';
+        }
+        const result = await client.getDossierContent(dossierName, resolvedVersion);
+        content = result.content;
+      }
+
+      // Write skill file
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(skillFile, content, 'utf8');
+
+      console.log(`\n✅ Installed skill '${skillName}'${resolvedVersion ? ' (v' + resolvedVersion + ')' : ''}`);
+      console.log(`   Location: ${skillFile}`);
+      console.log(`   Source: ${dossierName}\n`);
+    } catch (err) {
+      if (err.statusCode === 404) {
+        console.error(`\n❌ Not found in registry: ${name}\n`);
+      } else {
+        console.error(`\n❌ Install failed: ${err.message}\n`);
+      }
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
+// COMMAND: info (IMPLEMENTED)
 // ============================================================================
 program
   .command('info')
-  .description('Show dossier metadata [TBD]')
-  .argument('<file>', 'Dossier file or URL')
-  .option('--json', 'JSON output')
-  .option('--short', 'Brief summary only')
-  .action((file, options) => {
-    console.log('⚠️  info tbd - follow docs/planning/cli-evolution.md');
-    process.exit(1);
+  .description('Show dossier metadata')
+  .argument('<file-or-name>', 'Local dossier file path or registry dossier name')
+  .option('--json', 'Output as JSON')
+  .action(async (fileOrName, options) => {
+    const fs = require('fs');
+    const crypto = require('crypto');
+
+    let frontmatter;
+    let body;
+    let source;
+
+    const resolved = path.resolve(fileOrName);
+    const isLocal = fs.existsSync(resolved);
+
+    if (isLocal) {
+      // Local file
+      source = resolved;
+      const content = fs.readFileSync(resolved, 'utf8');
+
+      // Try JSON frontmatter (---dossier)
+      const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+      if (jsonMatch) {
+        try {
+          frontmatter = JSON.parse(jsonMatch[1]);
+          body = jsonMatch[2];
+        } catch (err) {
+          console.error(`\n❌ Invalid JSON in frontmatter: ${err.message}\n`);
+          process.exit(1);
+        }
+      } else {
+        // Try YAML frontmatter (---)
+        const yamlMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+        if (yamlMatch) {
+          // Simple YAML key-value parsing
+          frontmatter = {};
+          const lines = yamlMatch[1].split('\n');
+          let currentKey = null;
+          for (const line of lines) {
+            const kvMatch = line.match(/^(\w[\w_-]*):\s*(.*)$/);
+            if (kvMatch) {
+              currentKey = kvMatch[1];
+              const val = kvMatch[2].trim();
+              if (val === '' || val === '|' || val === '>') {
+                frontmatter[currentKey] = '';
+              } else if (val.startsWith('[') || val.startsWith('{')) {
+                try { frontmatter[currentKey] = JSON.parse(val); } catch { frontmatter[currentKey] = val; }
+              } else {
+                frontmatter[currentKey] = val;
+              }
+            } else if (currentKey && line.match(/^\s*-\s+(.+)$/)) {
+              const item = line.match(/^\s*-\s+(.+)$/)[1].trim();
+              if (!Array.isArray(frontmatter[currentKey])) {
+                frontmatter[currentKey] = frontmatter[currentKey] ? [frontmatter[currentKey]] : [];
+              }
+              frontmatter[currentKey].push(item);
+            }
+          }
+          body = yamlMatch[2];
+        } else {
+          console.error('\n❌ Invalid dossier format: no frontmatter found\n');
+          process.exit(1);
+        }
+      }
+    } else {
+      // Registry name
+      source = `registry: ${fileOrName}`;
+      try {
+        const { getClient, parseNameVersion } = require('../dist/registry-client');
+        const [dossierName, version] = parseNameVersion(fileOrName);
+        const client = getClient();
+        const meta = await client.getDossier(dossierName, version || null);
+        frontmatter = meta;
+        body = null; // No body from metadata endpoint
+      } catch (err) {
+        if (err.statusCode === 404) {
+          console.error(`\n❌ Not found: ${fileOrName}`);
+          console.error('   Not a local file and not found in registry\n');
+        } else {
+          console.error(`\n❌ Error: ${err.message}\n`);
+        }
+        process.exit(1);
+      }
+    }
+
+    if (options.json) {
+      console.log(JSON.stringify(frontmatter, null, 2));
+      process.exit(0);
+    }
+
+    // Formatted output
+    console.log(`\n📄 Dossier Info\n`);
+    console.log(`   Source:    ${source}`);
+
+    const fields = [
+      ['Name', frontmatter.name || frontmatter.title || ''],
+      ['Title', frontmatter.title || ''],
+      ['Version', frontmatter.version || ''],
+      ['Status', frontmatter.status || ''],
+      ['Category', Array.isArray(frontmatter.category) ? frontmatter.category.join(', ') : (frontmatter.category || '')],
+      ['Risk Level', frontmatter.risk_level || ''],
+      ['Objective', frontmatter.objective || frontmatter.description || ''],
+    ];
+
+    for (const [label, value] of fields) {
+      if (value) {
+        console.log(`   ${label.padEnd(10)} ${value}`);
+      }
+    }
+
+    // Authors
+    const authors = frontmatter.authors;
+    if (Array.isArray(authors) && authors.length > 0) {
+      const authorStr = authors.map(a => {
+        if (typeof a === 'string') {
+          // Handle YAML "- name: Foo" parsed as string
+          const nameMatch = a.match(/^name:\s*(.+)$/);
+          return nameMatch ? nameMatch[1] : a;
+        }
+        return a.name || '';
+      }).filter(Boolean).join(', ');
+      if (authorStr) console.log(`   Authors:   ${authorStr}`);
+    }
+
+    // Tags
+    if (Array.isArray(frontmatter.tags) && frontmatter.tags.length > 0) {
+      console.log(`   Tags:      ${frontmatter.tags.join(', ')}`);
+    }
+
+    // Checksum
+    if (body !== null) {
+      const checksumInfo = frontmatter.checksum;
+      if (checksumInfo?.hash) {
+        const actual = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+        const valid = actual === checksumInfo.hash;
+        console.log(`   Checksum:  ${checksumInfo.hash.slice(0, 16)}... ${valid ? '✅ valid' : '❌ mismatch'}`);
+      } else {
+        console.log(`   Checksum:  missing`);
+      }
+    }
+
+    // Signature
+    if (frontmatter.signature) {
+      const sig = frontmatter.signature;
+      console.log(`   Signed by: ${sig.signed_by || sig.key_id || 'unknown'}`);
+    }
+
+    console.log('');
+    process.exit(0);
   });
 
 // ============================================================================
