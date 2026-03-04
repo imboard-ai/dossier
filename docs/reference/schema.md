@@ -643,7 +643,7 @@ Whether the dossier MCP server is required for execution.
 - `true`: Block execution if MCP not available (rare)
 - `false`: Allow fallback to manual execution (recommended)
 
-##### `server_name` (string, default: "@dossier/mcp-server")
+##### `server_name` (string, default: "@ai-dossier/mcp-server")
 npm package name of the required MCP server.
 
 ##### `min_version` (string, semver format)
@@ -670,7 +670,7 @@ High-risk dossier, MCP optional but recommended:
 {
   "mcp_integration": {
     "required": false,
-    "server_name": "@dossier/mcp-server",
+    "server_name": "@ai-dossier/mcp-server",
     "min_version": "1.0.0",
     "features_used": ["verify_dossier"],
     "fallback": "manual_execution",
@@ -701,7 +701,7 @@ Dossier requiring MCP (very rare):
 {
   "mcp_integration": {
     "required": true,
-    "server_name": "@dossier/mcp-server",
+    "server_name": "@ai-dossier/mcp-server",
     "min_version": "1.0.0",
     "features_used": ["validate_dossier", "dossier://registry"],
     "fallback": "error",
@@ -1254,7 +1254,7 @@ Planned for future schema versions:
 
 ## Questions or Feedback?
 
-Open an issue at: https://github.com/imboard-ai/dossier/issues
+Open an issue at: https://github.com/imboard-ai/ai-dossier/issues
 
 ---
 

@@ -9,7 +9,7 @@
 [![Spec](https://img.shields.io/badge/Dossier%20Spec-v1.0-blue)](#)
 [![MCP Ready](https://img.shields.io/badge/MCP-Ready-brightgreen)](#)
 [![Security](https://img.shields.io/badge/Verification-Checksums%20%26%20Signatures-yellow)](#)
-[![GitHub](https://img.shields.io/github/stars/imboard-ai/dossier?style=social)](https://github.com/imboard-ai/dossier)
+[![GitHub](https://img.shields.io/github/stars/imboard-ai/ai-dossier?style=social)](https://github.com/imboard-ai/ai-dossier)
 
 > **Quick Concept**
 > Dossier turns plain-text instructions into executable workflows with built-in verification.
@@ -43,7 +43,7 @@ Add the Dossier MCP server to enable automatic verification:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@imboard-ai/dossier-mcp"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -59,7 +59,7 @@ Verify dossier security before execution:
 
 ```bash
 # Clone the repo and use the CLI verification tool
-git clone https://github.com/imboard-ai/dossier.git
+git clone https://github.com/imboard-ai/ai-dossier.git
 cd dossier
 chmod +x cli/bin/dossier-verify
 cli/bin/dossier-verify examples/git-project-review/atomic/readme-reality-check.ds.md
@@ -121,7 +121,7 @@ Real-world dossiers demonstrating the protocol across different domains:
 Ask your LLM:
 ```
 Analyze my project using the readme-reality-check dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 ---
@@ -407,7 +407,7 @@ This interactive dossier will guide you through configuration.
      "mcpServers": {
        "dossier": {
          "command": "npx",
-         "args": ["-y", "@imboard-ai/dossier-mcp"]
+         "args": ["-y", "@ai-dossier/mcp-server"]
        }
      }
    }
@@ -437,7 +437,7 @@ No installation needed - downloads on first use:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@imboard-ai/dossier-mcp"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -448,7 +448,7 @@ No installation needed - downloads on first use:
 Explicit installation:
 
 ```bash
-npm install -g @imboard-ai/dossier-mcp
+npm install -g @ai-dossier/mcp-server
 ```
 
 ```json
@@ -683,7 +683,7 @@ Atomic dossiers that analyze Git projects to surface insights requiring deep cod
 **How to run** (works today):
 ```
 Analyze https://github.com/yourorg/yourproject using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 Your LLM fetches the dossier, analyzes the project, and provides structured output with:

@@ -1,10 +1,10 @@
 {
-  "name": "@imboard-ai/dossier-cli",
+  "name": "@ai-dossier/cli",
   "version": "0.2.1",
   "description": "Command-line tool for creating, verifying, and executing dossiers",
   "main": "dist/cli.js",
   "bin": {
-    "dossier": "./bin/dossier"
+    "ai-dossier": "./bin/ai-dossier"
   },
   "files": [
     "bin/",
@@ -30,12 +30,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imboard-ai/dossier.git",
+    "url": "https://github.com/imboard-ai/ai-dossier.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/imboard-ai/dossier#readme",
+  "homepage": "https://github.com/imboard-ai/ai-dossier#readme",
   "bugs": {
-    "url": "https://github.com/imboard-ai/dossier/issues"
+    "url": "https://github.com/imboard-ai/ai-dossier/issues"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -43,10 +43,10 @@
   "preferGlobal": true,
   "publishConfig": {
     "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@imboard-ai/dossier-core": "^1.0.1",
+    "@ai-dossier/core": "^1.0.1",
     "commander": "^12.1.0"
   },
   "devDependencies": {

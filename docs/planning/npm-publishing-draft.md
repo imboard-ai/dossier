@@ -13,14 +13,14 @@ The repository transformation (community files, adopter playbooks, RFC process, 
 ## Current State
 
 **Unpublished packages:**
-- `@dossier/cli` - Command-line verification tool
-- `@dossier/mcp-server` - Model Context Protocol server
+- `@ai-dossier/cli` - Command-line verification tool
+- `@ai-dossier/mcp-server` - Model Context Protocol server
 
 **Current workaround:**
 Users must clone the repository and use local paths:
 ```bash
 # CLI
-git clone https://github.com/imboard-ai/dossier.git
+git clone https://github.com/imboard-ai/ai-dossier.git
 cd dossier/cli
 chmod +x bin/dossier-verify
 ./bin/dossier-verify <dossier-path>
@@ -42,10 +42,10 @@ Once packages are published, the experience will be much simpler:
 
 ```bash
 # CLI - via npx (no install needed)
-npx -y @dossier/cli verify <dossier-url>
+npx -y @ai-dossier/cli verify <dossier-url>
 
 # Or global install
-npm install -g @dossier/cli
+npm install -g @ai-dossier/cli
 dossier-verify <dossier-path>
 
 # MCP Server - via npx
@@ -53,7 +53,7 @@ dossier-verify <dossier-path>
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -69,16 +69,16 @@ dossier-verify <dossier-path>
 - [ ] Verify bin scripts work correctly when installed via npm
 
 ### Publishing
-- [ ] Publish `@dossier/cli` to npm
-- [ ] Publish `@dossier/mcp-server` to npm
-- [ ] Verify packages are accessible via `npm view @dossier/cli`
-- [ ] Test `npx -y @dossier/cli` works end-to-end
+- [ ] Publish `@ai-dossier/cli` to npm
+- [ ] Publish `@ai-dossier/mcp-server` to npm
+- [ ] Verify packages are accessible via `npm view @ai-dossier/cli`
+- [ ] Test `npx -y @ai-dossier/cli` works end-to-end
 
 ### Post-Publishing Documentation Updates
 - [ ] Update README.md "Try it in 30 seconds" section
 - [ ] Update docs/adopter-playbooks.md with simpler npm-based installation
 - [ ] Update scripts/demo-readme-reality-check.sh to use npx
-- [ ] Add npm badge back to README: `[![npm](https://img.shields.io/npm/v/@dossier/cli)](https://www.npmjs.com/package/@dossier/cli)`
+- [ ] Add npm badge back to README: `[![npm](https://img.shields.io/npm/v/@ai-dossier/cli)](https://www.npmjs.com/package/@ai-dossier/cli)`
 - [ ] Update CONTRIBUTING.md with npm installation instructions
 - [ ] Update GitHub Actions examples to use npx
 
@@ -103,7 +103,7 @@ dossier-verify <dossier-path>
 
 ## How to Create This Issue
 
-1. Go to https://github.com/imboard-ai/dossier/issues/new
+1. Go to https://github.com/imboard-ai/ai-dossier/issues/new
 2. Copy the content above (starting from "## Context")
 3. Set title: "Publish CLI and MCP Server packages to npm"
 4. Add label: "enhancement"

@@ -5,7 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getErrorMessage } from '@imboard-ai/dossier-core';
+import { getErrorMessage } from '@ai-dossier/core';
 import { logger } from './logger';
 
 /**

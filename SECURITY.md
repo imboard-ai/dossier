@@ -96,7 +96,7 @@ For detailed security architecture, see [security/ARCHITECTURE.md](./security/AR
 ## 📋 Security Advisories
 
 Security advisories will be published via:
-- **GitHub Security Advisories**: https://github.com/imboard-ai/dossier/security/advisories
+- **GitHub Security Advisories**: https://github.com/imboard-ai/ai-dossier/security/advisories
 - **Release Notes**: Tagged with `[SECURITY]`
 - **Email Notifications**: For critical vulnerabilities (if you've reported issues before)
 

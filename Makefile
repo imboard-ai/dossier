@@ -26,7 +26,7 @@ install:
 build: lint build-core build-mcp build-cli
 	@echo "✓ All packages built successfully"
 
-## build-core: Build @dossier/core package
+## build-core: Build @ai-dossier/core package
 build-core:
 	@echo "Building packages/core..."
 	cd packages/core && npm run build

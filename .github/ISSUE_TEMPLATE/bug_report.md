@@ -27,8 +27,8 @@ What actually happened?
 - **OS**: [e.g., macOS 14.1, Ubuntu 22.04, Windows 11]
 - **Node/Runtime version**: [e.g., Node 18.17.0]
 - **LLM/Client**: [e.g., Claude Code, ChatGPT, Cursor]
-- **Dossier CLI version** (if applicable): [e.g., @dossier/cli@0.1.0]
-- **MCP Server version** (if applicable): [e.g., @dossier/mcp-server@0.1.0]
+- **Dossier CLI version** (if applicable): [e.g., @ai-dossier/cli@0.1.0]
+- **MCP Server version** (if applicable): [e.g., @ai-dossier/mcp-server@0.1.0]
 
 ## Logs / Evidence
 Paste relevant output, error messages, or logs (redact any secrets/credentials):

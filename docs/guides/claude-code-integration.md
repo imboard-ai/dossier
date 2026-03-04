@@ -30,7 +30,7 @@ Use the Claude Code CLI to add the MCP server:
 claude mcp add dossier --scope user -- node /path/to/dossier/mcp-server/dist/index.js
 
 # After NPM package is published
-claude mcp add dossier --scope user -- npx @imboard-ai/dossier-mcp
+claude mcp add dossier --scope user -- npx @ai-dossier/mcp-server
 ```
 
 **Option B: Project-Only Installation** (for a specific project)
@@ -111,7 +111,7 @@ Run the dossier at examples/devops/deploy-to-aws.ds.md
 ```
 
 ```
-Execute https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/authoring/create-dossier.ds.md
+Execute https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/authoring/create-dossier.ds.md
 ```
 
 ### Method 2: Using the Prompt
@@ -240,7 +240,7 @@ npm run build
 ### Execute a Remote Dossier
 
 ```
-Execute the dossier at https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/development/add-git-worktree-support.ds.md
+Execute the dossier at https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/development/add-git-worktree-support.ds.md
 ```
 
 ### Create a DevOps Dossier
@@ -293,5 +293,5 @@ First verify, then execute the dossier at ./my-automation.ds.md
 ---
 
 **Questions or Issues?**
-- GitHub Discussions: https://github.com/imboard-ai/dossier/discussions
+- GitHub Discussions: https://github.com/imboard-ai/ai-dossier/discussions
 - Security Issues: security@imboard.ai

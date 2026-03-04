@@ -68,7 +68,7 @@ export function registerSignCommand(program: Command): void {
             console.log('   - Audit trail via GitHub Actions');
             console.log('   - Consistent signing identity\n');
             console.log('   To sign official dossiers:');
-            console.log('   1. Create a PR in the imboard-ai/dossier repository');
+            console.log('   1. Create a PR in the imboard-ai/ai-dossier repository');
             console.log('   2. Get approval from a maintainer');
             console.log('   3. Merge to main - CI will sign automatically\n');
             console.log('   For your own organization, use your own KMS key:');
@@ -137,7 +137,7 @@ export function registerSignCommand(program: Command): void {
         if (!fs.existsSync(signTool)) {
           console.log(`\n❌ Signing tool not found: ${signTool}`);
           console.log('\nThis may be a package installation issue.');
-          console.log('Please report at: https://github.com/imboard-ai/dossier/issues');
+          console.log('Please report at: https://github.com/imboard-ai/ai-dossier/issues');
           process.exit(1);
         }
 

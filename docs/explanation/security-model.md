@@ -79,7 +79,7 @@ Yes, I have access to:
 In your LLM assistant, run:
 
 ```
-run https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md
+run https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/security/validate-project-config.ds.md
 ```
 
 ### What You'll See
@@ -208,7 +208,7 @@ Now let's fix this by installing the dossier MCP server.
 Run the setup dossier:
 
 ```
-run https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/setup/setup-dossier-mcp.ds.md
+run https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/setup/setup-dossier-mcp.ds.md
 ```
 
 Follow the prompts to:
@@ -225,7 +225,7 @@ Follow the prompts to:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -264,7 +264,7 @@ Yes! I now have access to:
 Now that MCP server is configured, run the same malicious dossier:
 
 ```
-run https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md
+run https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/security/validate-project-config.ds.md
 ```
 
 ### What You Should See Now
@@ -331,7 +331,7 @@ Now let's verify that legitimate dossiers still work.
 ### Run a Legitimate Example
 
 ```
-run https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/data-science/train-ml-model.ds.md
+run https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/data-science/train-ml-model.ds.md
 ```
 
 ### Expected Behavior
@@ -478,7 +478,7 @@ You've now seen firsthand:
 
 1. ✅ **Keep MCP server configured** - Don't remove it
 2. ✅ **Trust the verification** - If it says block, don't override
-3. ✅ **Stay updated** - Keep @dossier/mcp-server current
+3. ✅ **Stay updated** - Keep @ai-dossier/mcp-server current
 4. ✅ **Report issues** - security@imboard.ai for vulnerabilities
 
 ### For Teams

@@ -8,9 +8,9 @@ Dossier consists of three main components in a monorepo structure:
 
 ```
 dossier/
-├── packages/core/          # @dossier/core - Verification library
-├── cli/                    # @dossier/cli - CLI tool
-└── mcp-server/            # @dossier/mcp-server - MCP integration
+├── packages/core/          # @ai-dossier/core - Verification library
+├── cli/                    # @ai-dossier/cli - CLI tool
+└── mcp-server/            # @ai-dossier/mcp-server - MCP integration
 ```
 
 ### Component Overview
@@ -22,7 +22,7 @@ dossier/
              │                            │
              ▼                            ▼
      ┌───────────────┐           ┌──────────────────┐
-     │  @dossier/cli │           │ @dossier/mcp     │
+     │  @ai-dossier/cli │           │ @ai-dossier/mcp     │
      │               │           │                  │
      │ - Verify      │           │ - Discover       │
      │ - Download    │           │ - Verify         │
@@ -33,7 +33,7 @@ dossier/
                           │
                           ▼
                  ┌────────────────┐
-                 │ @dossier/core  │
+                 │ @ai-dossier/core  │
                  │                │
                  │ - Parser       │
                  │ - Checksum     │
@@ -42,7 +42,7 @@ dossier/
                  └────────────────┘
 ```
 
-## Core Library (@dossier/core)
+## Core Library (@ai-dossier/core)
 
 **Purpose**: Shared verification and parsing logic
 
@@ -68,7 +68,7 @@ export function verifyChecksum(dossier: Dossier): boolean
 export function verifySignature(dossier: Dossier): SignatureResult
 ```
 
-## CLI Tool (@dossier/cli)
+## CLI Tool (@ai-dossier/cli)
 
 **Purpose**: Command-line verification for users
 
@@ -80,7 +80,7 @@ User Command
     ↓
 Download/Read File
     ↓
-Parse Dossier (using @dossier/core)
+Parse Dossier (using @ai-dossier/core)
     ↓
 Verify Checksum
     ↓
@@ -97,7 +97,7 @@ Exit 0 (safe) or 1 (unsafe)
 - Exit codes for scripting
 - Human-readable output
 
-## MCP Server (@dossier/mcp-server)
+## MCP Server (@ai-dossier/mcp-server)
 
 **Purpose**: Integration with AI agents via Model Context Protocol
 
@@ -107,7 +107,7 @@ MCP Client (Claude, etc.)
     ↓
 MCP Protocol (stdio)
     ↓
-@dossier/mcp-server
+@ai-dossier/mcp-server
     ├── Resources (discover dossiers)
     ├── Tools (verify, execute)
     └── Prompts (templates)
@@ -198,10 +198,10 @@ Execute (if verified) or BLOCK
 ```
 
 **Build Process**:
-1. Build @dossier/core (TypeScript → JavaScript)
-2. Publish @dossier/core to npm
-3. Publish @dossier/cli (depends on core)
-4. Publish @dossier/mcp-server (depends on core)
+1. Build @ai-dossier/core (TypeScript → JavaScript)
+2. Publish @ai-dossier/core to npm
+3. Publish @ai-dossier/cli (depends on core)
+4. Publish @ai-dossier/mcp-server (depends on core)
 
 ## Technology Stack
 

@@ -314,7 +314,7 @@ For high-risk dossiers, MCP provides automatic security verification but manual 
   "risk_level": "high",
   "mcp_integration": {
     "required": false,
-    "server_name": "@dossier/mcp-server",
+    "server_name": "@ai-dossier/mcp-server",
     "min_version": "1.0.0",
     "features_used": ["verify_dossier", "dossier://security"],
     "fallback": "manual_execution",
@@ -424,7 +424,7 @@ Very few dossiers should truly require MCP - only when functionality is genuinel
   "risk_level": "medium",
   "mcp_integration": {
     "required": true,
-    "server_name": "@dossier/mcp-server",
+    "server_name": "@ai-dossier/mcp-server",
     "min_version": "1.1.0",
     "features_used": [
       "get_registry",

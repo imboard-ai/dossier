@@ -750,7 +750,7 @@ cd /home/yuvaldim/projects/dossier/main && git status
 
 ```bash
 # Clone repository
-git clone https://github.com/imboard-ai/dossier.git
+git clone https://github.com/imboard-ai/ai-dossier.git
 cd dossier
 
 # Explore core documentation
@@ -1694,7 +1694,7 @@ EOF
 
 ### Community
 
-- **GitHub**: https://github.com/imboard-ai/dossier
+- **GitHub**: https://github.com/imboard-ai/ai-dossier
 - **Issues**: Report bugs, request features
 - **Discussions**: Ask questions, share dossiers
 - **Security**: security@imboard.ai

@@ -21,12 +21,12 @@ Even with MCP server installed and protocol documentation:
 
 Install globally:
 ```bash
-npm install -g @imboard-ai/dossier-cli
+npm install -g @ai-dossier/cli
 ```
 
 Or use without installing:
 ```bash
-npx @imboard-ai/dossier-cli <file-or-url>
+npx @ai-dossier/cli <file-or-url>
 ```
 
 ### Option 2: From Source (Development)
@@ -202,7 +202,7 @@ $ echo $?
 ### Example 2: Malicious Dossier (Blocked)
 
 ```bash
-$ dossier-verify https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md
+$ dossier-verify https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/security/validate-project-config.ds.md
 
 🔐 Dossier Verification Tool
 
@@ -410,9 +410,9 @@ Use both for best results.
 
 ## Support
 
-**Issues**: https://github.com/imboard-ai/dossier/issues
+**Issues**: https://github.com/imboard-ai/ai-dossier/issues
 **Security**: security@imboard.ai
-**Discussions**: https://github.com/imboard-ai/dossier/discussions
+**Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 
 ---
 

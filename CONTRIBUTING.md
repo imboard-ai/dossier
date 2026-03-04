@@ -50,7 +50,7 @@ Use GitHub Discussions for:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/imboard-ai/dossier.git
+   git clone https://github.com/imboard-ai/ai-dossier.git
    cd dossier
    ```
 
@@ -243,6 +243,37 @@ All submissions require review. We use GitHub pull requests for this purpose.
 - Simple PRs (docs, examples): Usually reviewed within 2-3 days
 - Complex PRs (code, spec changes): May take 1-2 weeks
 - RFCs: May take several weeks for discussion
+
+## Release Process
+
+Packages are published to the public npm registry under the `@ai-dossier` scope.
+
+### Tag-based Workflow (Primary)
+
+```bash
+# 1. Bump versions in package.json files
+# 2. Commit the changes
+git add packages/core/package.json cli/package.json mcp-server/package.json
+git commit -m "chore: bump version to 1.2.0"
+
+# 3. Create and push a tag — this triggers the publish pipeline
+git tag v1.2.0
+git push && git push origin v1.2.0
+```
+
+The CI pipeline will: lint → build → test → publish core → cli → mcp-server → verify.
+
+### Manual Dispatch
+
+Use the GitHub Actions UI to trigger the workflow with an automatic version bump (patch/minor/major).
+
+### Version Strategy
+
+- **patch** (1.0.x): Bug fixes, documentation updates
+- **minor** (1.x.0): New features, backward-compatible changes
+- **major** (x.0.0): Breaking changes
+
+All three packages (`@ai-dossier/core`, `@ai-dossier/cli`, `@ai-dossier/mcp-server`) are versioned together.
 
 ## Security Vulnerabilities
 

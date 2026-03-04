@@ -10,7 +10,7 @@ import {
   type ParsedDossier,
   parseDossierContent,
   readFileIfExists,
-} from '@imboard-ai/dossier-core';
+} from '@ai-dossier/core';
 
 /**
  * Read and parse a dossier file

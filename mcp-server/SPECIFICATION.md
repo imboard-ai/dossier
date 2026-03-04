@@ -1032,10 +1032,10 @@ main().catch(console.error);
 
 ```bash
 # Install globally
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 
 # Or use npx
-npx @dossier/mcp-server
+npx @ai-dossier/mcp-server
 ```
 
 **Claude Desktop Configuration:**
@@ -1047,7 +1047,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["@dossier/mcp-server"]
+      "args": ["@ai-dossier/mcp-server"]
     }
   }
 }
@@ -1062,7 +1062,7 @@ Add to `.cursor/mcp_config.json`:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["@dossier/mcp-server"]
+      "args": ["@ai-dossier/mcp-server"]
     }
   }
 }
@@ -1076,13 +1076,13 @@ Add to `.cursor/mcp_config.json`:
 
 ```bash
 # List dossiers in current directory
-echo '{"method":"list_dossiers","params":{"path":"."}}' | npx @dossier/mcp-server
+echo '{"method":"list_dossiers","params":{"path":"."}}' | npx @ai-dossier/mcp-server
 
 # Read a specific dossier
-echo '{"method":"read_dossier","params":{"name":"project-init"}}' | npx @dossier/mcp-server
+echo '{"method":"read_dossier","params":{"name":"project-init"}}' | npx @ai-dossier/mcp-server
 
 # Get registry
-echo '{"method":"get_registry","params":{"path":"."}}' | npx @dossier/mcp-server
+echo '{"method":"get_registry","params":{"path":"."}}' | npx @ai-dossier/mcp-server
 ```
 
 ### Integration Testing

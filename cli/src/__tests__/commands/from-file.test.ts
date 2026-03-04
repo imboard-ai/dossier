@@ -4,7 +4,7 @@ import { registerFromFileCommand } from '../../commands/from-file';
 import { createTestProgram } from '../helpers/test-utils';
 
 vi.mock('node:fs');
-vi.mock('@imboard-ai/dossier-core', () => ({
+vi.mock('@ai-dossier/core', () => ({
   calculateChecksum: vi.fn().mockReturnValue('abc123hash'),
   Ed25519Signer: vi.fn().mockImplementation(() => ({
     sign: vi.fn().mockResolvedValue({

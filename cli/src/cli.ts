@@ -39,7 +39,7 @@ import { registerWhoamiCommand } from './commands/whoami';
 
 // Setup program
 program
-  .name('dossier')
+  .name('ai-dossier')
   .description('CLI tool for creating, verifying, and executing dossiers')
   .version(pkg.version);
 

@@ -21,19 +21,19 @@ You're already using an LLM assistant (Claude Code, Cursor, ChatGPT, etc.). Just
 #### On Your Local Project:
 ```
 Analyze my project using the readme-reality-check dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 #### On Any GitHub Project:
 ```
 Analyze https://github.com/imboard-ai/mi6 using the onboarding-friction dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
 ```
 
 #### With Variables:
 ```
 Analyze this codebase using the schema-capability-check dossier from:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
 
 Use this variable:
 - capability: "Does the schema support referencing other dossier files?"
@@ -82,7 +82,7 @@ dossier run ./atomic/schema-capability-check.ds.md \
 **Run it**:
 ```
 Hey Claude, analyze this project using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 ```
 
 **Output**: Promises kept ✅, promises broken ❌, undocumented features 🎁
@@ -96,7 +96,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Analyze https://github.com/yourproject using the onboarding-friction dossier:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md
 ```
 
 **Output**: Friction score, blockers, confusion points, quick wins
@@ -110,7 +110,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Use the architecture-patterns dossier on my project:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/architecture-patterns.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/architecture-patterns.ds.md
 ```
 
 **Output**: Pattern inventory, inconsistencies, duplication hotspots
@@ -124,7 +124,7 @@ https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-r
 **Run it**:
 ```
 Use this dossier to check if the schema supports composition:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
 
 Variable: "Does the schema support referencing other dossier files?"
 ```
@@ -214,9 +214,9 @@ These dossiers are actively used on the Dossier project itself! Try running them
 
 ```
 Analyze the Dossier project itself using:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md
 
-Target: https://github.com/imboard-ai/dossier
+Target: https://github.com/imboard-ai/ai-dossier
 ```
 
 **Meta insight**: Using a dossier to analyze the dossier project = perfect dogfooding! 🐕
@@ -239,4 +239,4 @@ Keep them:
 
 - [Dossier Schema Documentation](../../SCHEMA.md)
 - [Writing Custom Dossiers](../../docs/writing-dossiers.md)
-- [Dossier Project Repository](https://github.com/imboard-ai/dossier)
+- [Dossier Project Repository](https://github.com/imboard-ai/ai-dossier)

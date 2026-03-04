@@ -560,7 +560,7 @@ Content-Type: application/json
 ## Implementation Notes
 
 1. **Storage abstraction**: Support both hosted (S3/GCS/local) and Git references
-2. **Signature verification**: Reuse existing `@imboard-ai/dossier-core` verification
+2. **Signature verification**: Reuse existing `@ai-dossier/core` verification
 3. **Schema validation**: Validate against `dossier-schema.json` on publish
 4. **Search backend**: SQLite FTS for self-hosted, Elasticsearch for SaaS
 5. **Idempotency**: Publish same content twice → return existing version (no error)

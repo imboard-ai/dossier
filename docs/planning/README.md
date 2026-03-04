@@ -18,4 +18,4 @@ Development session summaries and notes are stored in [session-notes/](session-n
 
 ## Note
 
-These documents are primarily for internal planning and may change frequently. For stable, user-facing roadmap information, see the project [README](../../README.md) and [GitHub milestones](https://github.com/imboard-ai/dossier/milestones).
+These documents are primarily for internal planning and may change frequently. For stable, user-facing roadmap information, see the project [README](../../README.md) and [GitHub milestones](https://github.com/imboard-ai/ai-dossier/milestones).

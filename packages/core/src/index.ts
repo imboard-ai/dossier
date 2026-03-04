@@ -1,5 +1,5 @@
 /**
- * @dossier/core - Core verification and parsing logic for dossier automation standard
+ * @ai-dossier/core - Core verification and parsing logic for dossier automation standard
  *
  * This package provides:
  * - Dossier parsing (frontmatter + body extraction)

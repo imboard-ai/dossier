@@ -1,16 +1,13 @@
-name: Publish Packages to GitHub Packages
+name: Publish Packages to npm
 
 on:
-  # Trigger on push to main when CLI or core files change
   push:
-    branches:
-      - main
-    paths:
-      - 'cli/**'
-      - 'packages/core/**'
-      - '.github/workflows/publish-packages.yml'
+    tags:
+      - 'v*'
 
-  # Allow manual trigger
+  release:
+    types: [published]
+
   workflow_dispatch:
     inputs:
       version:
@@ -24,12 +21,40 @@ on:
           - minor
           - major
 
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
 
     steps:
       - name: Checkout code
@@ -41,19 +66,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@imboard-ai'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build @dossier/core
-        run: |
-          cd packages/core
-          npm run build
-
-      - name: Bump version (if requested)
-        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+      - name: Bump version (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != 'skip'
         run: |
           # Bump core version
           cd packages/core
@@ -64,68 +83,112 @@ jobs:
           # Bump CLI version
           cd ../../cli
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          npm pkg set "dependencies.@ai-dossier/core=^$CORE_VERSION"
 
-          # Update CLI dependency on core
-          npm pkg set dependencies.@dossier/core="^$CORE_VERSION"
+          # Bump MCP server version
+          cd ../mcp-server
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
 
-      - name: Commit version bump
-        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+      - name: Commit and tag version bump
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != 'skip'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/core/package.json cli/package.json
-          git commit -m "chore: bump version to $(cd cli && node -p 'require(\"./package.json\").version')"
+          git add packages/core/package.json cli/package.json mcp-server/package.json
+          VERSION=$(cd cli && node -p "require('./package.json').version")
+          git commit -m "chore: bump version to $VERSION"
+          git tag "v$VERSION"
           git push
+          git push origin "v$VERSION"
 
-      - name: Check if core version needs publishing
+      - name: Build all packages
+        run: make build
+
+      - name: Check if @ai-dossier/core needs publishing
         id: check-core
         run: |
           CURRENT=$(node -p "require('./packages/core/package.json').version")
-          PUBLISHED=$(npm view @imboard-ai/dossier-core version 2>/dev/null || echo "0.0.0")
+          PUBLISHED=$(npm view @ai-dossier/core version 2>/dev/null || echo "0.0.0")
           if [ "$CURRENT" = "$PUBLISHED" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
-            echo "✅ Core $CURRENT already published, skipping"
+            echo "Core $CURRENT already published, skipping"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-            echo "📦 Publishing core $CURRENT (current published: $PUBLISHED)"
+            echo "Publishing core $CURRENT (current published: $PUBLISHED)"
           fi
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @imboard-ai/dossier-core
+      - name: Publish @ai-dossier/core
         if: steps.check-core.outputs.skip != 'true'
         run: |
           cd packages/core
           npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Check if CLI version needs publishing
+      - name: Check if @ai-dossier/cli needs publishing
         id: check-cli
         run: |
           CURRENT=$(node -p "require('./cli/package.json').version")
-          PUBLISHED=$(npm view @imboard-ai/dossier-cli version 2>/dev/null || echo "0.0.0")
+          PUBLISHED=$(npm view @ai-dossier/cli version 2>/dev/null || echo "0.0.0")
           if [ "$CURRENT" = "$PUBLISHED" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
-            echo "✅ CLI $CURRENT already published, skipping"
+            echo "CLI $CURRENT already published, skipping"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-            echo "📦 Publishing CLI $CURRENT (current published: $PUBLISHED)"
+            echo "Publishing CLI $CURRENT (current published: $PUBLISHED)"
           fi
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @imboard-ai/dossier-cli
+      - name: Publish @ai-dossier/cli
         if: steps.check-cli.outputs.skip != 'true'
         run: |
           cd cli
           npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create Git tag
-        if: github.event.inputs.version != 'skip' && github.event.inputs.version != ''
+      - name: Check if @ai-dossier/mcp-server needs publishing
+        id: check-mcp
         run: |
-          VERSION=$(cd cli && node -p "require('./package.json').version")
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
+          CURRENT=$(node -p "require('./mcp-server/package.json').version")
+          PUBLISHED=$(npm view @ai-dossier/mcp-server version 2>/dev/null || echo "0.0.0")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "MCP server $CURRENT already published, skipping"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Publishing MCP server $CURRENT (current published: $PUBLISHED)"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ai-dossier/mcp-server
+        if: steps.check-mcp.outputs.skip != 'true'
+        run: |
+          cd mcp-server
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  verify:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify packages are available
+        run: |
+          echo "Verifying published packages..."
+          npm view @ai-dossier/core version
+          npm view @ai-dossier/cli version
+          npm view @ai-dossier/mcp-server version
+
+      - name: Smoke test CLI
+        run: npx @ai-dossier/cli --help

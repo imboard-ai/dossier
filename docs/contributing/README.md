@@ -23,8 +23,8 @@ Developer documentation for contributors to the Dossier project.
 
 ## Getting Help
 
-- **General questions**: [GitHub Discussions](https://github.com/imboard-ai/dossier/discussions)
-- **Bug reports**: [GitHub Issues](https://github.com/imboard-ai/dossier/issues)
+- **General questions**: [GitHub Discussions](https://github.com/imboard-ai/ai-dossier/discussions)
+- **Bug reports**: [GitHub Issues](https://github.com/imboard-ai/ai-dossier/issues)
 - **Security issues**: security@imboard.ai
 
 ## Code of Conduct

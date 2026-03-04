@@ -46,7 +46,7 @@
   },
   "mcp_integration": {
     "required": false,
-    "server_name": "@dossier/mcp-server",
+    "server_name": "@ai-dossier/mcp-server",
     "min_version": "1.0.0",
     "features_used": [
       "verify_dossier"

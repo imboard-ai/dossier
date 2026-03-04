@@ -164,7 +164,7 @@ cat ~/.claude/settings.local.json 2>/dev/null | grep -A 5 "mcpServers" || echo "
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -192,7 +192,7 @@ cat ~/.claude/settings.local.json 2>/dev/null | grep -A 5 "mcpServers" || echo "
 
 **Installation**:
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 ```
 
 **Configuration**:
@@ -279,7 +279,7 @@ I'll create this configuration:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -289,7 +289,7 @@ I'll create this configuration:
 
 First, install the package:
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 ```
 
 Then I'll create this configuration:
@@ -324,7 +324,7 @@ cat > ~/.claude/settings.local.json << 'EOF'
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -339,7 +339,7 @@ EOF
    ```json
    "dossier": {
      "command": "npx",
-     "args": ["-y", "@dossier/mcp-server"]
+     "args": ["-y", "@ai-dossier/mcp-server"]
    }
    ```
 4. Ensure JSON is valid (no trailing commas, proper brackets)
@@ -503,7 +503,7 @@ Update configuration with absolute path:
   "mcpServers": {
     "dossier": {
       "command": "/usr/local/bin/npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -521,12 +521,12 @@ Update configuration with absolute path:
 
 **Check 1**: Verify installation
 ```bash
-npm list -g @dossier/mcp-server
+npm list -g @ai-dossier/mcp-server
 ```
 
 If not found:
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 ```
 
 **Check 2**: Find installation location
@@ -605,7 +605,7 @@ Common alternate locations:
 1. **Check logs**: Claude Code console should show MCP server errors
 2. **Test manually**: Try running MCP server directly:
    ```bash
-   npx @dossier/mcp-server
+   npx @ai-dossier/mcp-server
    # Or
    dossier-mcp-server
    # Or
@@ -613,8 +613,8 @@ Common alternate locations:
    ```
 3. **Verify network**: For npx, ensure you have internet access
 4. **Get help**:
-   - Issues: https://github.com/imboard-ai/dossier/issues
-   - Discussions: https://github.com/imboard-ai/dossier/discussions
+   - Issues: https://github.com/imboard-ai/ai-dossier/issues
+   - Discussions: https://github.com/imboard-ai/ai-dossier/discussions
 
 Include:
 - Your OS and version
@@ -666,7 +666,7 @@ Based on your setup being complete:
 ### Share Your Feedback
 
 Help improve the dossier project:
-- ⭐ Star the repository: https://github.com/imboard-ai/dossier
+- ⭐ Star the repository: https://github.com/imboard-ai/ai-dossier
 - 💬 Share your experience in Discussions
 - 🐛 Report issues or suggest improvements
 
@@ -682,7 +682,7 @@ Help improve the dossier project:
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     }
   }
 }
@@ -692,7 +692,7 @@ Help improve the dossier project:
 
 **First, install**:
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 ```
 
 **File**: `~/.claude/settings.local.json`
@@ -714,7 +714,7 @@ npm install -g @dossier/mcp-server
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"]
+      "args": ["-y", "@ai-dossier/mcp-server"]
     },
     "filesystem": {
       "command": "npx",
@@ -736,7 +736,7 @@ npm install -g @dossier/mcp-server
   "mcpServers": {
     "dossier": {
       "command": "npx",
-      "args": ["-y", "@dossier/mcp-server"],
+      "args": ["-y", "@ai-dossier/mcp-server"],
       "env": {
         "LOG_LEVEL": "debug"
       }

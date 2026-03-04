@@ -71,7 +71,7 @@ Add dossiers to your open-source project to help contributors and maintainers.
      - name: Checkout dossier repo
        uses: actions/checkout@v3
        with:
-         repository: imboard-ai/dossier
+         repository: imboard-ai/ai-dossier
          path: dossier-tools
 
      - name: Verify README reality check
@@ -203,7 +203,7 @@ Create a **failure response guide** for when validations fail:
    - name: Checkout dossier tools
      uses: actions/checkout@v3
      with:
-       repository: imboard-ai/dossier
+       repository: imboard-ai/ai-dossier
        path: dossier-tools
 
    - name: Verify deploy dossier

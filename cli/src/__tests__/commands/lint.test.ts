@@ -15,7 +15,7 @@ const { mockLintDossierFile, MockLintRuleRegistry } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@imboard-ai/dossier-core', () => ({
+vi.mock('@ai-dossier/core', () => ({
   LintRuleRegistry: MockLintRuleRegistry,
   defaultRules: [],
   lintDossierFile: mockLintDossierFile,

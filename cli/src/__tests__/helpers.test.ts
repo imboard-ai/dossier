@@ -76,11 +76,11 @@ describe('parseListSource', () => {
   });
 
   it('should parse GitHub URL', () => {
-    const result = parseListSource('https://github.com/imboard-ai/dossier');
+    const result = parseListSource('https://github.com/imboard-ai/ai-dossier');
     expect(result).toEqual({
       type: 'github',
       owner: 'imboard-ai',
-      repo: 'dossier',
+      repo: 'ai-dossier',
       path: '',
       branch: 'main',
     });

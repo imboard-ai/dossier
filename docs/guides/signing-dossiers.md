@@ -283,7 +283,7 @@ GitHub Actions uses OpenID Connect (OIDC) to get temporary AWS credentials:
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/dossier:*",
+          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/ai-dossier:*",
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         }
       }
@@ -368,7 +368,7 @@ const command = new VerifyCommand({
 dossier verify examples/authoring/create-dossier.ds.md
 
 # Test from GitHub URL
-dossier verify https://raw.githubusercontent.com/imboard-ai/dossier/cli-work/examples/authoring/create-dossier.ds.md
+dossier verify https://raw.githubusercontent.com/imboard-ai/ai-dossier/cli-work/examples/authoring/create-dossier.ds.md
 
 # Verbose output
 dossier verify examples/authoring/create-dossier.ds.md --verbose
@@ -409,7 +409,7 @@ dossier verify examples/authoring/create-dossier.ds.md --verbose
    ```
 
 3. **Wrong MessageType** (fixed in v1.0.2)
-   - Update to latest version of `@imboard-ai/dossier-core`
+   - Update to latest version of `@ai-dossier/core`
    - Rebuild: `cd packages/core && npm run build`
 
 4. **Content Modified After Signing**
@@ -576,5 +576,5 @@ echo "✅ All dossiers verified"
 ---
 
 **Questions or Issues?**
-- GitHub Discussions: https://github.com/imboard-ai/dossier/discussions
+- GitHub Discussions: https://github.com/imboard-ai/ai-dossier/discussions
 - Security Issues: security@imboard.ai

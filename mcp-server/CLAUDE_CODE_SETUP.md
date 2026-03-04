@@ -194,8 +194,8 @@ Once everything is working:
 
 ## Getting Help
 
-- **Issues**: https://github.com/imboard-ai/dossier/issues
-- **Discussions**: https://github.com/imboard-ai/dossier/discussions
+- **Issues**: https://github.com/imboard-ai/ai-dossier/issues
+- **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 - **Documentation**: https://docs.dossier.sh (coming soon)
 
 ---

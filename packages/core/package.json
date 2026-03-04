@@ -1,5 +1,5 @@
 {
-  "name": "@imboard-ai/dossier-core",
+  "name": "@ai-dossier/core",
   "version": "1.0.1",
   "description": "Core verification and parsing logic for dossier automation standard",
   "main": "dist/index.js",
@@ -27,16 +27,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imboard-ai/dossier.git",
+    "url": "https://github.com/imboard-ai/ai-dossier.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/imboard-ai/dossier#readme",
+  "homepage": "https://github.com/imboard-ai/ai-dossier#readme",
   "bugs": {
-    "url": "https://github.com/imboard-ai/dossier/issues"
+    "url": "https://github.com/imboard-ai/ai-dossier/issues"
   },
   "publishConfig": {
     "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.927.0",

@@ -306,7 +306,7 @@ resource "aws_kms_alias" "dossier_signing" {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/dossier:*"
+          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/ai-dossier:*"
         }
       }
     }

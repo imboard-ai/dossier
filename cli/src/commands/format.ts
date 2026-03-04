@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { formatDossierContent, formatDossierFile } from '@imboard-ai/dossier-core';
+import { formatDossierContent, formatDossierFile } from '@ai-dossier/core';
 import type { Command } from 'commander';
 
 export function registerFormatCommand(program: Command): void {

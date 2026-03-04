@@ -12,38 +12,38 @@ Browse the examples below or explore by category. Each example includes links to
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Deploy to AWS** | Deploy application to AWS using Infrastructure as Code (Terraform/CloudFormation) with validation and rollback capability | High | 15-60 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/devops/deploy-to-aws.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/devops/deploy-to-aws.ds.md) |
+| **Deploy to AWS** | Deploy application to AWS using Infrastructure as Code (Terraform/CloudFormation) with validation and rollback capability | High | 15-60 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/devops/deploy-to-aws.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.ds.md) |
 
 ### Database
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Database Schema Migration** | Execute database schema migrations with comprehensive safety checks, automatic backups, and rollback capability | Critical | 5-120 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/database/migrate-schema.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/database/migrate-schema.ds.md) |
+| **Database Schema Migration** | Execute database schema migrations with comprehensive safety checks, automatic backups, and rollback capability | Critical | 5-120 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/database/migrate-schema.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/database/migrate-schema.ds.md) |
 
 ### Development
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Add Git Worktree Support** | Restructure a git project to support git worktrees by moving contents into main/ subdirectory and creating worktree registry | High | 5-15 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/development/add-git-worktree-support.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/development/add-git-worktree-support.ds.md) |
-| **Setup React Library** | Set up a React component library with TypeScript, Storybook, and publishing workflow | Medium | 10-30 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/development/setup-react-library.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/development/setup-react-library.ds.md) |
+| **Add Git Worktree Support** | Restructure a git project to support git worktrees by moving contents into main/ subdirectory and creating worktree registry | High | 5-15 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/development/add-git-worktree-support.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/development/add-git-worktree-support.ds.md) |
+| **Setup React Library** | Set up a React component library with TypeScript, Storybook, and publishing workflow | Medium | 10-30 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/development/setup-react-library.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/development/setup-react-library.ds.md) |
 
 ### Data Science
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Train ML Model** | Train a machine learning model with proper data validation, evaluation, and artifact management | Medium | 5-60 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/data-science/train-ml-model.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/data-science/train-ml-model.ds.md) |
+| **Train ML Model** | Train a machine learning model with proper data validation, evaluation, and artifact management | Medium | 5-60 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/data-science/train-ml-model.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/data-science/train-ml-model.ds.md) |
 
 ### Security
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Validate Project Config** | Validate project configuration files for security issues and best practices | Low | 2-10 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/security/validate-project-config.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md) |
+| **Validate Project Config** | Validate project configuration files for security issues and best practices | Low | 2-10 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/security/validate-project-config.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/security/validate-project-config.ds.md) |
 
 ### Setup
 
 | Title | Description | Risk Level | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|------------|----------|----------|--------|--------|------|---------|
-| **Setup Dossier MCP Server** | Configure Claude Code to use the dossier MCP server for streamlined, secure dossier execution | Low | 5-15 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/setup/setup-dossier-mcp.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/setup/setup-dossier-mcp.ds.md) |
+| **Setup Dossier MCP Server** | Configure Claude Code to use the dossier MCP server for streamlined, secure dossier execution | Low | 5-15 min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/setup/setup-dossier-mcp.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/setup/setup-dossier-mcp.ds.md) |
 
 ### Git Project Review (Atomic Dossiers)
 
@@ -51,10 +51,10 @@ LLM-powered analysis tools for understanding and improving Git projects. These a
 
 | Title | Description | Duration | Checksum | Signed | Author | View | Raw URL |
 |-------|-------------|----------|----------|--------|--------|------|---------|
-| **README Reality Check** | Compare README promises vs. actual implementation to find documentation drift | ~30-60s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/git-project-review/atomic/readme-reality-check.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md) |
-| **Onboarding Friction** | Identify pain points for new contributors and find quick wins | ~45-90s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/git-project-review/atomic/onboarding-friction.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md) |
-| **Architecture Patterns** | Find inconsistent patterns and duplication hotspots | ~60-90s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/git-project-review/atomic/architecture-patterns.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/architecture-patterns.ds.md) |
-| **Schema Capability Check** | Explore codebase to answer "does it support X?" questions | ~1-2min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/git-project-review/atomic/schema-capability-check.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md) |
+| **README Reality Check** | Compare README promises vs. actual implementation to find documentation drift | ~30-60s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/git-project-review/atomic/readme-reality-check.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/readme-reality-check.ds.md) |
+| **Onboarding Friction** | Identify pain points for new contributors and find quick wins | ~45-90s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/git-project-review/atomic/onboarding-friction.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/onboarding-friction.ds.md) |
+| **Architecture Patterns** | Find inconsistent patterns and duplication hotspots | ~60-90s | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/git-project-review/atomic/architecture-patterns.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/architecture-patterns.ds.md) |
+| **Schema Capability Check** | Explore codebase to answer "does it support X?" questions | ~1-2min | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/git-project-review/atomic/schema-capability-check.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md) |
 
 See [git-project-review/README.md](./git-project-review/README.md) for detailed usage instructions.
 
@@ -62,8 +62,8 @@ See [git-project-review/README.md](./git-project-review/README.md) for detailed 
 
 | Name | Language | Description | Location |
 |------|----------|-------------|----------|
-| **validate-dossier.js** | Node.js | Validate dossier files against JSON schema using AJV | [View](https://github.com/imboard-ai/dossier/blob/main/examples/validation/validate-dossier.js) |
-| **validate-dossier.py** | Python | Validate dossier files against JSON schema using jsonschema | [View](https://github.com/imboard-ai/dossier/blob/main/examples/validation/validate-dossier.py) |
+| **validate-dossier.js** | Node.js | Validate dossier files against JSON schema using AJV | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/validation/validate-dossier.js) |
+| **validate-dossier.py** | Python | Validate dossier files against JSON schema using jsonschema | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/validation/validate-dossier.py) |
 
 See [validation/README.md](./validation/README.md) for usage instructions.
 
@@ -73,8 +73,8 @@ Demonstrates the working files pattern (`.dsw.md`) for tracking execution state 
 
 | File | Type | Description | Checksum | Signed | Author | View | Raw URL |
 |------|------|-------------|----------|--------|--------|------|---------|
-| **deploy-application.ds.md** | Dossier | Immutable deployment instructions | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/dossier/blob/main/examples/working-files/deploy-application.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/working-files/deploy-application.ds.md) |
-| **deploy-application.dsw.md** | Working File | Mutable state tracking during execution | N/A | N/A | - | [View](https://github.com/imboard-ai/dossier/blob/main/examples/working-files/deploy-application.dsw.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/working-files/deploy-application.dsw.md) |
+| **deploy-application.ds.md** | Dossier | Immutable deployment instructions | ✓ | ✓ | Dossier Team | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/working-files/deploy-application.ds.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/working-files/deploy-application.ds.md) |
+| **deploy-application.dsw.md** | Working File | Mutable state tracking during execution | N/A | N/A | - | [View](https://github.com/imboard-ai/ai-dossier/blob/main/examples/working-files/deploy-application.dsw.md) | [Raw](https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/working-files/deploy-application.dsw.md) |
 
 See [working-files/README.md](./working-files/README.md) for the complete working files pattern documentation.
 
@@ -86,7 +86,7 @@ You can execute dossiers by asking your LLM assistant:
 
 ```
 Execute this dossier:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/devops/deploy-to-aws.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.ds.md
 ```
 
 Or for local files:
@@ -112,7 +112,7 @@ Some dossiers accept variables for customization:
 
 ```
 Execute this dossier with variables:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/git-project-review/atomic/schema-capability-check.ds.md
 
 Variables:
 - capability: "Does the schema support referencing other dossier files?"
@@ -164,9 +164,9 @@ See [SPECIFICATION.md](../SPECIFICATION.md) for dossier authoring guidelines.
 
 ## Quick Links
 
-- **Browse on GitHub**: https://github.com/imboard-ai/dossier/tree/main/examples
-- **Main Repository**: https://github.com/imboard-ai/dossier
-- **Documentation**: https://github.com/imboard-ai/dossier/tree/main/docs
+- **Browse on GitHub**: https://github.com/imboard-ai/ai-dossier/tree/main/examples
+- **Main Repository**: https://github.com/imboard-ai/ai-dossier
+- **Documentation**: https://github.com/imboard-ai/ai-dossier/tree/main/docs
 
 ---
 

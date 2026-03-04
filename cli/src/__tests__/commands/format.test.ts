@@ -10,7 +10,7 @@ const { mockFormatDossierContent, mockFormatDossierFile } = vi.hoisted(() => ({
   mockFormatDossierFile: vi.fn(),
 }));
 
-vi.mock('@imboard-ai/dossier-core', () => ({
+vi.mock('@ai-dossier/core', () => ({
   formatDossierContent: mockFormatDossierContent,
   formatDossierFile: mockFormatDossierFile,
 }));

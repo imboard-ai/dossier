@@ -11,7 +11,7 @@
 ### Core Infrastructure ✅
 
 1. **TypeScript Project Setup**
-   - Package: `@dossier/mcp-server` v1.0.0
+   - Package: `@ai-dossier/mcp-server` v1.0.0
    - Dependencies: `@modelcontextprotocol/sdk`, `zod`
    - Build system: TypeScript → CommonJS
    - Scripts: `build`, `dev`, `start`
@@ -268,7 +268,7 @@
 ### Method 2: Global Install (Future - after NPM publish)
 
 ```bash
-npm install -g @dossier/mcp-server
+npm install -g @ai-dossier/mcp-server
 ```
 
 ```json

@@ -23,7 +23,7 @@ const {
   verifyIntegrity,
   loadTrustedKeys,
   verifySignature
-} = require('@imboard-ai/dossier-core');
+} = require('@ai-dossier/core');
 const { convertGitHubBlobToRaw } = require('../dist/github-url');
 
 // Colors for terminal output
@@ -126,7 +126,7 @@ ${colors.bright}Security Checks:${colors.reset}
   ✓ Risk level assessment
 
 ${colors.bright}More Information:${colors.reset}
-  Documentation: https://github.com/imboard-ai/dossier
+  Documentation: https://github.com/imboard/ai-dossier
   Security: SECURITY_STATUS.md
   Protocol: PROTOCOL.md
 `);
@@ -157,7 +157,7 @@ async function downloadFile(url) {
   });
 }
 
-// Parse dossier frontmatter (using @dossier/core)
+// Parse dossier frontmatter (using @ai-dossier/core)
 function parseDossier(content) {
   const parsed = parseDossierContent(content);
   return {
@@ -166,7 +166,7 @@ function parseDossier(content) {
   };
 }
 
-// Verify checksum (using @dossier/core)
+// Verify checksum (using @ai-dossier/core)
 function verifyChecksum(body, declaredHash) {
   const result = verifyIntegrity(body, declaredHash);
   return {
@@ -176,7 +176,7 @@ function verifyChecksum(body, declaredHash) {
   };
 }
 
-// Verify signature (using @dossier/core for real cryptographic verification)
+// Verify signature (using @ai-dossier/core for real cryptographic verification)
 async function checkSignature(body, frontmatter) {
   if (!frontmatter.signature) {
     return {

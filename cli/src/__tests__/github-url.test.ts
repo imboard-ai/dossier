@@ -9,9 +9,9 @@ describe('convertGitHubBlobToRaw', () => {
   });
 
   it('should handle nested paths', () => {
-    const input = 'https://github.com/imboard-ai/dossier/blob/main/examples/test.ds.md';
+    const input = 'https://github.com/imboard-ai/ai-dossier/blob/main/examples/test.ds.md';
     const expected =
-      'https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/test.ds.md';
+      'https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/test.ds.md';
     expect(convertGitHubBlobToRaw(input)).toBe(expected);
   });
 

@@ -19,7 +19,7 @@
  *   npx tsx tools/sign-dossier.ts examples/devops/deploy-to-aws.md --key ~/.dossier/private-key.pem --key-id imboard-ai-2024
  */
 
-import { Ed25519Signer, type SignatureResult } from '@imboard-ai/dossier-core';
+import { Ed25519Signer, type SignatureResult } from '@ai-dossier/core';
 import { createCliParser } from './lib/cli-parser';
 import { addChecksum, handleDryRun, readAndParseDossier, writeDossier } from './lib/signing-common';
 

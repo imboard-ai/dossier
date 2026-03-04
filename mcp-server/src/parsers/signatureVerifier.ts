@@ -9,7 +9,7 @@ import {
   getErrorMessage,
   loadTrustedKeys,
   verifySignature,
-} from '@imboard-ai/dossier-core';
+} from '@ai-dossier/core';
 import { logger } from '../utils/logger';
 
 /**

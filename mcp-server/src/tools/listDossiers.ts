@@ -5,7 +5,7 @@
 
 import { readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { type DossierListItem, getErrorMessage, parseDossierFile } from '@imboard-ai/dossier-core';
+import { type DossierListItem, getErrorMessage, parseDossierFile } from '@ai-dossier/core';
 import { logger } from '../utils/logger';
 
 export interface ListDossiersInput {

@@ -1,5 +1,5 @@
 {
-  "name": "@imboard-ai/dossier-mcp",
+  "name": "@ai-dossier/mcp-server",
   "version": "1.0.1",
   "description": "MCP server for dossier automation standard - enables LLMs to discover, verify, and execute dossiers",
   "main": "dist/index.js",
@@ -23,9 +23,16 @@
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
   "license": "MIT",
   "type": "commonjs",
+  "files": [
+    "dist/"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.927.0",
-    "@imboard-ai/dossier-core": "*",
+    "@ai-dossier/core": "*",
     "@modelcontextprotocol/sdk": "^1.21.0",
     "tweetnacl": "^1.0.3",
     "zod": "^3.25.76"

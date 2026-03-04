@@ -11,7 +11,7 @@ import {
   parseDossierFile,
   type VerificationResult,
   verifyIntegrity,
-} from '@imboard-ai/dossier-core';
+} from '@ai-dossier/core';
 import { verifyAuthenticity } from '../parsers/signatureVerifier';
 import { logger } from '../utils/logger';
 

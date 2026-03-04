@@ -28,7 +28,7 @@ These tools can read files, so they can learn about dossiers on-the-fly.
 
 ```bash
 # Clone this repo (has example dossiers)
-git clone https://github.com/imboard-ai/dossier.git
+git clone https://github.com/imboard-ai/ai-dossier.git
 cd dossier
 ```
 
@@ -38,7 +38,7 @@ Or add dossiers to your existing project:
 # In your project directory
 mkdir -p dossiers
 curl -o dossiers/project-init.md \
-  https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/development/setup-react-library.md
+  https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/development/setup-react-library.md
 ```
 
 #### Step 2: Tell your AI to learn and execute
@@ -80,7 +80,7 @@ These tools can't read files, so you need to provide the dossier content.
 cat dossiers/project-init.md
 
 # Or download an example
-curl https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/devops/deploy-to-aws.md
+curl https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.md
 ```
 
 #### Step 2: Use the universal template
@@ -369,8 +369,8 @@ diagnose the issue. Then propose a fix."
 ## Get Help
 
 - **FAQ**: [FAQ.md](./FAQ.md) - Comprehensive objection handling & comparisons
-- **Issues**: https://github.com/imboard-ai/dossier/issues
-- **Discussions**: https://github.com/imboard-ai/dossier/discussions
+- **Issues**: https://github.com/imboard-ai/ai-dossier/issues
+- **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 - **Examples**: See [examples/](./examples/)
 - **Spec**: See [SPECIFICATION.md](./SPECIFICATION.md)
 - **Protocol**: See [PROTOCOL.md](./PROTOCOL.md)

@@ -19,7 +19,7 @@
  *     --signed-by "Dossier Team <team@dossier.ai>"
  */
 
-import { KmsSigner, type SignatureResult } from '@imboard-ai/dossier-core';
+import { KmsSigner, type SignatureResult } from '@ai-dossier/core';
 import { createCliParser } from './lib/cli-parser';
 import { addChecksum, handleDryRun, readAndParseDossier, writeDossier } from './lib/signing-common';
 

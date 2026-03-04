@@ -144,7 +144,7 @@ When a key is compromised or rotated, it will be listed here:
 
 - **Documentation**: See [security/ARCHITECTURE.md](./security/ARCHITECTURE.md)
 - **Key Management**: See [security/KEY_MANAGEMENT.md](./security/KEY_MANAGEMENT.md)
-- **Issues**: Report at https://github.com/imboard-ai/dossier/issues
+- **Issues**: Report at https://github.com/imboard-ai/ai-dossier/issues
 - **Security concerns**: Email security@imboard.ai (when available)
 
 ---

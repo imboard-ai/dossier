@@ -28,7 +28,7 @@
 
 ### What We Built
 
-**MCP Server** (`@dossier/mcp-server`):
+**MCP Server** (`@ai-dossier/mcp-server`):
 - ✅ `verify_dossier()` - Verifies checksums and signatures
 - ✅ `read_dossier()` - Reads with automatic verification
 - ✅ `list_dossiers()` - Discovers dossiers
@@ -164,7 +164,7 @@ This would let MCP servers intercept file access and enforce verification.
 
 **Install**:
 ```bash
-npm install -g @dossier/cli
+npm install -g @ai-dossier/cli
 ```
 
 **Usage**:
@@ -366,16 +366,16 @@ As the dossier standard gains adoption, security enforcement will improve throug
 
 ```bash
 # 1. Verify the dossier once
-dossier-verify https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/devops/deploy-to-aws.ds.md
+dossier-verify https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.ds.md
 
 # 2. If it passes, you can use it
-claude-code "run https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/devops/deploy-to-aws.ds.md"
+claude-code "run https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.ds.md"
 
 # 3. Re-verify if content changes
 ```
 
 **Trust model**:
-- ✅ Official dossier repository (imboard-ai/dossier)
+- ✅ Official dossier repository (imboard-ai/ai-dossier)
 - ✅ Signed by known authors (check KEYS.txt)
 - ✅ Verified once, then trust until updates
 
@@ -423,7 +423,7 @@ claude-code "run /tmp/dossier.ds.md"
 ```
 New dossier to run?
 │
-├─ From official repository (imboard-ai/dossier)?
+├─ From official repository (imboard-ai/ai-dossier)?
 │  │
 │  ├─ YES → Verify once, then trust
 │  │         (re-verify on updates)
@@ -493,7 +493,7 @@ New dossier to run?
 
 ### Q: Can I trust the official examples?
 
-**A**: Yes, official examples from `imboard-ai/dossier` are safe:
+**A**: Yes, official examples from `imboard-ai/ai-dossier` are safe:
 - ✅ Maintained by core team
 - ✅ Code-reviewed
 - ✅ Have valid checksums
@@ -620,7 +620,7 @@ We commit to:
 ### Report Issues
 
 **Security vulnerabilities**: security@imboard.ai (private)
-**Bugs or improvements**: https://github.com/imboard-ai/dossier/issues (public)
+**Bugs or improvements**: https://github.com/imboard-ai/ai-dossier/issues (public)
 
 ### Contribute
 

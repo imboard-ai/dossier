@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { defaultRules, LintRuleRegistry, lintDossierFile } from '@imboard-ai/dossier-core';
+import { defaultRules, LintRuleRegistry, lintDossierFile } from '@ai-dossier/core';
 import type { Command } from 'commander';
 
 export function registerLintCommand(program: Command): void {

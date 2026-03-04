@@ -38,7 +38,7 @@ export function registerCreateCommand(program: Command): void {
           console.error('❌ Error: Meta-dossier not found');
           console.error(`   Expected: ${metaDossierPath}`);
           console.error('\nThis is likely a package installation issue.');
-          console.error('Please report this at: https://github.com/imboard-ai/dossier/issues\n');
+          console.error('Please report this at: https://github.com/imboard-ai/ai-dossier/issues\n');
           process.exit(2);
         }
 

@@ -82,7 +82,7 @@ aws kms create-alias \
       "Resource": "*",
       "Condition": {
         "StringEquals": {
-          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/dossier:ref:refs/heads/main",
+          "token.actions.githubusercontent.com:sub": "repo:imboard-ai/ai-dossier:ref:refs/heads/main",
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         }
       }
@@ -654,7 +654,7 @@ ssss-combine -t 3 < collected-shares.txt > recovered-key.key
 - PagerDuty: (to be configured)
 
 **General Questions**:
-- GitHub Discussions: https://github.com/imboard-ai/dossier/discussions
+- GitHub Discussions: https://github.com/imboard-ai/ai-dossier/discussions
 - Email: support@imboard.ai
 
 ---

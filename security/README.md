@@ -257,8 +257,8 @@ See `CONTRIBUTING.md` for general contribution guidelines.
 ## 📞 Contact
 
 - **Security Email:** security@imboard.ai
-- **General Issues:** https://github.com/imboard-ai/dossier/issues
-- **Discussions:** https://github.com/imboard-ai/dossier/discussions
+- **General Issues:** https://github.com/imboard-ai/ai-dossier/issues
+- **Discussions:** https://github.com/imboard-ai/ai-dossier/discussions
 
 ---
 

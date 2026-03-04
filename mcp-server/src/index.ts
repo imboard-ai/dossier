@@ -6,7 +6,7 @@
  * Enables LLMs to discover, verify, and execute dossiers securely
  */
 
-import { getErrorMessage, getErrorStack } from '@imboard-ai/dossier-core';
+import { getErrorMessage, getErrorStack } from '@ai-dossier/core';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -29,7 +29,7 @@ import { createToolResponse } from './utils/response.js';
 // Create MCP server instance
 const server = new Server(
   {
-    name: '@dossier/mcp-server',
+    name: '@ai-dossier/mcp-server',
     version: '1.0.0',
   },
   {
@@ -314,7 +314,7 @@ ${riskLevel ? `Risk level: ${riskLevel}` : ''}
 Suggested filename: ${filename}
 
 **Instructions**: Execute the meta-dossier at:
-https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/authoring/create-dossier.ds.md
+https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/authoring/create-dossier.ds.md
 
 This meta-dossier contains the official template and authoring instructions.
 Follow its guidance to create "${title}" with proper structure.`,
@@ -336,7 +336,7 @@ async function main() {
     await server.connect(transport);
 
     logger.info('Dossier MCP Server started', {
-      name: '@dossier/mcp-server',
+      name: '@ai-dossier/mcp-server',
       version: '1.0.0',
       transport: 'stdio',
     });

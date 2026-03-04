@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'node:path';
-import { type DossierFrontmatter, parseDossierFile } from '@imboard-ai/dossier-core';
+import { type DossierFrontmatter, parseDossierFile } from '@ai-dossier/core';
 import { logger } from '../utils/logger';
 
 export interface ReadDossierInput {

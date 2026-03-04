@@ -107,7 +107,7 @@ The workflow produces three files (not uploaded as artifacts currently):
 
 ### Motivation
 
-Automate the publishing of `@dossier/core` and `@dossier/cli` npm packages to GitHub Packages. This enables:
+Automate the publishing of `@ai-dossier/core` and `@ai-dossier/cli` npm packages to GitHub Packages. This enables:
 - **Continuous delivery**: Automatic publishing on code changes
 - **Version management**: Centralized version bumping
 - **Consistency**: Same build process every time
@@ -149,7 +149,7 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 3. Install dependencies
    - npm install (all workspaces)
    ↓
-4. Build @dossier/core
+4. Build @ai-dossier/core
    - Compile TypeScript → JavaScript
    - Generate type definitions
    ↓
@@ -162,11 +162,11 @@ Actions → Publish Packages to GitHub Packages → Run workflow
    - Commit updated package.json files
    - Push to main branch
    ↓
-7. Publish @dossier/core
+7. Publish @ai-dossier/core
    - Publish to https://npm.pkg.github.com
    - Includes: dist/, package.json, README
    ↓
-8. Publish @dossier/cli
+8. Publish @ai-dossier/cli
    - Publish to https://npm.pkg.github.com
    - Includes: bin/, README, package.json
    ↓
@@ -193,8 +193,8 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 ### Outputs
 
 **Published Packages:**
-- `@dossier/core@1.0.0` → https://github.com/imboard-ai/dossier/packages
-- `@dossier/cli@0.1.0` → https://github.com/imboard-ai/dossier/packages
+- `@ai-dossier/core@1.0.0` → https://github.com/imboard-ai/ai-dossier/packages
+- `@ai-dossier/cli@0.1.0` → https://github.com/imboard-ai/ai-dossier/packages
 
 **Git Artifacts:**
 - Version bump commit (if bumped)
@@ -231,11 +231,11 @@ git push origin main
 **Automatic (workflow manages it):**
 ```
 Input: patch
-Before: @dossier/cli@0.1.0, @dossier/core@1.0.0
-After:  @dossier/cli@0.1.1, @dossier/core@1.0.1
+Before: @ai-dossier/cli@0.1.0, @ai-dossier/core@1.0.0
+After:  @ai-dossier/cli@0.1.1, @ai-dossier/core@1.0.1
 
 - Both packages bumped to same version
-- CLI dependency updated: "@dossier/core": "^1.0.1"
+- CLI dependency updated: "@ai-dossier/core": "^1.0.1"
 - Commit: "chore: bump version to 0.1.1"
 - Tag: v0.1.1
 ```
@@ -281,7 +281,7 @@ After:  @dossier/cli@0.1.1, @dossier/core@1.0.1
 
 3. **Verify published packages**:
    ```bash
-   npm info @dossier/cli
+   npm info @ai-dossier/cli
    ```
 
 4. **Create GitHub releases** for significant versions
@@ -342,7 +342,7 @@ Actions → Publish Packages → Run workflow
 
 ### Published Package Can't Be Installed
 
-**Problem**: `npm install @dossier/cli` fails with 404.
+**Problem**: `npm install @ai-dossier/cli` fails with 404.
 
 **Solution**: Configure npm for GitHub Packages:
 ```bash

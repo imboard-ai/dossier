@@ -64,45 +64,14 @@ LLM:  "Found project-init dossier v1.0.0. Analyzing prerequisites..."
 
 ## Installation
 
-### For Claude Code (Current Method - Local Development)
-
-Since the MCP server is not yet published to NPM, you can use it locally:
-
-1. **Build the MCP server** (from `mcp-server/` directory):
-```bash
-cd mcp-server
-npm install
-npm run build
-```
-
-2. **Add MCP server globally** (available across all projects):
-```bash
-claude mcp add dossier --scope user -- node /absolute/path/to/dossier/mcp-server/dist/index.js
-```
-
-Replace `/absolute/path/to/dossier` with the full path to your dossier project.
-
-3. **Verify installation:**
-```bash
-claude mcp list
-```
-
-4. **Test it:**
-```
-"List available dossiers in this project"
-"Verify the security of examples/development/add-git-worktree-support.ds.md"
-```
-
-### For End Users (Future - After NPM Publish)
-
-**Using with Claude Code:**
+### Using with Claude Code
 
 ```bash
 # Global installation (available across all projects)
-claude mcp add dossier --scope user -- npx @imboard-ai/dossier-mcp
+claude mcp add dossier --scope user -- npx @ai-dossier/mcp-server
 
 # Or project-only installation
-claude mcp add dossier -- npx @imboard-ai/dossier-mcp
+claude mcp add dossier -- npx @ai-dossier/mcp-server
 ```
 
 Verify with:
@@ -278,7 +247,7 @@ dossier-mcp-server/
 
 ```bash
 # Clone and install
-git clone https://github.com/imboard-ai/dossier.git
+git clone https://github.com/imboard-ai/ai-dossier.git
 cd dossier/mcp-server
 npm install
 

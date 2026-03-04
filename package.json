@@ -1,5 +1,5 @@
 {
-  "name": "@dossier/monorepo",
+  "name": "@ai-dossier/monorepo",
   "version": "1.0.0",
   "private": true,
   "description": "Dossier monorepo - automation standard for AI agents",
@@ -20,7 +20,8 @@
     "prepare": "husky",
     "publish:core": "cd packages/core && npm run build && npm publish",
     "publish:cli": "cd cli && npm run build && npm publish",
-    "publish:all": "npm run publish:core && npm run publish:cli"
+    "publish:mcp": "cd mcp-server && npm run build && npm publish",
+    "publish:all": "npm run publish:core && npm run publish:cli && npm run publish:mcp"
   },
   "lint-staged": {
     "*.{ts,js,json}": "biome check --write --no-errors-on-unmatched"
@@ -29,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imboard-ai/dossier.git"
+    "url": "https://github.com/imboard-ai/ai-dossier.git"
   },
   "devDependencies": {
     "@aws-sdk/client-kms": "^3.932.0",

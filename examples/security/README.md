@@ -286,7 +286,7 @@ You can safely **verify** (but not execute):
 
 ```bash
 # Download the dossier
-curl -O https://raw.githubusercontent.com/imboard-ai/dossier/main/examples/security/validate-project-config.ds.md
+curl -O https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/security/validate-project-config.ds.md
 
 # Verify it (safe - doesn't execute)
 node tools/verify-dossier.js validate-project-config.ds.md

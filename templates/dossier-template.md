@@ -209,7 +209,7 @@ OPTIONAL: If you have access to a Dossier MCP server:
   - Query `dossier://protocol` for detailed execution protocol
   - Use `verify_dossier` tool for automated security checks
 
-Learn more: https://github.com/imboard-ai/dossier/blob/main/SECURITY_ARCHITECTURE.md
+Learn more: https://github.com/imboard-ai/ai-dossier/blob/main/SECURITY_ARCHITECTURE.md
 -->
 
 

@@ -64,8 +64,8 @@ This documentation follows the [Diataxis framework](https://diataxis.fr/):
 
 ## Get Help
 
-- **Issues**: https://github.com/imboard-ai/dossier/issues
-- **Discussions**: https://github.com/imboard-ai/dossier/discussions
+- **Issues**: https://github.com/imboard-ai/ai-dossier/issues
+- **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 - **Security**: security@imboard.ai
 
 ---

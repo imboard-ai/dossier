@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/imboard-ai/dossier/schema/v1.0.0",
+  "$id": "https://github.com/imboard-ai/ai-dossier/schema/v1.0.0",
   "title": "Dossier Schema",
   "description": "JSON Schema for Dossier frontmatter metadata, providing deterministic structure for LLM agent automation",
   "type": "object",
@@ -702,7 +702,7 @@
         "server_name": {
           "type": "string",
           "description": "npm package name of the required MCP server",
-          "default": "@dossier/mcp-server"
+          "default": "@ai-dossier/mcp-server"
         },
         "min_version": {
           "type": "string",

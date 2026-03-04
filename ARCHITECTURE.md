@@ -15,25 +15,25 @@ Dossier is a lightweight automation standard built on three principles:
 ┌─────────────────────────────────────────┐
 │         Dossier Ecosystem                │
 ├─────────────────────────────────────────┤
-│  @dossier/cli      │  Command-line tool │
-│  @dossier/core     │  Verification lib  │
-│  @dossier/mcp      │  AI agent support  │
+│  @ai-dossier/cli      │  Command-line tool │
+│  @ai-dossier/core     │  Verification lib  │
+│  @ai-dossier/mcp      │  AI agent support  │
 └─────────────────────────────────────────┘
 ```
 
-### Core Library (`@dossier/core`)
+### Core Library (`@ai-dossier/core`)
 Shared verification and parsing logic used by all tools. Handles:
 - Dossier parsing (YAML frontmatter + Markdown body)
 - SHA256 checksum verification
 - Signature verification (Minisign, AWS KMS)
 
-### CLI Tool (`@dossier/cli`)
+### CLI Tool (`@ai-dossier/cli`)
 Command-line verification tool for end users:
 ```bash
 dossier-verify <file-or-url>
 ```
 
-### MCP Server (`@dossier/mcp-server`)
+### MCP Server (`@ai-dossier/mcp-server`)
 Model Context Protocol integration for AI agents like Claude Code.
 
 ## File Format
@@ -92,9 +92,9 @@ See [security/ARCHITECTURE.md](security/ARCHITECTURE.md) for details.
 ```
 dossier/
 ├── packages/
-│   └── core/              # @dossier/core
-├── cli/                   # @dossier/cli
-├── mcp-server/           # @dossier/mcp-server
+│   └── core/              # @ai-dossier/core
+├── cli/                   # @ai-dossier/cli
+├── mcp-server/           # @ai-dossier/mcp-server
 ├── examples/             # Example dossiers
 ├── security/             # Security documentation
 ├── docs/                 # Detailed documentation
@@ -131,8 +131,8 @@ For comprehensive architecture documentation, see:
 ## Questions?
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: https://github.com/imboard-ai/dossier/issues
-- **Discussions**: https://github.com/imboard-ai/dossier/discussions
+- **Issues**: https://github.com/imboard-ai/ai-dossier/issues
+- **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 
 ---
 

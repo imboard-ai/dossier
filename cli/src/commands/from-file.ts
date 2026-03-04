@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { calculateChecksum, Ed25519Signer } from '@imboard-ai/dossier-core';
+import { calculateChecksum, Ed25519Signer } from '@ai-dossier/core';
 import type { Command } from 'commander';
 
 export function registerFromFileCommand(program: Command): void {

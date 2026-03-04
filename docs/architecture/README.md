@@ -15,9 +15,9 @@ This section contains comprehensive architectural documentation for developers a
 ## System Components
 
 ### Core Components
-- **@dossier/core** - Verification and parsing library
-- **@dossier/cli** - Command-line verification tool
-- **@dossier/mcp-server** - Model Context Protocol integration
+- **@ai-dossier/core** - Verification and parsing library
+- **@ai-dossier/cli** - Command-line verification tool
+- **@ai-dossier/mcp-server** - Model Context Protocol integration
 
 ### File Structure
 - Monorepo organization (npm workspaces)

@@ -217,7 +217,7 @@ Options:
 
 **Example Output**:
 ```
-🔍 Fetching dossiers from GitHub: imboard-ai/dossier
+🔍 Fetching dossiers from GitHub: imboard-ai/ai-dossier
    Path: examples
    Branch: main
 
@@ -393,7 +393,7 @@ dossier config --reset                  # Reset to defaults
 - ✅ Created 10 command placeholders with helpful TBD messages
 - ✅ Migrated `verify` to new structure
 - ✅ Removed `dossier-verify` standalone command (breaking change)
-- ✅ Updated package scope to `@imboard-ai/*`
+- ✅ Updated package scope to `@ai-dossier/*`
 
 **Command**: `dossier <command>`
 
@@ -1361,7 +1361,7 @@ program.parse();
 - `clipboardy` - Clipboard integration (fallback)
 
 **Existing**:
-- `@imboard-ai/dossier-core` - Verification logic
+- `@ai-dossier/core` - Verification logic
 
 ---
 
@@ -1400,7 +1400,7 @@ dossier verify file.ds.md
 ⚠️  DEPRECATED: dossier-verify will be removed in v1.0.0
    Use: dossier verify <file>
 
-   Migration guide: https://github.com/imboard-ai/dossier/wiki/CLI-Migration
+   Migration guide: https://github.com/imboard-ai/ai-dossier/wiki/CLI-Migration
 ```
 
 ---

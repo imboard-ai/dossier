@@ -562,7 +562,7 @@ To configure manually:
      "mcpServers": {
        "dossier": {
          "command": "npx",
-         "args": ["-y", "@dossier/mcp-server"]
+         "args": ["-y", "@ai-dossier/mcp-server"]
        }
      }
    }

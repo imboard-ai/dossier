@@ -34,4 +34,4 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 - Check [Tutorials](../tutorials/) for step-by-step learning
 - See [Reference](../reference/) for technical specifications
 - Browse [Examples](../examples/) for code samples
-- Ask in [GitHub Discussions](https://github.com/imboard-ai/dossier/discussions)
+- Ask in [GitHub Discussions](https://github.com/imboard-ai/ai-dossier/discussions)

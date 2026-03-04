@@ -26,7 +26,7 @@ Added `mcp_integration` field:
 {
   "mcp_integration": {
     "required": boolean,                    // Is MCP server required?
-    "server_name": "@dossier/mcp-server",  // npm package name
+    "server_name": "@ai-dossier/mcp-server",  // npm package name
     "min_version": "1.0.0",                 // Minimum version
     "features_used": [                      // Tools/resources used
       "verify_dossier",
@@ -176,7 +176,7 @@ Before executing dossiers, LLMs should check if MCP server is available:
    ```json
    "mcp_integration": {
      "required": false,
-     "server_name": "@dossier/mcp-server",
+     "server_name": "@ai-dossier/mcp-server",
      "min_version": "1.0.0",
      "features_used": ["verify_dossier"],
      "fallback": "manual_execution"
