@@ -1,11 +1,11 @@
-import type { Command } from 'commander';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { Command } from 'commander';
 import * as config from '../config';
+import { buildLlmCommand, detectLlm, runVerification } from '../helpers';
 import { getClient, parseNameVersion } from '../registry-client';
-import { detectLlm, buildLlmCommand, runVerification } from '../helpers';
 
 export function registerRunCommand(program: Command): void {
   program
@@ -16,7 +16,7 @@ export function registerRunCommand(program: Command): void {
     .option('--headless', 'Run in headless mode (non-interactive, for CI/CD)')
     .option('--dry-run', 'Show plan without executing')
     .option('--force', 'Skip risk warnings')
-    .option('--no-prompt', 'Don\'t ask for confirmation')
+    .option('--no-prompt', "Don't ask for confirmation")
     .option('--fresh', 'Skip cache, fetch fresh from registry')
     .option('--pull', 'Update cache before running')
     .option('--skip-checksum', 'Skip checksum verification (DANGEROUS)')
@@ -33,7 +33,9 @@ export function registerRunCommand(program: Command): void {
       const isUrl = file.startsWith('http://') || file.startsWith('https://');
       const isLocalFile = !isUrl && fs.existsSync(path.resolve(file));
       const isNested = process.env.CLAUDE_CODE === '1' || process.env.CLAUDECODE === '1';
-      const log = isNested ? (...args: any[]) => console.error(...args) : (...args: any[]) => console.log(...args);
+      const log = isNested
+        ? (...args: any[]) => console.error(...args)
+        : (...args: any[]) => console.log(...args);
 
       // If not a URL or local file, treat as a registry name
       if (!isUrl && !isLocalFile) {
@@ -45,7 +47,9 @@ export function registerRunCommand(program: Command): void {
         if (!options.fresh) {
           const dossierCacheDir = path.join(cacheDir, ...dossierName.split('/'));
           if (fs.existsSync(dossierCacheDir)) {
-            const metaFiles = fs.readdirSync(dossierCacheDir).filter((f: string) => f.endsWith('.meta.json'));
+            const metaFiles = fs
+              .readdirSync(dossierCacheDir)
+              .filter((f: string) => f.endsWith('.meta.json'));
             for (const mf of metaFiles) {
               const ver = mf.replace('.meta.json', '');
               if (version && ver !== version) continue;
@@ -67,7 +71,7 @@ export function registerRunCommand(program: Command): void {
             const client = getClient();
             let resolvedVersion = version;
             if (!resolvedVersion) {
-              const meta = await client.getDossier(dossierName) as any;
+              const meta = (await client.getDossier(dossierName)) as any;
               resolvedVersion = meta.version || 'latest';
             }
             const result = await client.getDossierContent(dossierName, resolvedVersion);
@@ -77,11 +81,19 @@ export function registerRunCommand(program: Command): void {
               fs.mkdirSync(dossierCacheDir, { recursive: true, mode: 0o700 });
               const contentFile = path.join(dossierCacheDir, `${resolvedVersion}.ds.md`);
               fs.writeFileSync(contentFile, result.content, 'utf8');
-              fs.writeFileSync(path.join(dossierCacheDir, `${resolvedVersion}.meta.json`), JSON.stringify({
-                cached_at: new Date().toISOString(),
-                version: resolvedVersion,
-                source_registry_url: (client as any).baseUrl.replace(/\/api\/v1$/, ''),
-              }, null, 2), 'utf8');
+              fs.writeFileSync(
+                path.join(dossierCacheDir, `${resolvedVersion}.meta.json`),
+                JSON.stringify(
+                  {
+                    cached_at: new Date().toISOString(),
+                    version: resolvedVersion,
+                    source_registry_url: (client as any).baseUrl.replace(/\/api\/v1$/, ''),
+                  },
+                  null,
+                  2
+                ),
+                'utf8'
+              );
               resolvedFile = contentFile;
               log(`📥 Fetched: ${dossierName}@${resolvedVersion}\n`);
             } else {
@@ -110,7 +122,9 @@ export function registerRunCommand(program: Command): void {
         let fm: any = null;
 
         if (jsonMatch) {
-          try { fm = JSON.parse(jsonMatch[1]); } catch {}
+          try {
+            fm = JSON.parse(jsonMatch[1]);
+          } catch {}
         } else if (yamlMatch) {
           fm = {};
           for (const line of yamlMatch[1].split('\n')) {
@@ -176,7 +190,9 @@ export function registerRunCommand(program: Command): void {
         console.log(`   LLM: ${llmOption}`);
 
         const llmToUse = detectLlm(llmOption as string, true);
-        const command = llmToUse ? buildLlmCommand(llmToUse, resolvedFile, options.headless) : 'No LLM detected - would show error';
+        const command = llmToUse
+          ? buildLlmCommand(llmToUse, resolvedFile, options.headless)
+          : 'No LLM detected - would show error';
 
         console.log(`   Command: ${command}\n`);
         console.log('✅ All verifications passed - ready to execute');

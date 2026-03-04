@@ -35,8 +35,8 @@ export function registerPromptHookCommand(program: Command): void {
           const perPage = 100;
 
           while (true) {
-            const result = await client.listDossiers({ page, perPage }) as any;
-            const items = (result.dossiers || result.data || []);
+            const result = (await client.listDossiers({ page, perPage })) as any;
+            const items = result.dossiers || result.data || [];
             for (const d of items) {
               dossiers.push({ name: d.name, title: d.title || d.name });
             }

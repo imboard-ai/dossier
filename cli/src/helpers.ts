@@ -127,7 +127,9 @@ export function readStdin(timeoutMs = 5000): Promise<string | null> {
     }, timeoutMs);
 
     process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk: string) => { data += chunk; });
+    process.stdin.on('data', (chunk: string) => {
+      data += chunk;
+    });
     process.stdin.on('end', () => {
       clearTimeout(timer);
       resolve(data || null);
@@ -198,7 +200,10 @@ export function buildLlmCommand(llm: string, file: string, headless = false): st
 /**
  * Multi-stage verification pipeline.
  */
-export async function runVerification(file: string, options: VerificationOptions): Promise<VerificationResult> {
+export async function runVerification(
+  file: string,
+  options: VerificationOptions
+): Promise<VerificationResult> {
   const verifyScript = path.join(BIN_DIR, 'dossier-verify');
   const results: VerificationResult = { passed: true, stages: [] };
 
@@ -332,7 +337,7 @@ export function parseListSource(source: string): ListSource {
   // GitHub URL
   if (source.startsWith('https://github.com/') || source.startsWith('http://github.com/')) {
     const url = new URL(source);
-    const parts = url.pathname.split('/').filter(p => p);
+    const parts = url.pathname.split('/').filter((p) => p);
     const owner = parts[0];
     const repo = parts[1];
 
@@ -371,7 +376,7 @@ export async function findDossierFilesGitHub(
   owner: string,
   repo: string,
   subpath: string,
-  branch: string,
+  branch: string
 ): Promise<GitHubFile[]> {
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
 
@@ -379,91 +384,108 @@ export async function findDossierFilesGitHub(
     const options = {
       headers: {
         'User-Agent': 'dossier-cli',
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json',
       },
     };
 
-    https.get(apiUrl, options, (res) => {
-      if (res.statusCode === 404) {
-        return reject(new Error(`Repository not found: ${owner}/${repo} (branch: ${branch})`));
-      }
-      if (res.statusCode === 403) {
-        return reject(new Error('GitHub API rate limit exceeded. Try again later or use a local clone.'));
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`GitHub API error: ${res.statusCode} ${res.statusMessage}`));
-      }
-
-      let data = '';
-      res.on('data', (chunk: string) => { data += chunk; });
-      res.on('end', () => {
-        try {
-          const tree = JSON.parse(data);
-          if (!tree.tree) {
-            return reject(new Error('Invalid response from GitHub API'));
-          }
-
-          const dossierFiles: GitHubFile[] = tree.tree
-            .filter((item: { type: string; path: string }) => {
-              if (item.type !== 'blob') return false;
-              if (!item.path.endsWith('.ds.md')) return false;
-              if (subpath && !item.path.startsWith(subpath + '/') && item.path !== subpath) return false;
-              if (item.path.includes('node_modules/')) return false;
-              return true;
-            })
-            .map((item: { path: string }) => ({
-              path: item.path,
-              rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`,
-              githubUrl: `https://github.com/${owner}/${repo}/blob/${branch}/${item.path}`,
-            }));
-
-          resolve(dossierFiles);
-        } catch (err) {
-          reject(new Error(`Failed to parse GitHub response: ${(err as Error).message}`));
+    https
+      .get(apiUrl, options, (res) => {
+        if (res.statusCode === 404) {
+          return reject(new Error(`Repository not found: ${owner}/${repo} (branch: ${branch})`));
         }
-      });
-    }).on('error', reject);
+        if (res.statusCode === 403) {
+          return reject(
+            new Error('GitHub API rate limit exceeded. Try again later or use a local clone.')
+          );
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`GitHub API error: ${res.statusCode} ${res.statusMessage}`));
+        }
+
+        let data = '';
+        res.on('data', (chunk: string) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          try {
+            const tree = JSON.parse(data);
+            if (!tree.tree) {
+              return reject(new Error('Invalid response from GitHub API'));
+            }
+
+            const dossierFiles: GitHubFile[] = tree.tree
+              .filter((item: { type: string; path: string }) => {
+                if (item.type !== 'blob') return false;
+                if (!item.path.endsWith('.ds.md')) return false;
+                if (subpath && !item.path.startsWith(subpath + '/') && item.path !== subpath)
+                  return false;
+                if (item.path.includes('node_modules/')) return false;
+                return true;
+              })
+              .map((item: { path: string }) => ({
+                path: item.path,
+                rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`,
+                githubUrl: `https://github.com/${owner}/${repo}/blob/${branch}/${item.path}`,
+              }));
+
+            resolve(dossierFiles);
+          } catch (err) {
+            reject(new Error(`Failed to parse GitHub response: ${(err as Error).message}`));
+          }
+        });
+      })
+      .on('error', reject);
   });
 }
 
 /**
  * Fetch and parse dossier metadata from a URL.
  */
-export async function fetchDossierMetadata(url: string, displayPath: string): Promise<DossierMetadata> {
+export async function fetchDossierMetadata(
+  url: string,
+  displayPath: string
+): Promise<DossierMetadata> {
   return new Promise((resolve) => {
     const protocol = url.startsWith('https://') ? https : http;
 
-    protocol.get(url, (res) => {
-      if (res.statusCode !== 200) {
+    protocol
+      .get(url, (res) => {
+        if (res.statusCode !== 200) {
+          resolve({
+            path: displayPath,
+            filename: path.basename(displayPath),
+            title: path.basename(displayPath, '.ds.md'),
+            error: `HTTP ${res.statusCode}`,
+          });
+          return;
+        }
+
+        let content = '';
+        res.on('data', (chunk: string) => {
+          content += chunk;
+        });
+        res.on('end', () => {
+          resolve(parseDossierMetadataFromContent(content, displayPath));
+        });
+      })
+      .on('error', (err) => {
         resolve({
           path: displayPath,
           filename: path.basename(displayPath),
           title: path.basename(displayPath, '.ds.md'),
-          error: `HTTP ${res.statusCode}`,
+          error: err.message,
         });
-        return;
-      }
-
-      let content = '';
-      res.on('data', (chunk: string) => { content += chunk; });
-      res.on('end', () => {
-        resolve(parseDossierMetadataFromContent(content, displayPath));
       });
-    }).on('error', (err) => {
-      resolve({
-        path: displayPath,
-        filename: path.basename(displayPath),
-        title: path.basename(displayPath, '.ds.md'),
-        error: err.message,
-      });
-    });
   });
 }
 
 /**
  * Parse dossier metadata from file content.
  */
-export function parseDossierMetadataFromContent(content: string, filePath: string): DossierMetadata {
+export function parseDossierMetadataFromContent(
+  content: string,
+  filePath: string
+): DossierMetadata {
   try {
     // Check for ---dossier JSON frontmatter format
     const jsonFrontmatterMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---/);
@@ -476,7 +498,9 @@ export function parseDossierMetadataFromContent(content: string, filePath: strin
           title: frontmatter.title || path.basename(filePath, '.ds.md'),
           version: frontmatter.version || '-',
           risk_level: frontmatter.risk_level || 'unknown',
-          category: Array.isArray(frontmatter.category) ? frontmatter.category.join(', ') : (frontmatter.category || '-'),
+          category: Array.isArray(frontmatter.category)
+            ? frontmatter.category.join(', ')
+            : frontmatter.category || '-',
           status: frontmatter.status || '-',
           signed: !!frontmatter.signature,
           checksum: !!frontmatter.checksum,
@@ -502,8 +526,10 @@ export function parseDossierMetadataFromContent(content: string, filePath: strin
         const match = line.match(/^(\w+):\s*(.*)$/);
         if (match) {
           let value = match[2].trim();
-          if ((value.startsWith('"') && value.endsWith('"')) ||
-              (value.startsWith("'") && value.endsWith("'"))) {
+          if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+          ) {
             value = value.slice(1, -1);
           }
           frontmatter[match[1]] = value;
@@ -565,7 +591,9 @@ export function parseDossierMetadataLocal(filePath: string): DossierMetadata {
 export function verifyDossierQuick(filePath: string): boolean {
   const verifyScript = path.join(BIN_DIR, 'dossier-verify');
   try {
-    execSync(`node "${verifyScript}" "${filePath}" --exit-code-only 2>/dev/null`, { stdio: 'pipe' });
+    execSync(`node "${verifyScript}" "${filePath}" --exit-code-only 2>/dev/null`, {
+      stdio: 'pipe',
+    });
     return true;
   } catch {
     return false;
@@ -580,7 +608,7 @@ export function formatTable(dossiers: DossierMetadata[], showPath = false): stri
     return 'No dossiers found.';
   }
 
-  const titleWidth = Math.min(30, Math.max(5, ...dossiers.map(d => (d.title || '').length)));
+  const titleWidth = Math.min(30, Math.max(5, ...dossiers.map((d) => (d.title || '').length)));
   const riskWidth = 8;
   const signedWidth = 6;
 

@@ -1,10 +1,10 @@
-import type { Command } from 'commander';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { Command } from 'commander';
 import * as config from '../config';
-import { detectLlm, BIN_DIR, REPO_ROOT } from '../helpers';
+import { BIN_DIR, detectLlm, REPO_ROOT } from '../helpers';
 
 export function registerCreateCommand(program: Command): void {
   program
@@ -27,7 +27,12 @@ export function registerCreateCommand(program: Command): void {
           process.exit(2);
         }
 
-        const metaDossierPath = path.join(REPO_ROOT, 'examples', 'authoring', 'create-dossier.ds.md');
+        const metaDossierPath = path.join(
+          REPO_ROOT,
+          'examples',
+          'authoring',
+          'create-dossier.ds.md'
+        );
 
         if (!fs.existsSync(metaDossierPath)) {
           console.error('❌ Error: Meta-dossier not found');
@@ -69,20 +74,25 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
         } else {
           console.log(`❌ Unknown LLM: ${llm}\n`);
           console.log('Supported: claude-code, auto\n');
-          try { fs.unlinkSync(tmpFile); } catch {}
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {}
           process.exit(2);
         }
 
         try {
           execSync(command, { stdio: 'inherit', shell: '/bin/bash' });
-          try { fs.unlinkSync(tmpFile); } catch {}
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {}
         } catch (execError) {
-          try { fs.unlinkSync(tmpFile); } catch {}
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {}
           throw execError;
         }
 
         console.log('\n✅ Dossier creation completed');
-
       } catch (error: any) {
         console.error('\n❌ Dossier creation failed');
         console.error(`   Error: ${error.message}`);

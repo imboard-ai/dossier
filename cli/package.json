@@ -13,7 +13,9 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "./test-verify.sh"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "dossier",
@@ -49,6 +51,8 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "@types/node": "^24.10.0"
+    "@types/node": "^24.10.0",
+    "vitest": "^4.0.9",
+    "@vitest/coverage-v8": "^4.0.9"
   }
 }

@@ -1,13 +1,11 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
+import type { Command } from 'commander';
 
 export function registerCacheCommand(program: Command): void {
-  const cacheCmd = program
-    .command('cache')
-    .description('Manage local dossier cache');
+  const cacheCmd = program.command('cache').description('Manage local dossier cache');
 
   // cache list
   cacheCmd
@@ -85,7 +83,9 @@ export function registerCacheCommand(program: Command): void {
 
       for (const e of entries) {
         const date = e.cached_at ? e.cached_at.slice(0, 19).replace('T', ' ') : '';
-        console.log(`  ${e.name.padEnd(40)} ${e.version.padEnd(10)} ${formatSize(e.size).padEnd(8)} ${date}`);
+        console.log(
+          `  ${e.name.padEnd(40)} ${e.version.padEnd(10)} ${formatSize(e.size).padEnd(8)} ${date}`
+        );
       }
       console.log('');
       process.exit(0);

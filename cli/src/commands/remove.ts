@@ -1,6 +1,6 @@
-import type { Command } from 'commander';
 import readline from 'node:readline';
-import { loadCredentials, isExpired } from '../credentials';
+import type { Command } from 'commander';
+import { isExpired, loadCredentials } from '../credentials';
 import { getClient, parseNameVersion } from '../registry-client';
 
 export function registerRemoveCommand(program: Command): void {

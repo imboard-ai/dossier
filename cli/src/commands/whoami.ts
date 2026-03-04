@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import { loadCredentials, isExpired } from '../credentials';
+import { isExpired, loadCredentials } from '../credentials';
 
 export function registerWhoamiCommand(program: Command): void {
   program

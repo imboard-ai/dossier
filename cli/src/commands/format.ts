@@ -1,5 +1,6 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
+import { formatDossierContent, formatDossierFile } from '@imboard-ai/dossier-core';
+import type { Command } from 'commander';
 
 export function registerFormatCommand(program: Command): void {
   program
@@ -12,18 +13,17 @@ export function registerFormatCommand(program: Command): void {
     .option('--indent <n>', 'JSON indentation spaces', '2')
     .option('--json', 'Output result as JSON')
     .action((file: string, options: any) => {
-      const core = require('@imboard-ai/dossier-core');
-
       const formatOptions = {
         indent: parseInt(options.indent, 10),
         sortKeys: options.sortKeys !== false,
         updateChecksum: options.checksum !== false,
       };
 
+      let exitCode = 0;
       try {
         if (options.check) {
           const content = fs.readFileSync(file, 'utf8');
-          const result = core.formatDossierContent(content, formatOptions);
+          const result = formatDossierContent(content, formatOptions);
 
           if (options.json) {
             console.log(JSON.stringify({ file, formatted: !result.changed }, null, 2));
@@ -35,9 +35,9 @@ export function registerFormatCommand(program: Command): void {
             }
           }
 
-          process.exit(result.changed ? 1 : 0);
+          exitCode = result.changed ? 1 : 0;
         } else {
-          const result = core.formatDossierFile(file, formatOptions);
+          const result = formatDossierFile(file, formatOptions);
 
           if (options.json) {
             console.log(JSON.stringify({ file, changed: result.changed }, null, 2));
@@ -49,11 +49,13 @@ export function registerFormatCommand(program: Command): void {
             }
           }
 
-          process.exit(0);
+          exitCode = 0;
         }
       } catch (err: any) {
         console.error(`Error: ${err.message}`);
-        process.exit(2);
+        exitCode = 2;
       }
+
+      process.exit(exitCode);
     });
 }

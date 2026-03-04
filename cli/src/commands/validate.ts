@@ -1,12 +1,7 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  REQUIRED_FIELDS,
-  RECOMMENDED_FIELDS,
-  VALID_RISK_LEVELS,
-  VALID_STATUSES,
-} from '../helpers';
+import type { Command } from 'commander';
+import { RECOMMENDED_FIELDS, REQUIRED_FIELDS, VALID_RISK_LEVELS, VALID_STATUSES } from '../helpers';
 
 export function registerValidateCommand(program: Command): void {
   program
@@ -21,7 +16,13 @@ export function registerValidateCommand(program: Command): void {
 
       if (!fs.existsSync(dossierFile)) {
         if (options.json) {
-          console.log(JSON.stringify({ valid: false, errors: [`File not found: ${dossierFile}`], warnings: [] }));
+          console.log(
+            JSON.stringify({
+              valid: false,
+              errors: [`File not found: ${dossierFile}`],
+              warnings: [],
+            })
+          );
         } else {
           console.log(`❌ File not found: ${dossierFile}`);
         }
@@ -50,8 +51,10 @@ export function registerValidateCommand(program: Command): void {
           const match = line.match(/^(\w+):\s*(.*)$/);
           if (match) {
             let value = match[2].trim();
-            if ((value.startsWith('"') && value.endsWith('"')) ||
-                (value.startsWith("'") && value.endsWith("'"))) {
+            if (
+              (value.startsWith('"') && value.endsWith('"')) ||
+              (value.startsWith("'") && value.endsWith("'"))
+            ) {
               value = value.slice(1, -1);
             }
             frontmatter[match[1]] = value;
@@ -76,20 +79,31 @@ export function registerValidateCommand(program: Command): void {
           }
         }
 
-        if (frontmatter.risk_level && !VALID_RISK_LEVELS.includes(frontmatter.risk_level.toLowerCase())) {
-          warnings.push(`Unknown risk_level: "${frontmatter.risk_level}" (expected: ${VALID_RISK_LEVELS.join(', ')})`);
+        if (
+          frontmatter.risk_level &&
+          !VALID_RISK_LEVELS.includes(frontmatter.risk_level.toLowerCase())
+        ) {
+          warnings.push(
+            `Unknown risk_level: "${frontmatter.risk_level}" (expected: ${VALID_RISK_LEVELS.join(', ')})`
+          );
         }
 
         if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status)) {
-          warnings.push(`Unknown status: "${frontmatter.status}" (expected: ${VALID_STATUSES.join(', ')})`);
+          warnings.push(
+            `Unknown status: "${frontmatter.status}" (expected: ${VALID_STATUSES.join(', ')})`
+          );
         }
 
         if (frontmatter.version && !/^\d+\.\d+(\.\d+)?(-[\w.]+)?$/.test(frontmatter.version)) {
-          warnings.push(`Version "${frontmatter.version}" doesn't follow semver format (e.g., 1.0.0)`);
+          warnings.push(
+            `Version "${frontmatter.version}" doesn't follow semver format (e.g., 1.0.0)`
+          );
         }
 
         if (frontmatter.dossier_schema_version && frontmatter.dossier_schema_version !== '1.0.0') {
-          warnings.push(`Unknown schema version: ${frontmatter.dossier_schema_version} (current: 1.0.0)`);
+          warnings.push(
+            `Unknown schema version: ${frontmatter.dossier_schema_version} (current: 1.0.0)`
+          );
         }
 
         if (frontmatter.signature && !frontmatter.checksum) {
@@ -106,20 +120,28 @@ export function registerValidateCommand(program: Command): void {
 
       const hasErrors = errors.length > 0;
       const hasWarnings = warnings.length > 0;
-      const valid = options.strict ? (!hasErrors && !hasWarnings) : !hasErrors;
+      const valid = options.strict ? !hasErrors && !hasWarnings : !hasErrors;
 
       if (options.json) {
-        console.log(JSON.stringify({
-          valid,
-          file: dossierFile,
-          errors,
-          warnings,
-          frontmatter: frontmatter ? {
-            title: frontmatter.title,
-            version: frontmatter.version,
-            schema_version: frontmatter.dossier_schema_version,
-          } : null,
-        }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              valid,
+              file: dossierFile,
+              errors,
+              warnings,
+              frontmatter: frontmatter
+                ? {
+                    title: frontmatter.title,
+                    version: frontmatter.version,
+                    schema_version: frontmatter.dossier_schema_version,
+                  }
+                : null,
+            },
+            null,
+            2
+          )
+        );
       } else {
         console.log(`\n📋 Dossier Validation\n`);
         console.log(`   File: ${path.basename(dossierFile)}`);

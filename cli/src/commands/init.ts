@@ -1,6 +1,6 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { Command } from 'commander';
 import * as config from '../config';
 import * as hooks from '../hooks';
 

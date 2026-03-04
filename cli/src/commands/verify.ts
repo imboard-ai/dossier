@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
-import { runVerification } from '../helpers';
 import type { VerificationOptions } from '../helpers';
+import { runVerification } from '../helpers';
 
 export function registerVerifyCommand(program: Command): void {
   program
@@ -27,7 +27,7 @@ export function registerVerifyCommand(program: Command): void {
       if (options.verbose) {
         console.log('✅ All verification stages passed\n');
         console.log('Stages completed:');
-        result.stages.forEach(s => {
+        result.stages.forEach((s) => {
           const status = s.passed ? '✅' : s.skipped ? '⚠️' : '❌';
           const demo = s.demo ? ' (demo)' : '';
           console.log(`  ${status} Stage ${s.stage}: ${s.name}${demo}`);

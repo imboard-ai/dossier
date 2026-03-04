@@ -8,32 +8,32 @@ import { program } from 'commander';
 // Package info
 const pkg = require('../package.json');
 
-// Import command registrations
-import { registerVerifyCommand } from './commands/verify';
-import { registerRunCommand } from './commands/run';
-import { registerCreateCommand } from './commands/create';
-import { registerConfigCommand } from './commands/config-cmd';
-import { registerListCommand } from './commands/list';
-import { registerSearchCommand } from './commands/search';
-import { registerInfoCommand } from './commands/info';
-import { registerSignCommand } from './commands/sign';
-import { registerPublishCommand } from './commands/publish';
-import { registerRemoveCommand } from './commands/remove';
-import { registerLoginCommand } from './commands/login';
-import { registerLogoutCommand } from './commands/logout';
-import { registerWhoamiCommand } from './commands/whoami';
-import { registerChecksumCommand } from './commands/checksum';
-import { registerValidateCommand } from './commands/validate';
-import { registerInitCommand } from './commands/init';
-import { registerResetHooksCommand } from './commands/reset-hooks';
-import { registerPromptHookCommand } from './commands/prompt-hook';
-import { registerPullCommand } from './commands/pull';
-import { registerExportCommand } from './commands/export';
 import { registerCacheCommand } from './commands/cache';
+import { registerChecksumCommand } from './commands/checksum';
+import { registerConfigCommand } from './commands/config-cmd';
+import { registerCreateCommand } from './commands/create';
+import { registerExportCommand } from './commands/export';
+import { registerFormatCommand } from './commands/format';
+import { registerInfoCommand } from './commands/info';
+import { registerInitCommand } from './commands/init';
 import { registerInstallSkillCommand } from './commands/install-skill';
 import { registerKeysCommand } from './commands/keys';
 import { registerLintCommand } from './commands/lint';
-import { registerFormatCommand } from './commands/format';
+import { registerListCommand } from './commands/list';
+import { registerLoginCommand } from './commands/login';
+import { registerLogoutCommand } from './commands/logout';
+import { registerPromptHookCommand } from './commands/prompt-hook';
+import { registerPublishCommand } from './commands/publish';
+import { registerPullCommand } from './commands/pull';
+import { registerRemoveCommand } from './commands/remove';
+import { registerResetHooksCommand } from './commands/reset-hooks';
+import { registerRunCommand } from './commands/run';
+import { registerSearchCommand } from './commands/search';
+import { registerSignCommand } from './commands/sign';
+import { registerValidateCommand } from './commands/validate';
+// Import command registrations
+import { registerVerifyCommand } from './commands/verify';
+import { registerWhoamiCommand } from './commands/whoami';
 
 // Setup program
 program

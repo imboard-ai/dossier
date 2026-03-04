@@ -6,18 +6,35 @@ export function registerSearchCommand(program: Command): void {
     .command('search')
     .description('Search the registry for dossiers')
     .argument('<query>', 'Search keywords')
-    .option('--category <category>', 'Filter by category (devops, database, development, security, etc.)')
+    .option(
+      '--category <category>',
+      'Filter by category (devops, database, development, security, etc.)'
+    )
     .option('--page <number>', 'Page number', '1')
     .option('--per-page <number>', 'Results per page', '20')
     .option('--json', 'Output as JSON')
-    .action(async (query: string, options: { category?: string; page: string; perPage: string; json?: boolean }) => {
-      const page = parseInt(options.page, 10) || 1;
-      const perPage = parseInt(options.perPage, 10) || 20;
+    .action(
+      async (
+        query: string,
+        options: { category?: string; page: string; perPage: string; json?: boolean }
+      ) => {
+        const page = parseInt(options.page, 10) || 1;
+        const perPage = parseInt(options.perPage, 10) || 20;
 
-      try {
-        const client = getClient();
-        const result = await client.listDossiers({ category: options.category, page: 1, perPage: 100 }) as any;
-        const allDossiers: any[] = result.dossiers || [];
+        let allDossiers: any[];
+        try {
+          const client = getClient();
+          const result = (await client.listDossiers({
+            category: options.category,
+            page: 1,
+            perPage: 100,
+          })) as any;
+          allDossiers = result.dossiers || [];
+        } catch (err: unknown) {
+          console.error(`\n❌ Search failed: ${(err as Error).message}\n`);
+          process.exit(1);
+          return;
+        }
 
         const queryLower = query.toLowerCase();
         const terms = queryLower.split(/\s+/).filter(Boolean);
@@ -29,9 +46,11 @@ export function registerSearchCommand(program: Command): void {
             d.description || d.objective || '',
             ...(Array.isArray(d.category) ? d.category : [d.category || '']),
             ...(d.tags || []),
-          ].map((f: string) => String(f).toLowerCase()).join(' ');
+          ]
+            .map((f: string) => String(f).toLowerCase())
+            .join(' ');
 
-          return terms.every(term => fields.includes(term) || fields.indexOf(term) !== -1);
+          return terms.every((term) => fields.includes(term) || fields.indexOf(term) !== -1);
         });
 
         const total = matched.length;
@@ -54,7 +73,7 @@ export function registerSearchCommand(program: Command): void {
           const name = d.name || '';
           const version = d.version || '';
           const title = d.title || '';
-          const category = Array.isArray(d.category) ? d.category.join(', ') : (d.category || '');
+          const category = Array.isArray(d.category) ? d.category.join(', ') : d.category || '';
           const description = d.description || d.objective || '';
 
           console.log(`  ${name} (v${version})${category ? '  [' + category + ']' : ''}`);
@@ -62,7 +81,8 @@ export function registerSearchCommand(program: Command): void {
             console.log(`  ${title}`);
           }
           if (description) {
-            const snippet = description.length > 100 ? description.slice(0, 100) + '...' : description;
+            const snippet =
+              description.length > 100 ? description.slice(0, 100) + '...' : description;
             console.log(`  ${snippet}`);
           }
           console.log('');
@@ -76,9 +96,6 @@ export function registerSearchCommand(program: Command): void {
           }
           console.log('');
         }
-      } catch (err: unknown) {
-        console.error(`\n❌ Search failed: ${(err as Error).message}\n`);
-        process.exit(1);
       }
-    });
+    );
 }

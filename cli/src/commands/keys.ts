@@ -1,12 +1,10 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { Command } from 'commander';
 
 export function registerKeysCommand(program: Command): void {
-  const keysCmd = program
-    .command('keys')
-    .description('Manage trusted signing keys');
+  const keysCmd = program.command('keys').description('Manage trusted signing keys');
 
   keysCmd
     .command('list')
@@ -26,7 +24,7 @@ export function registerKeysCommand(program: Command): void {
       }
 
       const content = fs.readFileSync(trustedKeysPath, 'utf8');
-      const lines = content.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+      const lines = content.split('\n').filter((line) => line.trim() && !line.startsWith('#'));
 
       if (lines.length === 0) {
         console.log('⚠️  No trusted keys configured');
@@ -37,7 +35,7 @@ export function registerKeysCommand(program: Command): void {
       }
 
       if (options.json) {
-        const keys = lines.map(line => {
+        const keys = lines.map((line) => {
           const [key, ...idParts] = line.trim().split(/\s+/);
           return { public_key: key, identifier: idParts.join(' ') };
         });
@@ -88,7 +86,9 @@ export function registerKeysCommand(program: Command): void {
 
       console.log('✅ Key added successfully');
       console.log(`   Identifier: ${identifier}`);
-      console.log(`   Public Key: ${publicKey.substring(0, 60)}${publicKey.length > 60 ? '...' : ''}`);
+      console.log(
+        `   Public Key: ${publicKey.substring(0, 60)}${publicKey.length > 60 ? '...' : ''}`
+      );
       console.log(`   Location: ${trustedKeysPath}`);
       console.log('\nYou can now verify dossiers signed with this key.\n');
 
