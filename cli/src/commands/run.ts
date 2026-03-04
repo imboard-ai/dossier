@@ -203,6 +203,13 @@ export function registerRunCommand(program: Command): void {
         }
       }
 
+      const cleanupTmpFile = () => {
+        if (tmpUrlFile)
+          try {
+            fs.unlinkSync(tmpUrlFile);
+          } catch {}
+      };
+
       if (options.dryRun) {
         console.log('🧪 DRY RUN MODE - No execution\n');
         console.log('Would execute:');
@@ -218,10 +225,7 @@ export function registerRunCommand(program: Command): void {
           `   Command: ${descriptor ? descriptor.description : 'No LLM detected - would show error'}\n`
         );
         console.log('✅ All verifications passed - ready to execute');
-        if (tmpUrlFile)
-          try {
-            fs.unlinkSync(tmpUrlFile);
-          } catch {}
+        cleanupTmpFile();
         process.exit(0);
       }
 
@@ -229,10 +233,7 @@ export function registerRunCommand(program: Command): void {
 
       const llmToUse = detectLlm(llmOption as string);
       if (!llmToUse) {
-        if (tmpUrlFile)
-          try {
-            fs.unlinkSync(tmpUrlFile);
-          } catch {}
+        cleanupTmpFile();
         process.exit(2);
       }
 
@@ -240,10 +241,7 @@ export function registerRunCommand(program: Command): void {
       if (!descriptor) {
         console.log(`❌ Unknown LLM: ${llmToUse}\n`);
         console.log('Supported: claude-code, auto\n');
-        if (tmpUrlFile)
-          try {
-            fs.unlinkSync(tmpUrlFile);
-          } catch {}
+        cleanupTmpFile();
         process.exit(2);
       }
 
@@ -261,15 +259,9 @@ export function registerRunCommand(program: Command): void {
         console.log('\n✅ Execution completed');
       } catch (error: any) {
         console.log('\n❌ Execution failed');
-        if (tmpUrlFile)
-          try {
-            fs.unlinkSync(tmpUrlFile);
-          } catch {}
+        cleanupTmpFile();
         process.exit(error.status || 2);
       }
-      if (tmpUrlFile)
-        try {
-          fs.unlinkSync(tmpUrlFile);
-        } catch {}
+      cleanupTmpFile();
     });
 }

@@ -7,6 +7,7 @@ import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
+import os from 'node:os';
 import path from 'node:path';
 
 import { convertGitHubBlobToRaw } from './github-url';
@@ -219,7 +220,7 @@ export interface LlmExecDescriptor {
 export function downloadUrlToTempFile(url: string): string {
   const resolvedUrl = convertGitHubBlobToRaw(url);
   const tmpFile = path.join(
-    require('node:os').tmpdir(),
+    os.tmpdir(),
     `dossier-${Date.now()}-${Math.random().toString(36).slice(2)}.ds.md`
   );
   const result = spawnSync('curl', ['-sL', '-o', tmpFile, '--', resolvedUrl], {
