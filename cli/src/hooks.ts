@@ -32,7 +32,8 @@ interface ClaudeSettings {
 const DOSSIER_HOOK_ID = 'dossier-discovery-hook';
 const DOSSIER_HOOK_COMMAND = 'dossier prompt-hook';
 
-const DOSSIER_HOOK_PATTERN = /\b(workflow|setup|deploy|migrate|refactor|ci\/?cd|pipeline|create\s+(script|automation|process)|sync\s+worktree|onboard|initialize|configure)\b/i;
+const DOSSIER_HOOK_PATTERN =
+  /\b(workflow|setup|deploy|migrate|refactor|ci\/?cd|pipeline|create\s+(script|automation|process)|sync\s+worktree|onboard|initialize|configure)\b/i;
 
 const CLAUDE_SETTINGS_FILE = path.join(os.homedir(), '.claude', 'settings.json');
 const DOSSIER_LIST_CACHE_FILE = path.join(CONFIG_DIR, 'dossier-list-cache.json');
@@ -75,9 +76,7 @@ function installClaudeHook(): boolean {
     if (h.id === DOSSIER_HOOK_ID || h.command === DOSSIER_HOOK_COMMAND) return true;
     // Handle nested format: { hooks: [{ type, command }] }
     if (Array.isArray(h.hooks)) {
-      return h.hooks.some(
-        (inner) => inner.command === DOSSIER_HOOK_COMMAND
-      );
+      return h.hooks.some((inner) => inner.command === DOSSIER_HOOK_COMMAND);
     }
     return false;
   };
@@ -123,15 +122,14 @@ function removeClaudeHook(): boolean {
   const matchesHook = (h: ClaudeHookEntry): boolean => {
     if (h.id === DOSSIER_HOOK_ID || h.command === DOSSIER_HOOK_COMMAND) return true;
     if (Array.isArray(h.hooks)) {
-      return h.hooks.some(
-        (inner) => inner.command === DOSSIER_HOOK_COMMAND
-      );
+      return h.hooks.some((inner) => inner.command === DOSSIER_HOOK_COMMAND);
     }
     return false;
   };
-  settings.hooks!.UserPromptSubmit = hooks.filter((h) => !matchesHook(h));
+  const filteredHooks = hooks.filter((h) => !matchesHook(h));
+  settings.hooks = { ...settings.hooks, UserPromptSubmit: filteredHooks };
 
-  if (settings.hooks!.UserPromptSubmit!.length === originalLength) {
+  if (filteredHooks.length === originalLength) {
     return false;
   }
 
