@@ -1,0 +1,51 @@
+import type { Command } from 'commander';
+import fs from 'node:fs';
+import path from 'node:path';
+import { getClient, parseNameVersion } from '../registry-client';
+
+export function registerExportCommand(program: Command): void {
+  program
+    .command('export')
+    .description('Download a dossier and save to a local file')
+    .argument('<name>', 'Dossier name (use name@version for a specific version)')
+    .option('-o, --output <path>', 'Output file path')
+    .option('--stdout', 'Print to stdout instead of saving to file')
+    .action(async (name: string, options: { output?: string; stdout?: boolean }) => {
+      const [dossierName, version] = parseNameVersion(name);
+
+      try {
+        const client = getClient();
+        const result = await client.getDossierContent(dossierName, version || null);
+        const content = result.content;
+        const digest = result.digest;
+
+        if (options.stdout) {
+          process.stdout.write(content);
+          process.exit(0);
+        }
+
+        const outputPath = options.output || `${dossierName.replace(/\//g, '-')}.ds.md`;
+        const outputDir = path.dirname(path.resolve(outputPath));
+
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        fs.writeFileSync(path.resolve(outputPath), content, 'utf8');
+
+        console.log(`\n✅ Exported: ${outputPath}`);
+        console.log(`   Source: ${dossierName}${version ? '@' + version : ''}`);
+        if (digest) {
+          console.log(`   Digest: ${digest}`);
+        }
+        console.log('');
+      } catch (err: any) {
+        if (err.statusCode === 404) {
+          console.error(`\n❌ Not found: ${name}\n`);
+        } else {
+          console.error(`\n❌ Export failed: ${err.message}\n`);
+        }
+        process.exit(1);
+      }
+    });
+}
