@@ -141,3 +141,5 @@ vite.config.ts.timestamp-*
 
 REFACTORING_PLAN.md
 
+# Worktrees
+worktrees/
