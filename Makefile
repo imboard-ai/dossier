@@ -1,7 +1,7 @@
 # Dossier Build System
 # Handles build order dependencies across npm workspaces
 
-.PHONY: all build clean test install help lint format check
+.PHONY: all build clean test test-coverage install help lint format check
 .DEFAULT_GOAL := help
 
 ## help: Show this help message
@@ -60,6 +60,12 @@ test:
 	@echo "Running tests..."
 	npm run test --workspaces --if-present
 	@echo "✓ Tests completed"
+
+## test-coverage: Run tests with coverage reporting and threshold enforcement
+test-coverage:
+	@echo "Running tests with coverage..."
+	npm run test:coverage --workspaces --if-present
+	@echo "✓ Tests with coverage completed"
 
 ## lint: Check code for linting issues (no changes)
 lint:

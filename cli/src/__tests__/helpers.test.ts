@@ -1,0 +1,284 @@
+import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('node:child_process');
+vi.mock('node:fs');
+
+const mockedFs = vi.mocked(fs);
+const mockedExecSync = vi.mocked(execSync);
+
+import {
+  buildLlmCommand,
+  detectLlm,
+  findDossierFilesLocal,
+  formatTable,
+  parseDossierMetadataFromContent,
+  parseListSource,
+  RECOMMENDED_FIELDS,
+  REQUIRED_FIELDS,
+  VALID_RISK_LEVELS,
+  VALID_STATUSES,
+} from '../helpers';
+import { makeDossier, makeDossierYaml } from './helpers/test-utils';
+
+describe('constants', () => {
+  it('REQUIRED_FIELDS should include essential fields', () => {
+    expect(REQUIRED_FIELDS).toContain('title');
+    expect(REQUIRED_FIELDS).toContain('version');
+    expect(REQUIRED_FIELDS).toContain('dossier_schema_version');
+  });
+
+  it('RECOMMENDED_FIELDS should include helpful fields', () => {
+    expect(RECOMMENDED_FIELDS).toContain('objective');
+    expect(RECOMMENDED_FIELDS).toContain('risk_level');
+    expect(RECOMMENDED_FIELDS).toContain('status');
+  });
+
+  it('VALID_RISK_LEVELS should include standard levels', () => {
+    expect(VALID_RISK_LEVELS).toEqual(['low', 'medium', 'high', 'critical']);
+  });
+
+  it('VALID_STATUSES should include standard statuses', () => {
+    expect(VALID_STATUSES).toEqual(['Draft', 'Stable', 'Deprecated', 'Experimental']);
+  });
+});
+
+describe('parseListSource', () => {
+  it('should parse local directory path', () => {
+    expect(parseListSource('.')).toEqual({ type: 'local', path: '.' });
+    expect(parseListSource('/home/user/dossiers')).toEqual({
+      type: 'local',
+      path: '/home/user/dossiers',
+    });
+  });
+
+  it('should parse github: shorthand', () => {
+    const result = parseListSource('github:owner/repo');
+    expect(result).toEqual({
+      type: 'github',
+      owner: 'owner',
+      repo: 'repo',
+      path: '',
+      branch: 'main',
+    });
+  });
+
+  it('should parse github: shorthand with subpath and branch', () => {
+    const result = parseListSource('github:owner/repo/path/to/dossiers@develop');
+    expect(result).toEqual({
+      type: 'github',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'path/to/dossiers',
+      branch: 'develop',
+    });
+  });
+
+  it('should parse GitHub URL', () => {
+    const result = parseListSource('https://github.com/imboard-ai/dossier');
+    expect(result).toEqual({
+      type: 'github',
+      owner: 'imboard-ai',
+      repo: 'dossier',
+      path: '',
+      branch: 'main',
+    });
+  });
+
+  it('should parse GitHub tree URL with branch and path', () => {
+    const result = parseListSource('https://github.com/owner/repo/tree/main/examples');
+    expect(result).toEqual({
+      type: 'github',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'examples',
+      branch: 'main',
+    });
+  });
+});
+
+describe('parseDossierMetadataFromContent', () => {
+  it('should parse JSON frontmatter', () => {
+    const content = makeDossier({ title: 'My Dossier', version: '2.0.0', risk_level: 'high' });
+    const result = parseDossierMetadataFromContent(content, '/path/test.ds.md');
+
+    expect(result.title).toBe('My Dossier');
+    expect(result.version).toBe('2.0.0');
+    expect(result.risk_level).toBe('high');
+    expect(result.error).toBeNull();
+  });
+
+  it('should parse YAML frontmatter', () => {
+    const content = makeDossierYaml({ title: 'YAML Dossier', version: '1.0.0' });
+    const result = parseDossierMetadataFromContent(content, '/path/test.ds.md');
+
+    expect(result.title).toBe('YAML Dossier');
+    expect(result.version).toBe('1.0.0');
+    expect(result.error).toBeNull();
+  });
+
+  it('should return error for content without frontmatter', () => {
+    const result = parseDossierMetadataFromContent('# Just markdown', '/test.ds.md');
+    expect(result.error).toBe('No frontmatter found');
+  });
+
+  it('should return error for invalid JSON frontmatter', () => {
+    const content = '---dossier\n{invalid json}\n---\n\nBody';
+    const result = parseDossierMetadataFromContent(content, '/test.ds.md');
+    expect(result.error).toBe('Invalid JSON frontmatter');
+  });
+
+  it('should handle array categories', () => {
+    const content = makeDossier({ category: ['deploy', 'ci'] });
+    const result = parseDossierMetadataFromContent(content, '/test.ds.md');
+    expect(result.category).toBe('deploy, ci');
+  });
+
+  it('should detect signature presence', () => {
+    const content = makeDossier({ signature: { key_id: 'abc', value: 'sig' } });
+    const result = parseDossierMetadataFromContent(content, '/test.ds.md');
+    expect(result.signed).toBe(true);
+  });
+
+  it('should detect checksum presence', () => {
+    const content = makeDossier({ checksum: 'sha256:abc' });
+    const result = parseDossierMetadataFromContent(content, '/test.ds.md');
+    expect(result.checksum).toBe(true);
+  });
+
+  it('should extract filename from path', () => {
+    const content = makeDossier({});
+    const result = parseDossierMetadataFromContent(content, '/long/path/dossier.ds.md');
+    expect(result.filename).toBe('dossier.ds.md');
+  });
+});
+
+describe('formatTable', () => {
+  it('should return "No dossiers found." for empty array', () => {
+    expect(formatTable([])).toBe('No dossiers found.');
+  });
+
+  it('should format dossier table with headers', () => {
+    const dossiers = [
+      {
+        path: '/test.ds.md',
+        filename: 'test.ds.md',
+        title: 'Test',
+        risk_level: 'low',
+        signed: true,
+        error: null,
+      },
+    ];
+
+    const table = formatTable(dossiers);
+    expect(table).toContain('TITLE');
+    expect(table).toContain('RISK');
+    expect(table).toContain('SIGNED');
+    expect(table).toContain('Test');
+    expect(table).toContain('LOW');
+  });
+
+  it('should show path when showPath is true', () => {
+    const dossiers = [
+      {
+        path: '/full/path/test.ds.md',
+        filename: 'test.ds.md',
+        title: 'Test',
+        error: null,
+      },
+    ];
+
+    const table = formatTable(dossiers, true);
+    expect(table).toContain('PATH');
+    expect(table).toContain('/full/path/test.ds.md');
+  });
+});
+
+describe('detectLlm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return the llm name when not auto', () => {
+    expect(detectLlm('claude-code')).toBe('claude-code');
+    expect(detectLlm('custom-llm')).toBe('custom-llm');
+  });
+
+  it('should return null when auto-detect fails', () => {
+    mockedExecSync.mockImplementation(() => {
+      throw new Error('not found');
+    });
+
+    expect(detectLlm('auto', true)).toBeNull();
+  });
+
+  it('should detect claude when command exists', () => {
+    mockedExecSync.mockReturnValue(Buffer.from('/usr/bin/claude'));
+
+    expect(detectLlm('auto', true)).toBe('claude-code');
+  });
+});
+
+describe('buildLlmCommand', () => {
+  it('should build command for claude-code with local file', () => {
+    const cmd = buildLlmCommand('claude-code', '/path/to/dossier.ds.md');
+    expect(cmd).toBe('claude "/path/to/dossier.ds.md"');
+  });
+
+  it('should build headless command for claude-code', () => {
+    const cmd = buildLlmCommand('claude-code', '/path/to/dossier.ds.md', true);
+    expect(cmd).toBe('cat "/path/to/dossier.ds.md" | claude -p');
+  });
+
+  it('should handle URLs by converting GitHub blob to raw', () => {
+    const cmd = buildLlmCommand(
+      'claude-code',
+      'https://github.com/owner/repo/blob/main/test.ds.md'
+    );
+    expect(cmd).toContain('raw.githubusercontent.com');
+    expect(cmd).toContain('curl -sL');
+  });
+
+  it('should return null for unknown LLM', () => {
+    expect(buildLlmCommand('unknown-llm', '/file.ds.md')).toBeNull();
+  });
+});
+
+describe('findDossierFilesLocal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should find .ds.md files in directory', () => {
+    mockedFs.readdirSync.mockReturnValue([
+      { name: 'test.ds.md', isFile: () => true, isDirectory: () => false },
+      { name: 'readme.md', isFile: () => true, isDirectory: () => false },
+      { name: 'other.ds.md', isFile: () => true, isDirectory: () => false },
+    ] as unknown as fs.Dirent[]);
+
+    const files = findDossierFilesLocal('/test/dir');
+    expect(files).toHaveLength(2);
+    expect(files[0]).toContain('test.ds.md');
+    expect(files[1]).toContain('other.ds.md');
+  });
+
+  it('should skip node_modules and hidden directories', () => {
+    mockedFs.readdirSync.mockReturnValue([
+      { name: 'node_modules', isFile: () => false, isDirectory: () => true },
+      { name: '.git', isFile: () => false, isDirectory: () => true },
+      { name: 'test.ds.md', isFile: () => true, isDirectory: () => false },
+    ] as unknown as fs.Dirent[]);
+
+    const files = findDossierFilesLocal('/test/dir', true);
+    expect(files).toHaveLength(1);
+  });
+
+  it('should return empty array on read error', () => {
+    mockedFs.readdirSync.mockImplementation(() => {
+      throw new Error('EACCES');
+    });
+
+    expect(findDossierFilesLocal('/no/access')).toEqual([]);
+  });
+});

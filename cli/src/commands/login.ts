@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
-import { runOAuthFlow } from '../oauth';
 import { saveCredentials } from '../credentials';
+import { runOAuthFlow } from '../oauth';
 import { getRegistryUrl } from '../registry-client';
 
 export function registerLoginCommand(program: Command): void {

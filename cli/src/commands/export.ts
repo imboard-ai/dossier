@@ -1,6 +1,6 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { Command } from 'commander';
 import { getClient, parseNameVersion } from '../registry-client';
 
 export function registerExportCommand(program: Command): void {
@@ -13,32 +13,13 @@ export function registerExportCommand(program: Command): void {
     .action(async (name: string, options: { output?: string; stdout?: boolean }) => {
       const [dossierName, version] = parseNameVersion(name);
 
+      let content: string;
+      let digest: string | null;
       try {
         const client = getClient();
         const result = await client.getDossierContent(dossierName, version || null);
-        const content = result.content;
-        const digest = result.digest;
-
-        if (options.stdout) {
-          process.stdout.write(content);
-          process.exit(0);
-        }
-
-        const outputPath = options.output || `${dossierName.replace(/\//g, '-')}.ds.md`;
-        const outputDir = path.dirname(path.resolve(outputPath));
-
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
-        }
-
-        fs.writeFileSync(path.resolve(outputPath), content, 'utf8');
-
-        console.log(`\n✅ Exported: ${outputPath}`);
-        console.log(`   Source: ${dossierName}${version ? '@' + version : ''}`);
-        if (digest) {
-          console.log(`   Digest: ${digest}`);
-        }
-        console.log('');
+        content = result.content;
+        digest = result.digest;
       } catch (err: any) {
         if (err.statusCode === 404) {
           console.error(`\n❌ Not found: ${name}\n`);
@@ -46,6 +27,28 @@ export function registerExportCommand(program: Command): void {
           console.error(`\n❌ Export failed: ${err.message}\n`);
         }
         process.exit(1);
+        return;
       }
+
+      if (options.stdout) {
+        process.stdout.write(content);
+        process.exit(0);
+      }
+
+      const outputPath = options.output || `${dossierName.replace(/\//g, '-')}.ds.md`;
+      const outputDir = path.dirname(path.resolve(outputPath));
+
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+
+      fs.writeFileSync(path.resolve(outputPath), content, 'utf8');
+
+      console.log(`\n✅ Exported: ${outputPath}`);
+      console.log(`   Source: ${dossierName}${version ? '@' + version : ''}`);
+      if (digest) {
+        console.log(`   Digest: ${digest}`);
+      }
+      console.log('');
     });
 }

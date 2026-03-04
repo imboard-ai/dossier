@@ -1,7 +1,7 @@
-import type { Command } from 'commander';
-import fs from 'node:fs';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import path from 'node:path';
+import type { Command } from 'commander';
 import { getClient, parseNameVersion } from '../registry-client';
 
 export function registerInfoCommand(program: Command): void {
@@ -45,14 +45,20 @@ export function registerInfoCommand(program: Command): void {
                 if (val === '' || val === '|' || val === '>') {
                   frontmatter[currentKey] = '';
                 } else if (val.startsWith('[') || val.startsWith('{')) {
-                  try { frontmatter[currentKey] = JSON.parse(val); } catch { frontmatter[currentKey] = val; }
+                  try {
+                    frontmatter[currentKey] = JSON.parse(val);
+                  } catch {
+                    frontmatter[currentKey] = val;
+                  }
                 } else {
                   frontmatter[currentKey] = val;
                 }
               } else if (currentKey && line.match(/^\s*-\s+(.+)$/)) {
                 const item = line.match(/^\s*-\s+(.+)$/)![1].trim();
                 if (!Array.isArray(frontmatter[currentKey])) {
-                  frontmatter[currentKey] = frontmatter[currentKey] ? [frontmatter[currentKey]] : [];
+                  frontmatter[currentKey] = frontmatter[currentKey]
+                    ? [frontmatter[currentKey]]
+                    : [];
                 }
                 frontmatter[currentKey].push(item);
               }
@@ -68,7 +74,7 @@ export function registerInfoCommand(program: Command): void {
         try {
           const [dossierName, version] = parseNameVersion(fileOrName);
           const client = getClient();
-          const meta = await client.getDossier(dossierName, version || null) as any;
+          const meta = (await client.getDossier(dossierName, version || null)) as any;
           frontmatter = meta;
           body = null;
         } catch (err: any) {
@@ -96,7 +102,7 @@ export function registerInfoCommand(program: Command): void {
         ['Title', fm.title || ''],
         ['Version', fm.version || ''],
         ['Status', fm.status || ''],
-        ['Category', Array.isArray(fm.category) ? fm.category.join(', ') : (fm.category || '')],
+        ['Category', Array.isArray(fm.category) ? fm.category.join(', ') : fm.category || ''],
         ['Risk Level', fm.risk_level || ''],
         ['Objective', fm.objective || fm.description || ''],
       ];
@@ -109,13 +115,16 @@ export function registerInfoCommand(program: Command): void {
 
       const authors = fm.authors;
       if (Array.isArray(authors) && authors.length > 0) {
-        const authorStr = authors.map((a: any) => {
-          if (typeof a === 'string') {
-            const nameMatch = a.match(/^name:\s*(.+)$/);
-            return nameMatch ? nameMatch[1] : a;
-          }
-          return a.name || '';
-        }).filter(Boolean).join(', ');
+        const authorStr = authors
+          .map((a: any) => {
+            if (typeof a === 'string') {
+              const nameMatch = a.match(/^name:\s*(.+)$/);
+              return nameMatch ? nameMatch[1] : a;
+            }
+            return a.name || '';
+          })
+          .filter(Boolean)
+          .join(', ');
         if (authorStr) console.log(`   Authors:   ${authorStr}`);
       }
 
@@ -128,7 +137,9 @@ export function registerInfoCommand(program: Command): void {
         if (checksumInfo?.hash) {
           const actual = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
           const valid = actual === checksumInfo.hash;
-          console.log(`   Checksum:  ${checksumInfo.hash.slice(0, 16)}... ${valid ? '✅ valid' : '❌ mismatch'}`);
+          console.log(
+            `   Checksum:  ${checksumInfo.hash.slice(0, 16)}... ${valid ? '✅ valid' : '❌ mismatch'}`
+          );
         } else {
           console.log(`   Checksum:  missing`);
         }

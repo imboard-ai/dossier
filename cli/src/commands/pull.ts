@@ -1,8 +1,8 @@
-import type { Command } from 'commander';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import crypto from 'node:crypto';
+import type { Command } from 'commander';
 import { getClient, parseNameVersion } from '../registry-client';
 
 export function registerPullCommand(program: Command): void {
@@ -20,7 +20,7 @@ export function registerPullCommand(program: Command): void {
 
         try {
           if (!version) {
-            const meta = await client.getDossier(dossierName) as any;
+            const meta = (await client.getDossier(dossierName)) as any;
             version = meta.version || 'latest';
           }
 
@@ -48,11 +48,19 @@ export function registerPullCommand(program: Command): void {
 
           fs.mkdirSync(dossierDir, { recursive: true, mode: 0o700 });
           fs.writeFileSync(contentFile, content, 'utf8');
-          fs.writeFileSync(metaFile, JSON.stringify({
-            cached_at: new Date().toISOString(),
-            version,
-            source_registry_url: (client as any).baseUrl.replace(/\/api\/v1$/, ''),
-          }, null, 2), 'utf8');
+          fs.writeFileSync(
+            metaFile,
+            JSON.stringify(
+              {
+                cached_at: new Date().toISOString(),
+                version,
+                source_registry_url: (client as any).baseUrl.replace(/\/api\/v1$/, ''),
+              },
+              null,
+              2
+            ),
+            'utf8'
+          );
 
           const status = options.force ? 'updated' : 'downloaded';
           console.log(`✅ ${dossierName}@${version} (${status})`);

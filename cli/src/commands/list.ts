@@ -1,16 +1,16 @@
-import type { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
-import { getClient } from '../registry-client';
-import {
-  findDossierFilesLocal,
-  parseListSource,
-  findDossierFilesGitHub,
-  fetchDossierMetadata,
-  parseDossierMetadataLocal,
-  formatTable,
-} from '../helpers';
+import type { Command } from 'commander';
 import type { DossierMetadata } from '../helpers';
+import {
+  fetchDossierMetadata,
+  findDossierFilesGitHub,
+  findDossierFilesLocal,
+  formatTable,
+  parseDossierMetadataLocal,
+  parseListSource,
+} from '../helpers';
+import { getClient } from '../registry-client';
 
 export function registerListCommand(program: Command): void {
   program
@@ -31,51 +31,59 @@ export function registerListCommand(program: Command): void {
         const page = parseInt(options.page, 10) || 1;
         const perPage = parseInt(options.perPage, 10) || 20;
 
+        let registryResult: any;
         try {
           const client = getClient();
-          const result = await client.listDossiers({ category: options.category, page, perPage }) as any;
-          const dossiers: any[] = result.dossiers || result.data || [];
-
-          if (options.format === 'json') {
-            console.log(JSON.stringify(result, null, 2));
-            process.exit(0);
-          }
-
-          if (options.format === 'simple') {
-            for (const d of dossiers) {
-              console.log(d.name || '');
-            }
-            process.exit(0);
-          }
-
-          if (dossiers.length === 0) {
-            console.log('\n⚠️  No dossiers found in registry\n');
-            process.exit(0);
-          }
-
-          const total = result.total || dossiers.length;
-          console.log(`\n📋 Registry dossiers (${total} total):\n`);
-
-          for (const d of dossiers) {
-            const name = d.name || '';
-            const version = d.version || '';
-            const title = d.title || '';
-            const category = Array.isArray(d.category) ? d.category.join(', ') : (d.category || '');
-            console.log(`  ${name.padEnd(30)} ${('v' + version).padEnd(10)} ${category.padEnd(12)} ${title}`);
-          }
-
-          const totalPages = result.totalPages || Math.ceil(total / perPage);
-          if (totalPages > 1) {
-            console.log(`\nPage ${page}/${totalPages}`);
-            if (page < totalPages) {
-              console.log(`Use --page ${page + 1} to see more results`);
-            }
-          }
-          console.log('');
+          registryResult = (await client.listDossiers({
+            category: options.category,
+            page,
+            perPage,
+          })) as any;
         } catch (err: unknown) {
           console.error(`\n❌ Registry list failed: ${(err as Error).message}\n`);
           process.exit(1);
         }
+
+        const dossiers: any[] = registryResult.dossiers || registryResult.data || [];
+
+        if (options.format === 'json') {
+          console.log(JSON.stringify(registryResult, null, 2));
+          process.exit(0);
+        }
+
+        if (options.format === 'simple') {
+          for (const d of dossiers) {
+            console.log(d.name || '');
+          }
+          process.exit(0);
+        }
+
+        if (dossiers.length === 0) {
+          console.log('\n⚠️  No dossiers found in registry\n');
+          process.exit(0);
+        }
+
+        const total = registryResult.total || dossiers.length;
+        console.log(`\n📋 Registry dossiers (${total} total):\n`);
+
+        for (const d of dossiers) {
+          const name = d.name || '';
+          const version = d.version || '';
+          const title = d.title || '';
+          const category = Array.isArray(d.category) ? d.category.join(', ') : d.category || '';
+          console.log(
+            `  ${name.padEnd(30)} ${('v' + version).padEnd(10)} ${category.padEnd(12)} ${title}`
+          );
+        }
+
+        const totalPages = registryResult.totalPages || Math.ceil(total / perPage);
+        if (totalPages > 1) {
+          console.log(`\nPage ${page}/${totalPages}`);
+          if (page < totalPages) {
+            console.log(`Use --page ${page + 1} to see more results`);
+          }
+        }
+        console.log('');
         process.exit(0);
       }
 
@@ -90,7 +98,12 @@ export function registerListCommand(program: Command): void {
         console.log(`   Branch: ${parsed.branch}\n`);
 
         try {
-          const files = await findDossierFilesGitHub(parsed.owner!, parsed.repo!, parsed.path || '', parsed.branch!);
+          const files = await findDossierFilesGitHub(
+            parsed.owner!,
+            parsed.repo!,
+            parsed.path || '',
+            parsed.branch!
+          );
 
           if (files.length === 0) {
             console.log('⚠️  No dossiers found (*.ds.md files)');
@@ -104,7 +117,7 @@ export function registerListCommand(program: Command): void {
           for (let i = 0; i < files.length; i += batchSize) {
             const batch = files.slice(i, i + batchSize);
             const results = await Promise.all(
-              batch.map(f => fetchDossierMetadata(f.rawUrl, f.path))
+              batch.map((f) => fetchDossierMetadata(f.rawUrl, f.path))
             );
             dossiers.push(...results);
           }
@@ -142,19 +155,19 @@ export function registerListCommand(program: Command): void {
         }
 
         console.log(`   Found ${files.length} dossier file(s)\n`);
-        dossiers = files.map(f => parseDossierMetadataLocal(f));
+        dossiers = files.map((f) => parseDossierMetadataLocal(f));
       }
 
       if (options.signedOnly) {
-        dossiers = dossiers.filter(d => d.signed === true);
+        dossiers = dossiers.filter((d) => d.signed === true);
       }
       if (options.risk) {
         const riskLevel = options.risk.toLowerCase();
-        dossiers = dossiers.filter(d => (d.risk_level || '').toLowerCase() === riskLevel);
+        dossiers = dossiers.filter((d) => (d.risk_level || '').toLowerCase() === riskLevel);
       }
       if (options.category) {
         const category = options.category.toLowerCase();
-        dossiers = dossiers.filter(d => (d.category || '').toLowerCase().includes(category));
+        dossiers = dossiers.filter((d) => (d.category || '').toLowerCase().includes(category));
       }
 
       if (options.format === 'json') {
@@ -168,7 +181,7 @@ export function registerListCommand(program: Command): void {
 
         console.log(`\nTotal: ${dossiers.length} dossier(s)`);
 
-        const signed = dossiers.filter(d => d.signed).length;
+        const signed = dossiers.filter((d) => d.signed).length;
         const unsigned = dossiers.length - signed;
         if (signed > 0 || unsigned > 0) {
           console.log(`   Signed: ${signed}  |  Unsigned: ${unsigned}`);

@@ -1,9 +1,9 @@
-import type { Command } from 'commander';
-import fs from 'node:fs';
 import crypto from 'node:crypto';
-import readline from 'node:readline';
+import fs from 'node:fs';
 import path from 'node:path';
-import { loadCredentials, isExpired } from '../credentials';
+import readline from 'node:readline';
+import type { Command } from 'commander';
+import { isExpired, loadCredentials } from '../credentials';
 import { getClient } from '../registry-client';
 
 export function registerPublishCommand(program: Command): void {
@@ -59,7 +59,15 @@ export function registerPublishCommand(program: Command): void {
       if (frontmatter.risk_level && !validRiskLevels.includes(frontmatter.risk_level)) {
         errors.push(`Invalid risk_level: ${frontmatter.risk_level}`);
       }
-      const validStatuses = ['draft', 'stable', 'deprecated', 'Draft', 'Stable', 'Deprecated', 'Experimental'];
+      const validStatuses = [
+        'draft',
+        'stable',
+        'deprecated',
+        'Draft',
+        'Stable',
+        'Deprecated',
+        'Experimental',
+      ];
       if (frontmatter.status && !validStatuses.includes(frontmatter.status)) {
         errors.push(`Invalid status: ${frontmatter.status}`);
       }
@@ -76,7 +84,9 @@ export function registerPublishCommand(program: Command): void {
       if (existingHash) {
         const actualHash = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
         if (existingHash !== actualHash) {
-          console.error('\n❌ Checksum mismatch - content has been modified without updating checksum');
+          console.error(
+            '\n❌ Checksum mismatch - content has been modified without updating checksum'
+          );
           console.error(`   Expected: ${existingHash}`);
           console.error(`   Actual:   ${actualHash}`);
           console.error(`\n   Run 'dossier checksum ${file} --update' to fix\n`);
@@ -113,7 +123,11 @@ export function registerPublishCommand(program: Command): void {
 
       try {
         const client = getClient(credentials.token);
-        const result = await client.publishDossier(namespace, content, options.changelog || null) as any;
+        const result = (await client.publishDossier(
+          namespace,
+          content,
+          options.changelog || null
+        )) as any;
 
         const fullName = result.name || `${namespace}/${name}`;
         console.log(`\n✅ Published ${fullName}@${version}`);

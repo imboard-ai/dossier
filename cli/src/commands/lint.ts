@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import { defaultRules, LintRuleRegistry, lintDossierFile } from '@imboard-ai/dossier-core';
 import type { Command } from 'commander';
 
 export function registerLintCommand(program: Command): void {
@@ -11,19 +13,23 @@ export function registerLintCommand(program: Command): void {
     .option('--config <path>', 'Path to .dossierrc.json config file')
     .option('--list-rules', 'List all available lint rules and exit')
     .action((file: string | undefined, options: any) => {
-      const core = require('@imboard-ai/dossier-core');
-
       if (options.listRules) {
-        const registry = new core.LintRuleRegistry();
-        registry.registerAll(core.defaultRules);
+        const registry = new LintRuleRegistry();
+        registry.registerAll(defaultRules);
         const rules = registry.getRules();
 
         if (options.json) {
-          console.log(JSON.stringify(rules.map((r: any) => ({
-            id: r.id,
-            description: r.description,
-            defaultSeverity: r.defaultSeverity,
-          })), null, 2));
+          console.log(
+            JSON.stringify(
+              rules.map((r: any) => ({
+                id: r.id,
+                description: r.description,
+                defaultSeverity: r.defaultSeverity,
+              })),
+              null,
+              2
+            )
+          );
         } else {
           console.log('Available lint rules:\n');
           for (const rule of rules) {
@@ -42,7 +48,6 @@ export function registerLintCommand(program: Command): void {
 
       let lintConfig: any;
       if (options.config) {
-        const fs = require('fs');
         try {
           const raw = fs.readFileSync(options.config, 'utf8');
           const parsed = JSON.parse(raw);
@@ -55,7 +60,7 @@ export function registerLintCommand(program: Command): void {
 
       let result: any;
       try {
-        result = core.lintDossierFile(file, lintConfig);
+        result = lintDossierFile(file, lintConfig);
       } catch (err: any) {
         console.error(`Error: ${err.message}`);
         process.exit(2);
@@ -67,13 +72,19 @@ export function registerLintCommand(program: Command): void {
       }
 
       if (options.json) {
-        console.log(JSON.stringify({
-          file,
-          diagnostics,
-          errorCount: result.errorCount,
-          warningCount: result.warningCount,
-          infoCount: result.infoCount,
-        }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              file,
+              diagnostics,
+              errorCount: result.errorCount,
+              warningCount: result.warningCount,
+              infoCount: result.infoCount,
+            },
+            null,
+            2
+          )
+        );
       } else {
         if (diagnostics.length === 0) {
           console.log(`${file}: no issues found`);
@@ -83,7 +94,9 @@ export function registerLintCommand(program: Command): void {
             const field = d.field ? ` (${d.field})` : '';
             console.log(`  ${icon} ${d.severity.padEnd(7)}  ${d.message}${field}  [${d.ruleId}]`);
           }
-          console.log(`\n  ${result.errorCount} error(s), ${result.warningCount} warning(s), ${result.infoCount} info`);
+          console.log(
+            `\n  ${result.errorCount} error(s), ${result.warningCount} warning(s), ${result.infoCount} info`
+          );
         }
       }
 
