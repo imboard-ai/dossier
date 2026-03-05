@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     authentication: {
       type: 'Bearer Token (JWT)',
       description: 'Obtain a token via GitHub OAuth flow',
-      loginUrl: `${baseUrl}/auth/callback`,
+      loginUrl: `${baseUrl}/auth/login`,
       header: 'Authorization: Bearer <token>',
     },
     endpoints: {

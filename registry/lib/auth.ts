@@ -9,7 +9,9 @@ export function signJwt(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
 }
 
 export function verifyJwt(token: string): JwtPayload {
-  return jwt.verify(token, config.auth.jwt.secret) as JwtPayload;
+  return jwt.verify(token, config.auth.jwt.secret, {
+    algorithms: ['HS256'],
+  }) as JwtPayload;
 }
 
 export function extractBearerToken(req: VercelRequest): string | null {
@@ -17,7 +19,7 @@ export function extractBearerToken(req: VercelRequest): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
-  return authHeader.slice(7);
+  return authHeader.slice('Bearer '.length);
 }
 
 export function encodeAsDisplayCode(token: string): string {

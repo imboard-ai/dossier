@@ -169,7 +169,7 @@ async function handlePublish(req: VercelRequest, res: VercelResponse) {
     return res.status(502).json({
       error: {
         code: 'PUBLISH_ERROR',
-        message: `Failed to publish dossier: ${err instanceof Error ? err.message : String(err)}`,
+        message: 'Failed to publish dossier',
       },
     });
   }
