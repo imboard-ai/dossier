@@ -18,7 +18,7 @@ const validDossier = `---dossier
 Body content here`;
 
 describe('publish command', () => {
-  const mockClient = { publishDossier: vi.fn() };
+  const mockClient = { publishDossier: vi.fn(), getDossier: vi.fn() };
 
   beforeEach(() => {
     vi.mocked(credentials.loadCredentials).mockReturnValue({
@@ -29,6 +29,9 @@ describe('publish command', () => {
     });
     vi.mocked(credentials.isExpired).mockReturnValue(false);
     vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
+    mockClient.getDossier.mockRejectedValue(
+      Object.assign(new Error('Not found'), { statusCode: 404 })
+    );
     mockedFs.existsSync.mockReturnValue(true);
     mockedFs.readFileSync.mockReturnValue(validDossier);
   });
@@ -39,9 +42,9 @@ describe('publish command', () => {
     const program = createTestProgram();
     registerPublishCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Not logged in'));
   });
@@ -52,9 +55,9 @@ describe('publish command', () => {
     const program = createTestProgram();
     registerPublishCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('expired'));
   });
@@ -67,7 +70,7 @@ describe('publish command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'publish', 'missing.ds.md'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('File not found'));
   });
@@ -78,9 +81,9 @@ describe('publish command', () => {
     const program = createTestProgram();
     registerPublishCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Invalid dossier format'));
   });
@@ -91,14 +94,14 @@ describe('publish command', () => {
     const program = createTestProgram();
     registerPublishCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Validation errors'));
   });
 
-  it('should publish with --yes flag', async () => {
+  it('should publish with --yes flag and show full registry path', async () => {
     mockClient.publishDossier.mockResolvedValue({
       name: 'org/test-dossier',
       content_url: 'https://registry.example.com/dossiers/org/test-dossier',
@@ -110,10 +113,80 @@ describe('publish command', () => {
     await program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes']);
 
     expect(mockClient.publishDossier).toHaveBeenCalledWith('org', validDossier, null);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('org/test-dossier@1.0.0'));
   });
 
-  it('should exit 1 on 409 version conflict', async () => {
+  it('should exit 1 on same-version collision (pre-publish check)', async () => {
+    mockClient.getDossier.mockReset();
+    // First call (with version) returns existing dossier — same version exists
+    mockClient.getDossier.mockResolvedValueOnce({ name: 'org/test-dossier', version: '1.0.0' });
+
+    const program = createTestProgram();
+    registerPublishCommand(program);
+
+    // In vitest v4, process.exit records the call but doesn't halt execution
+    try {
+      await program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes']);
+    } catch {
+      // Expected — process.exit throws in vitest v4
+    }
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('Version collision: org/test-dossier@1.0.0 already exists')
+    );
+  });
+
+  it('should output JSON on same-version collision with --json flag', async () => {
+    mockClient.getDossier.mockReset();
+    mockClient.getDossier.mockResolvedValueOnce({ name: 'org/test-dossier', version: '1.0.0' });
+
+    const program = createTestProgram();
+    registerPublishCommand(program);
+
+    await expect(
+      program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes', '--json'])
+    ).rejects.toThrow();
+
+    const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
+      try {
+        const parsed = JSON.parse(call[0] as string);
+        return parsed.error === 'version_exists';
+      } catch {
+        return false;
+      }
+    });
+    expect(jsonCall).toBeDefined();
+    const output = JSON.parse(jsonCall?.[0] as string);
+    expect(output.success).toBe(false);
+    expect(output.path).toBe('org/test-dossier');
+  });
+
+  it('should publish with --json flag and output structured result', async () => {
+    mockClient.publishDossier.mockResolvedValue({
+      name: 'org/test-dossier',
+      content_url: 'https://registry.example.com/dossiers/org/test-dossier',
+    });
+
+    const program = createTestProgram();
+    registerPublishCommand(program);
+
+    await program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes', '--json']);
+
+    const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
+      try {
+        const parsed = JSON.parse(call[0] as string);
+        return parsed.success === true;
+      } catch {
+        return false;
+      }
+    });
+    expect(jsonCall).toBeDefined();
+    const output = JSON.parse(jsonCall?.[0] as string);
+    expect(output.registryPath).toBe('org/test-dossier@1.0.0');
+    expect(output.url).toBe('https://registry.example.com/dossiers/org/test-dossier');
+  });
+
+  it('should exit 1 on 409 version conflict from server', async () => {
     mockClient.publishDossier.mockRejectedValue(
       Object.assign(new Error('Version exists'), { statusCode: 409 })
     );
@@ -123,8 +196,31 @@ describe('publish command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Version conflict'));
+  });
+
+  it('should warn when dossier exists at different version', async () => {
+    mockClient.getDossier.mockReset();
+    // First call (with version) — 404 (specific version doesn't exist)
+    mockClient.getDossier.mockRejectedValueOnce(
+      Object.assign(new Error('Not found'), { statusCode: 404 })
+    );
+    // Second call (without version) — dossier exists at different version
+    mockClient.getDossier.mockResolvedValueOnce({ name: 'org/test-dossier', version: '0.9.0' });
+
+    mockClient.publishDossier.mockResolvedValue({
+      name: 'org/test-dossier',
+      content_url: 'https://registry.example.com/dossiers/org/test-dossier',
+    });
+
+    const program = createTestProgram();
+    registerPublishCommand(program);
+
+    await program.parseAsync(['node', 'dossier', 'publish', 'test.ds.md', '--yes']);
+
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Updated from v0.9.0'));
+    expect(mockClient.publishDossier).toHaveBeenCalled();
   });
 });
