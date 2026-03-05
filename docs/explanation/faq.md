@@ -5,7 +5,7 @@
 - [Dossiers vs. Alternatives](#dossiers-vs-alternatives)
 - [Protocol & Governance](#protocol--governance)
 - [Security & Trust](#security--trust)
-- [Technical Concerns](#technical-concerns)
+- [Technical Concerns](#technical-concerns) (file extensions, `---dossier` delimiter, determinism)
 - [Practical Usage](#practical-usage)
 
 ---
@@ -886,6 +886,33 @@ signature:
 ---
 
 ## Technical Concerns
+
+### What do the `.ds.md` and `.dsw.md` file extensions mean?
+
+Dossier files use two extensions:
+
+| Extension | Purpose | Mutable? | Verified? |
+|-----------|---------|----------|-----------|
+| `.ds.md` | **Dossier** — immutable instructions | No | Yes (checksums + signatures) |
+| `.dsw.md` | **Working file** — mutable execution state | Yes | No |
+
+**`.ds.md` (Dossier files)** contain the instructions, metadata, and validation criteria. They are checksummed and optionally signed. Their content should not change during execution.
+
+**`.dsw.md` (Working files)** track execution state: progress, context gathered, decisions made, and action logs. They are mutable and intentionally outside the security boundary. See the [working files example](../../examples/working-files/) for the full pattern.
+
+**Why not just `.md`?** The `.ds.md` extension makes dossiers discoverable by tooling (CLI, MCP server, IDE plugins) without needing to parse every markdown file in a project.
+
+### Why does the frontmatter use `---dossier` instead of `---`?
+
+Standard YAML frontmatter uses `---` as its delimiter. Dossier frontmatter uses `---dossier` intentionally:
+
+1. **Disambiguation** — Tools like Jekyll, Hugo, and VS Code treat `---` as YAML frontmatter. Since dossier frontmatter contains **JSON** (not YAML), using `---` would cause parsing errors or incorrect syntax highlighting in many editors.
+2. **Explicit identification** — `---dossier` signals to parsers that this block is a dossier metadata block, not generic frontmatter. This enables fast detection without reading the full file.
+3. **Coexistence** — A project can have both standard frontmatter files and dossier files without conflicts.
+
+**Tradeoff**: Some markdown previewers won't render the frontmatter as hidden metadata — they'll show it as text. This is expected. The frontmatter is meant for tooling (CLI, MCP server, registries), not for human reading in a previewer.
+
+If your editor shows the JSON block as visible text, that's normal behavior and does not affect execution.
 
 ### LLMs are non-deterministic. How can I rely on dossiers for production?
 
