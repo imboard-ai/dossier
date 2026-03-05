@@ -100,7 +100,7 @@ imboard-ai/development/setup-react-library
 | Serverless Functions | Vercel / Node.js | Hosting the API endpoints |
 | Content & Metadata | GitHub Public Repo | Source of truth for `.ds.md` files and `index.json` |
 | Content Delivery | jsDelivr CDN | Global delivery of all content |
-| Dependencies | None | API is dependency-free |
+| Dependencies | `@ai-dossier/core`, `jsonwebtoken` | Shared verification logic and JWT auth |
 
 ### Content Repo Structure
 
