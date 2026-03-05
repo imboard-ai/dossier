@@ -33,4 +33,4 @@ All contributors must follow our [Code of Conduct](../../CODE_OF_CONDUCT.md).
 
 ## License
 
-By contributing to Dossier, you agree that your contributions will be licensed under the MIT License.
+By contributing to Dossier, you agree that your contributions will be licensed under the [Elastic License 2.0 (ELv2)](../LICENSE).

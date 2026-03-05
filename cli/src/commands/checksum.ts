@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 
 export function registerChecksumCommand(program: Command): void {
@@ -21,21 +22,16 @@ export function registerChecksumCommand(program: Command): void {
 
       const content = fs.readFileSync(dossierFile, 'utf8');
 
-      const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-      if (!jsonMatch) {
-        console.log('❌ Invalid dossier format: missing ---dossier frontmatter');
-        process.exit(1);
-      }
-
-      let frontmatter: any;
+      let frontmatter: Record<string, any>;
+      let body: string;
       try {
-        frontmatter = JSON.parse(jsonMatch[1]);
+        const parsed = parseDossierContent(content);
+        frontmatter = parsed.frontmatter as Record<string, any>;
+        body = parsed.body;
       } catch (err: unknown) {
-        console.log(`❌ Invalid JSON in frontmatter: ${(err as Error).message}`);
+        console.log(`❌ ${(err as Error).message}`);
         process.exit(1);
       }
-
-      const body = jsonMatch[2];
       const calculatedHash = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
       const existingHash = frontmatter.checksum?.hash;
 

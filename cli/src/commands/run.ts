@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 import * as config from '../config';
 import {
@@ -123,19 +124,20 @@ export function registerRunCommand(program: Command): void {
       // Show metadata summary
       try {
         const content = fs.readFileSync(path.resolve(resolvedFile), 'utf8');
-        const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?/);
-        const yamlMatch = !jsonMatch && content.match(/^---\n([\s\S]*?)\n---\n?/);
         let fm: any = null;
 
-        if (jsonMatch) {
-          try {
-            fm = JSON.parse(jsonMatch[1]);
-          } catch {}
-        } else if (yamlMatch) {
-          fm = {};
-          for (const line of yamlMatch[1].split('\n')) {
-            const kv = line.match(/^(\w[\w_-]*):\s*(.+)$/);
-            if (kv) fm[kv[1]] = kv[2].trim();
+        try {
+          const parsed = parseDossierContent(content);
+          fm = parsed.frontmatter;
+        } catch {
+          // Fall back to YAML frontmatter
+          const yamlMatch = content.match(/^---\n([\s\S]*?)\n---\n?/);
+          if (yamlMatch) {
+            fm = {};
+            for (const line of yamlMatch[1].split('\n')) {
+              const kv = line.match(/^(\w[\w_-]*):\s*(.+)$/);
+              if (kv) fm[kv[1]] = kv[2].trim();
+            }
           }
         }
 
@@ -186,8 +188,6 @@ export function registerRunCommand(program: Command): void {
       console.log(`   Action:      RUN`);
       console.log('   Status:      VERIFIED');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      console.log('📋 [MVP: Audit log printed to console]');
-      console.log('📋 [Future: Would send to audit server]\n');
 
       // If resolvedFile is still a URL, download it to a temp file first
       const isResolvedUrl =

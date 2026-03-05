@@ -70,4 +70,4 @@ This documentation follows the [Diataxis framework](https://diataxis.fr/):
 
 ---
 
-**License**: MIT | **Maintained by**: Imboard AI
+**License**: [Elastic License 2.0 (ELv2)](LICENSE) | **Maintained by**: Imboard AI

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 import { RECOMMENDED_FIELDS, REQUIRED_FIELDS, VALID_RISK_LEVELS, VALID_STATUSES } from '../helpers';
 
@@ -34,15 +35,19 @@ export function registerValidateCommand(program: Command): void {
       const warnings: string[] = [];
       let frontmatter: Record<string, any> | null = null;
 
-      const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---/);
-      const yamlMatch = !jsonMatch && content.match(/^---\s*\n([\s\S]*?)\n---/);
+      let isJson = false;
+      try {
+        const parsed = parseDossierContent(content);
+        frontmatter = parsed.frontmatter as Record<string, any>;
+        isJson = true;
+      } catch {
+        // Not valid ---dossier JSON frontmatter, try YAML
+      }
 
-      if (jsonMatch) {
-        try {
-          frontmatter = JSON.parse(jsonMatch[1]);
-        } catch (err: unknown) {
-          errors.push(`Invalid JSON in frontmatter: ${(err as Error).message}`);
-        }
+      const yamlMatch = !isJson && content.match(/^---\s*\n([\s\S]*?)\n---/);
+
+      if (isJson) {
+        // Already parsed above
       } else if (yamlMatch) {
         warnings.push('YAML frontmatter detected - basic validation only');
         frontmatter = {};
@@ -88,7 +93,7 @@ export function registerValidateCommand(program: Command): void {
           );
         }
 
-        if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status)) {
+        if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status.toLowerCase())) {
           warnings.push(
             `Unknown status: "${frontmatter.status}" (expected: ${VALID_STATUSES.join(', ')})`
           );

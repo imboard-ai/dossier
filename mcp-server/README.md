@@ -221,7 +221,7 @@ The `verify_dossier` tool returns:
 - `dossier://keys` - Official and community public keys
 - `dossier://protocol` - Includes security verification steps
 
-Learn more: [SECURITY_ARCHITECTURE.md](../SECURITY_ARCHITECTURE.md)
+Learn more: [Security Architecture](../security/ARCHITECTURE.md)
 
 ---
 
@@ -341,7 +341,7 @@ This transforms dossiers from "interesting idea" to "production-ready automation
 - **Language**: TypeScript
 - **Runtime**: Node.js 18+
 - **Dependencies**: @modelcontextprotocol/sdk
-- **License**: MIT
+- **License**: Elastic License 2.0 (ELv2)
 
 ---
 

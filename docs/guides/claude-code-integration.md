@@ -278,7 +278,7 @@ First verify, then execute the dossier at ./my-automation.ds.md
 - [Signing Dossiers](./signing-dossiers.md) - How to sign your own dossiers
 - [MCP Server README](../../mcp-server/README.md) - Full MCP server documentation
 - [Security Architecture](../../security/ARCHITECTURE.md) - Security model details
-- [Dossier Protocol](../../PROTOCOL.md) - Complete execution protocol
+- [Dossier Protocol](../reference/protocol.md) - Complete execution protocol
 
 ---
 

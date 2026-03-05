@@ -284,7 +284,7 @@ As of Dossier Specification v1.0.0, dossiers **SHOULD** include structured metad
 - Valid JSON format (validated against `dossier-schema.json`)
 - Must include required fields: `dossier_schema_version`, `title`, `version`, `protocol_version`, `status`, `objective`
 
-**Complete Documentation**: See [SCHEMA.md](./SCHEMA.md) for:
+**Complete Documentation**: See [SCHEMA.md](./schema.md) for:
 - Complete field reference
 - Validation rules
 - Examples
@@ -481,7 +481,7 @@ Every dossier **MUST** reference a protocol version:
 
 ### 4.2 Protocol Adherence
 
-Dossiers **MUST** be compatible with the referenced [PROTOCOL.md](./PROTOCOL.md), including:
+Dossiers **MUST** be compatible with the referenced [PROTOCOL.md](./protocol.md), including:
 - Self-improvement analysis support
 - Safety guidelines (backups, confirmations)
 - Standard output formatting
@@ -785,7 +785,7 @@ Implementations **MAY** add custom sections prefixed with `X-`:
 
 ### 12.2 Local Protocol Extensions
 
-Projects **MAY** extend protocol locally (see [PROTOCOL.md](./PROTOCOL.md) § Custom Protocol Extensions).
+Projects **MAY** extend protocol locally (see [PROTOCOL.md](./protocol.md) § Custom Protocol Extensions).
 
 ---
 
@@ -813,9 +813,9 @@ Projects **MAY** extend protocol locally (see [PROTOCOL.md](./PROTOCOL.md) § Cu
 
 ## 14. References
 
-- [PROTOCOL.md](./PROTOCOL.md) - Dossier Execution Protocol
-- [SCHEMA.md](./SCHEMA.md) - Dossier Schema Specification (JSON frontmatter)
-- [README.md](./README.md) - Introduction to dossiers
+- [PROTOCOL.md](./protocol.md) - Dossier Execution Protocol
+- [SCHEMA.md](./schema.md) - Dossier Schema Specification (JSON frontmatter)
+- [README.md](../../README.md) - Introduction to dossiers
 - [examples/](./examples/) - Example implementations
 - [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
 

@@ -549,10 +549,10 @@ mv ~/.claude/settings.local.json.backup ~/.claude/settings.local.json
 
 ### Documentation
 
-- **[README.md](./README.md)** - MCP Server Integration section
-- **[PROTOCOL.md](./PROTOCOL.md)** - Security Verification Protocol
-- **[SECURITY.md](./SECURITY.md)** - Security policy
-- **[examples/security/README.md](./examples/security/README.md)** - Detailed analysis
+- **[README.md](../../README.md)** - MCP Server Integration section
+- **[PROTOCOL.md](../reference/protocol.md)** - Security Verification Protocol
+- **[SECURITY.md](../../SECURITY.md)** - Security policy
+- **[examples/security/README.md](../../examples/security/README.md)** - Detailed analysis
 - **[KEYS.txt](./KEYS.txt)** - Official trusted public keys
 
 ### Setup Guides

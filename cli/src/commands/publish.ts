@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
+import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 import { isExpired, loadCredentials } from '../credentials';
 import { getClient } from '../registry-client';
@@ -34,21 +35,16 @@ export function registerPublishCommand(program: Command): void {
 
         const content = fs.readFileSync(dossierFile, 'utf8');
 
-        const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-        if (!jsonMatch) {
-          console.error('\n❌ Invalid dossier format: missing ---dossier frontmatter\n');
-          process.exit(1);
-        }
-
-        let frontmatter: any;
+        let frontmatter: Record<string, any>;
+        let body: string;
         try {
-          frontmatter = JSON.parse(jsonMatch[1]);
+          const parsed = parseDossierContent(content);
+          frontmatter = parsed.frontmatter as Record<string, any>;
+          body = parsed.body;
         } catch (err: unknown) {
-          console.error(`\n❌ Invalid JSON in frontmatter: ${(err as Error).message}\n`);
+          console.error(`\n❌ ${(err as Error).message}\n`);
           process.exit(1);
         }
-
-        const body = jsonMatch[2];
 
         const errors: string[] = [];
         const required = ['title', 'version'];
@@ -61,16 +57,8 @@ export function registerPublishCommand(program: Command): void {
         if (frontmatter.risk_level && !validRiskLevels.includes(frontmatter.risk_level)) {
           errors.push(`Invalid risk_level: ${frontmatter.risk_level}`);
         }
-        const validStatuses = [
-          'draft',
-          'stable',
-          'deprecated',
-          'Draft',
-          'Stable',
-          'Deprecated',
-          'Experimental',
-        ];
-        if (frontmatter.status && !validStatuses.includes(frontmatter.status)) {
+        const validStatuses = ['draft', 'stable', 'deprecated', 'experimental'];
+        if (frontmatter.status && !validStatuses.includes(frontmatter.status.toLowerCase())) {
           errors.push(`Invalid status: ${frontmatter.status}`);
         }
         if (errors.length > 0) {

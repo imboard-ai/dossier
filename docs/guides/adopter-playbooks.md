@@ -374,8 +374,8 @@ Track these to measure dossier adoption success:
 
 ## Getting Help
 
-- Read the [QUICK_START.md](../QUICK_START.md) for step-by-step guidance
-- Check [examples/](../examples/) for more dossier patterns
-- Review [FAQ.md](../FAQ.md) for common questions
-- See [SPECIFICATION.md](../SPECIFICATION.md) for formal dossier structure
+- Read the [Quick Start Guide](../getting-started/installation.md) for step-by-step guidance
+- Check [examples/](../../examples/) for more dossier patterns
+- Review [FAQ.md](../explanation/faq.md) for common questions
+- See [SPECIFICATION.md](../reference/specification.md) for formal dossier structure
 - Visit the [security/](../security/) directory for security best practices

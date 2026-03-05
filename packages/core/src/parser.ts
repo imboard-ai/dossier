@@ -11,7 +11,7 @@ import { readFileIfExists } from './utils/fs';
  * Format: ---dossier\n{JSON}\n---\n[body]
  */
 export function parseDossierContent(content: string): ParsedDossier {
-  const frontmatterRegex = /^---dossier\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/m;
+  const frontmatterRegex = /^---dossier[^\S\n]*\n([\s\S]*?)\n---[^\S\n]*\n([\s\S]*)$/m;
   const match = content.match(frontmatterRegex);
 
   if (!match) {
@@ -73,8 +73,8 @@ export function validateFrontmatter(frontmatter: DossierFrontmatter): string[] {
   }
 
   // Validate status enum
-  const validStatuses = ['draft', 'stable', 'deprecated'];
-  if (frontmatter.status && !validStatuses.includes(frontmatter.status)) {
+  const validStatuses = ['draft', 'stable', 'deprecated', 'experimental'];
+  if (frontmatter.status && !validStatuses.includes(frontmatter.status.toLowerCase())) {
     errors.push(
       `Invalid status: ${frontmatter.status}. Must be one of: ${validStatuses.join(', ')}`
     );

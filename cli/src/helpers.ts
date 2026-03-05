@@ -9,6 +9,7 @@ import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 
 import { convertGitHubBlobToRaw } from './github-url';
 
@@ -46,7 +47,7 @@ export const RECOMMENDED_FIELDS = ['objective', 'risk_level', 'status'];
 export const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 
 /** Valid values for status */
-export const VALID_STATUSES = ['Draft', 'Stable', 'Deprecated', 'Experimental'];
+export const VALID_STATUSES = ['draft', 'stable', 'deprecated', 'experimental'];
 
 // ============================================================================
 // TypeScript interfaces
@@ -301,54 +302,12 @@ export async function runVerification(
     results.stages.push({ stage: 1, name: 'Integrity', skipped: true });
   }
 
-  // Stage 2: Author Whitelist/Blacklist (not yet implemented)
-  if (!options.skipAuthorCheck && !options.skipAllChecks) {
-    console.log('👤 Stage 2: Author Whitelist/Blacklist');
-    console.log('   ⚠️  NOT IMPLEMENTED: Author check');
-    console.log('   📋 [Would check ~/.dossier/authors-whitelist.txt]');
-    console.log('   📋 [Would check ~/.dossier/authors-blacklist.txt]\n');
-    results.stages.push({ stage: 2, name: 'Author Check', skipped: true, demo: true });
-  } else {
-    console.log('⚠️  Stage 2: SKIPPED - Author check\n');
-    results.stages.push({ stage: 2, name: 'Author Check', skipped: true });
-  }
-
-  // Stage 3: Dossier Whitelist/Blacklist (not yet implemented)
-  if (!options.skipDossierCheck && !options.skipAllChecks) {
-    console.log('📋 Stage 3: Dossier Whitelist/Blacklist');
-    console.log('   ⚠️  NOT IMPLEMENTED: Dossier check');
-    console.log('   📋 [Would check ~/.dossier/dossiers-whitelist.txt]');
-    console.log('   📋 [Would check ~/.dossier/dossiers-blacklist.txt]\n');
-    results.stages.push({ stage: 3, name: 'Dossier Check', skipped: true, demo: true });
-  } else {
-    console.log('⚠️  Stage 3: SKIPPED - Dossier check\n');
-    results.stages.push({ stage: 3, name: 'Dossier Check', skipped: true });
-  }
-
-  // Stage 4: Risk Assessment (not yet implemented)
-  if (!options.skipRiskAssessment && !options.skipAllChecks) {
-    console.log('🔴 Stage 4: Risk Assessment');
-    console.log('   ⚠️  NOT IMPLEMENTED: Risk assessment');
-    console.log('   📋 [Would evaluate risk level and prompt for high-risk dossiers]\n');
-    results.stages.push({ stage: 4, name: 'Risk Assessment', skipped: true, demo: true });
-  } else {
-    console.log('⚠️  Stage 4: SKIPPED - Risk assessment\n');
-    results.stages.push({ stage: 4, name: 'Risk Assessment', skipped: true });
-  }
-
-  // Stage 5: Review Dossier (not yet implemented)
-  if (!options.skipReview && !options.skipAllChecks) {
-    const reviewDossierPath = options.reviewDossier || 'built-in://review-dossier.ds.md';
-    console.log('🔍 Stage 5: Review Dossier Analysis');
-    console.log(`   Using: ${reviewDossierPath}`);
-    console.log('   ⚠️  NOT IMPLEMENTED: Review dossier analysis');
-    console.log('   📋 [Would execute review dossier to analyze target]');
-    console.log('   📋 [Would check for dangerous patterns]\n');
-    results.stages.push({ stage: 5, name: 'Review Dossier', skipped: true, demo: true });
-  } else {
-    console.log('⚠️  Stage 5: SKIPPED - Review dossier\n');
-    results.stages.push({ stage: 5, name: 'Review Dossier', skipped: true });
-  }
+  // Stages 2-5 are planned but not yet available.
+  // Skip them silently to avoid misleading output.
+  results.stages.push({ stage: 2, name: 'Author Check', skipped: true });
+  results.stages.push({ stage: 3, name: 'Dossier Check', skipped: true });
+  results.stages.push({ stage: 4, name: 'Risk Assessment', skipped: true });
+  results.stages.push({ stage: 5, name: 'Review Dossier', skipped: true });
 
   return results;
 }
@@ -558,10 +517,10 @@ export function parseDossierMetadataFromContent(
 ): DossierMetadata {
   try {
     // Check for ---dossier JSON frontmatter format
-    const jsonFrontmatterMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---/);
-    if (jsonFrontmatterMatch) {
+    if (content.startsWith('---dossier')) {
       try {
-        const frontmatter = JSON.parse(jsonFrontmatterMatch[1]);
+        const parsed = parseDossierContent(content);
+        const frontmatter = parsed.frontmatter as Record<string, any>;
         return {
           path: filePath,
           filename: path.basename(filePath),

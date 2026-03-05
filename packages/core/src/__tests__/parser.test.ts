@@ -249,7 +249,7 @@ describe('validateFrontmatter', () => {
     const errors = validateFrontmatter(frontmatter);
 
     expect(errors).toContain(
-      'Invalid status: invalid_status. Must be one of: draft, stable, deprecated'
+      'Invalid status: invalid_status. Must be one of: draft, stable, deprecated, experimental'
     );
   });
 

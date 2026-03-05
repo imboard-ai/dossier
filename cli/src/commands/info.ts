@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 import { getClient, parseNameVersion } from '../registry-client';
 
@@ -22,16 +23,12 @@ export function registerInfoCommand(program: Command): void {
         source = resolved;
         const content = fs.readFileSync(resolved, 'utf8');
 
-        const jsonMatch = content.match(/^---dossier\s*\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-        if (jsonMatch) {
-          try {
-            frontmatter = JSON.parse(jsonMatch[1]);
-            body = jsonMatch[2];
-          } catch (err: unknown) {
-            console.error(`\n❌ Invalid JSON in frontmatter: ${(err as Error).message}\n`);
-            process.exit(1);
-          }
-        } else {
+        try {
+          const parsed = parseDossierContent(content);
+          frontmatter = parsed.frontmatter as Record<string, any>;
+          body = parsed.body;
+        } catch {
+          // Fall back to YAML frontmatter
           const yamlMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
           if (yamlMatch) {
             frontmatter = {};

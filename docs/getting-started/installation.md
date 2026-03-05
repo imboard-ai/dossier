@@ -12,7 +12,7 @@ Instead of writing brittle scripts that break on edge cases, you write clear ins
 
 **Example**: A "deploy-to-aws" dossier tells the AI how to deploy, but the AI figures out your specific AWS setup, validates prerequisites, and handles errors intelligently.
 
-> **❓ First time here?** See [FAQ.md](./FAQ.md) for common questions like "Why not just use AGENTS.md?", "Who controls this protocol?", and detailed comparisons with alternatives.
+> **❓ First time here?** See [FAQ.md](../explanation/faq.md) for common questions like "Why not just use AGENTS.md?", "Who controls this protocol?", and detailed comparisons with alternatives.
 
 ---
 
@@ -238,7 +238,7 @@ cp templates/dossier-template.md dossiers/my-custom-dossier.md
 vim dossiers/my-custom-dossier.md
 ```
 
-Follow the structure in [SPECIFICATION.md](./SPECIFICATION.md).
+Follow the structure in [SPECIFICATION.md](../reference/specification.md).
 
 ### 3. Organize Multiple Dossiers
 
@@ -246,7 +246,7 @@ See [examples/sample-implementation/dossiers-registry.md](./examples/sample-impl
 
 ### 4. Understand the Protocol
 
-Read [PROTOCOL.md](./PROTOCOL.md) to learn about:
+Read [PROTOCOL.md](../reference/protocol.md) to learn about:
 - Self-improving dossiers
 - Safety guidelines
 - Validation patterns
@@ -342,7 +342,7 @@ diagnose the issue. Then propose a fix."
 
 ## Common Questions
 
-**For comprehensive answers, see [FAQ.md](./FAQ.md)**
+**For comprehensive answers, see [FAQ.md](../explanation/faq.md)**
 
 ### Q: Do I need special tools?
 
@@ -350,15 +350,15 @@ diagnose the issue. Then propose a fix."
 
 ### Q: How is this different from AGENTS.md?
 
-**A**: AGENTS.md provides project context. Dossiers provide executable workflows with validation and security. They're complementary! See [FAQ.md § Dossiers vs. AGENTS.md](./FAQ.md#how-are-dossiers-different-from-agentsmd-files) for detailed comparison.
+**A**: AGENTS.md provides project context. Dossiers provide executable workflows with validation and security. They're complementary! See [FAQ.md § Dossiers vs. AGENTS.md](../explanation/faq.md#how-are-dossiers-different-from-agentsmd-files) for detailed comparison.
 
 ### Q: Who controls this protocol?
 
-**A**: It's an open protocol - you control your dossiers. See [FAQ.md § Protocol & Governance](./FAQ.md#protocol--governance) for governance model.
+**A**: It's an open protocol - you control your dossiers. See [FAQ.md § Protocol & Governance](../explanation/faq.md#protocol--governance) for governance model.
 
 ### Q: Are dossiers secure?
 
-**A**: Yes - multi-layer security with checksums, signatures, and risk assessment. See [FAQ.md § Security & Trust](./FAQ.md#security--trust) for details.
+**A**: Yes - multi-layer security with checksums, signatures, and risk assessment. See [FAQ.md § Security & Trust](../explanation/faq.md#security--trust) for details.
 
 ### Q: Do dossiers work with all LLMs?
 
@@ -368,12 +368,12 @@ diagnose the issue. Then propose a fix."
 
 ## Get Help
 
-- **FAQ**: [FAQ.md](./FAQ.md) - Comprehensive objection handling & comparisons
+- **FAQ**: [FAQ.md](../explanation/faq.md) - Comprehensive objection handling & comparisons
 - **Issues**: https://github.com/imboard-ai/ai-dossier/issues
 - **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
 - **Examples**: See [examples/](./examples/)
-- **Spec**: See [SPECIFICATION.md](./SPECIFICATION.md)
-- **Protocol**: See [PROTOCOL.md](./PROTOCOL.md)
+- **Spec**: See [SPECIFICATION.md](../reference/specification.md)
+- **Protocol**: See [PROTOCOL.md](../reference/protocol.md)
 
 ---
 
