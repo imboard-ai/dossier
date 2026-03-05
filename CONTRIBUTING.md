@@ -51,7 +51,7 @@ Use GitHub Discussions for:
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/imboard-ai/ai-dossier.git
-   cd dossier
+   cd ai-dossier
    ```
 
 2. **Install dependencies** (for CLI and MCP server):
@@ -70,7 +70,7 @@ Use GitHub Discussions for:
    ```bash
    cd cli
    npm test  # If tests are available
-   node bin/dossier-verify.js --help
+   npx ai-dossier verify --help
    ```
 
 5. **Test the MCP server** (requires Claude Code):
