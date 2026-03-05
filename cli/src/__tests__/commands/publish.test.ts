@@ -147,7 +147,7 @@ describe('publish command', () => {
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
         const parsed = JSON.parse(call[0] as string);
-        return parsed.success === true;
+        return parsed.published === true;
       } catch {
         return false;
       }
@@ -193,15 +193,15 @@ describe('publish command', () => {
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
         const parsed = JSON.parse(call[0] as string);
-        return parsed.error === 'version_exists';
+        return parsed.code === 'version_exists';
       } catch {
         return false;
       }
     });
     expect(jsonCall).toBeDefined();
     const output = JSON.parse(jsonCall?.[0] as string);
-    expect(output.success).toBe(false);
-    expect(output.path).toBe('org/test-dossier');
+    expect(output.published).toBe(false);
+    expect(output.name).toBe('org/test-dossier');
   });
 
   it('should publish with --json flag and output structured result', async () => {
@@ -218,15 +218,16 @@ describe('publish command', () => {
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
         const parsed = JSON.parse(call[0] as string);
-        return parsed.success === true;
+        return parsed.published === true;
       } catch {
         return false;
       }
     });
     expect(jsonCall).toBeDefined();
     const output = JSON.parse(jsonCall?.[0] as string);
-    expect(output.registryPath).toBe('org/test-dossier@1.0.0');
-    expect(output.url).toBe('https://registry.example.com/dossiers/org/test-dossier');
+    expect(output.name).toBe('org/test-dossier');
+    expect(output.version).toBe('1.0.0');
+    expect(output.content_url).toBe('https://registry.example.com/dossiers/org/test-dossier');
   });
 
   it('should exit 1 on 409 version conflict from server', async () => {

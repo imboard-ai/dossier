@@ -76,7 +76,7 @@ describe('remove command', () => {
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
         const parsed = JSON.parse(call[0] as string);
-        return parsed.success === true;
+        return parsed.removed === true;
       } catch {
         return false;
       }
@@ -90,7 +90,7 @@ describe('remove command', () => {
 
   it('should output JSON error on remove failure with --json flag', async () => {
     mockClient.removeDossier.mockRejectedValue(
-      Object.assign(new Error('Not found'), { statusCode: 404 })
+      Object.assign(new Error('Not found'), { statusCode: 404, code: 'not_found' })
     );
 
     const program = createTestProgram();
@@ -103,15 +103,15 @@ describe('remove command', () => {
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
         const parsed = JSON.parse(call[0] as string);
-        return parsed.success === false;
+        return parsed.removed === false;
       } catch {
         return false;
       }
     });
     expect(jsonCall).toBeDefined();
     const output = JSON.parse(jsonCall?.[0] as string);
-    expect(output.success).toBe(false);
-    expect(output.statusCode).toBe(404);
+    expect(output.error).toBe('Not found');
+    expect(output.code).toBe('not_found');
   });
 
   it('should remove specific version with --yes', async () => {
