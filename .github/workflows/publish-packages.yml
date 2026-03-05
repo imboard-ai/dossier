@@ -55,6 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -116,16 +117,12 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "Publishing core $CURRENT (current published: $PUBLISHED)"
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @ai-dossier/core
         if: steps.check-core.outputs.skip != 'true'
         run: |
           cd packages/core
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --provenance --access public
 
       - name: Check if @ai-dossier/cli needs publishing
         id: check-cli
@@ -139,16 +136,12 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "Publishing CLI $CURRENT (current published: $PUBLISHED)"
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @ai-dossier/cli
         if: steps.check-cli.outputs.skip != 'true'
         run: |
           cd cli
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --provenance --access public
 
       - name: Check if @ai-dossier/mcp-server needs publishing
         id: check-mcp
@@ -162,16 +155,12 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "Publishing MCP server $CURRENT (current published: $PUBLISHED)"
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @ai-dossier/mcp-server
         if: steps.check-mcp.outputs.skip != 'true'
         run: |
           cd mcp-server
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --provenance --access public
 
   verify:
     needs: publish
