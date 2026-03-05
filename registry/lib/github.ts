@@ -1,0 +1,243 @@
+import config from './config';
+import type { DeleteResult, FileContent, Manifest, ManifestDossier } from './types';
+
+const GITHUB_API = 'https://api.github.com';
+
+async function githubRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const url = endpoint.startsWith('http') ? endpoint : `${GITHUB_API}${endpoint}`;
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${config.content.botToken}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'Dossier-Registry',
+      ...(options.headers as Record<string, string>),
+    },
+  });
+
+  return response;
+}
+
+export async function getFileContent(path: string): Promise<FileContent | null> {
+  const { org, repo } = config.content;
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`);
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as { content: string; sha: string };
+  return {
+    content: Buffer.from(data.content, 'base64').toString('utf-8'),
+    sha: data.sha,
+  };
+}
+
+export async function deleteFile(path: string, message: string, sha: string): Promise<unknown> {
+  const { org, repo } = config.content;
+
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ message, sha }),
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as { message?: string };
+    throw new Error(
+      `GitHub API error: ${response.status} - ${error.message || JSON.stringify(error)}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function createOrUpdateFile(
+  path: string,
+  content: string,
+  message: string,
+  sha: string | null = null
+): Promise<unknown> {
+  const { org, repo } = config.content;
+  const body: Record<string, string> = {
+    message,
+    content: Buffer.from(content).toString('base64'),
+  };
+
+  if (sha) {
+    body.sha = sha;
+  }
+
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as { message?: string };
+    throw new Error(
+      `GitHub API error: ${response.status} - ${error.message || JSON.stringify(error)}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function getManifest(): Promise<Manifest> {
+  const result = await getFileContent('index.json');
+
+  if (!result) {
+    return { dossiers: [], sha: null };
+  }
+
+  const manifest = JSON.parse(result.content);
+  return { ...manifest, sha: result.sha };
+}
+
+export async function updateManifest(
+  currentManifest: Manifest,
+  dossierEntry: ManifestDossier
+): Promise<unknown> {
+  const { sha, ...manifest } = currentManifest;
+
+  const existingIndex = manifest.dossiers.findIndex((d) => d.name === dossierEntry.name);
+
+  if (existingIndex >= 0) {
+    manifest.dossiers[existingIndex] = dossierEntry;
+  } else {
+    manifest.dossiers.push(dossierEntry);
+  }
+
+  manifest.dossiers.sort((a, b) => a.name.localeCompare(b.name));
+
+  const content = `${JSON.stringify(manifest, null, 2)}\n`;
+  const message =
+    existingIndex >= 0
+      ? `Update manifest: ${dossierEntry.name} v${dossierEntry.version}`
+      : `Add to manifest: ${dossierEntry.name} v${dossierEntry.version}`;
+
+  return createOrUpdateFile('index.json', content, message, sha);
+}
+
+export async function removeFromManifest(
+  currentManifest: Manifest,
+  dossierName: string
+): Promise<unknown> {
+  const { sha, ...manifest } = currentManifest;
+
+  const existingIndex = manifest.dossiers.findIndex((d) => d.name === dossierName);
+
+  if (existingIndex < 0) {
+    throw new Error(`Dossier '${dossierName}' not found in manifest`);
+  }
+
+  manifest.dossiers.splice(existingIndex, 1);
+
+  const content = `${JSON.stringify(manifest, null, 2)}\n`;
+  const message = `Remove from manifest: ${dossierName}`;
+
+  return createOrUpdateFile('index.json', content, message, sha);
+}
+
+export async function publishDossier(
+  fullPath: string,
+  content: string,
+  metadata: ManifestDossier,
+  changelog: string
+): Promise<{ file: unknown; manifest: unknown }> {
+  const filePath = `${fullPath}.ds.md`;
+
+  const existing = await getFileContent(filePath);
+
+  const fileMessage = existing
+    ? `Update ${metadata.name} to v${metadata.version}: ${changelog}`
+    : `Publish ${metadata.name} v${metadata.version}: ${changelog}`;
+
+  const fileResult = await createOrUpdateFile(
+    filePath,
+    content,
+    fileMessage,
+    existing?.sha ?? null
+  );
+
+  const manifest = await getManifest();
+
+  const OPTIONAL_MANIFEST_FIELDS = [
+    'description',
+    'category',
+    'tags',
+    'authors',
+    'tools_required',
+  ] as const;
+
+  const dossierEntry: ManifestDossier = {
+    name: fullPath,
+    title: metadata.title,
+    version: metadata.version,
+    path: filePath,
+  };
+
+  for (const field of OPTIONAL_MANIFEST_FIELDS) {
+    if (metadata[field] !== undefined) {
+      (dossierEntry as Record<string, unknown>)[field] = metadata[field];
+    }
+  }
+
+  const manifestResult = await updateManifest(manifest, dossierEntry);
+
+  return { file: fileResult, manifest: manifestResult };
+}
+
+export async function deleteDossier(
+  dossierName: string,
+  expectedVersion: string | null = null
+): Promise<DeleteResult> {
+  const filePath = `${dossierName}.ds.md`;
+
+  const existing = await getFileContent(filePath);
+
+  if (!existing) {
+    return { found: false };
+  }
+
+  const manifest = await getManifest();
+  const dossierEntry = manifest.dossiers.find((d) => d.name === dossierName);
+
+  if (!dossierEntry) {
+    const fileResult = await deleteFile(
+      filePath,
+      `Delete orphaned file: ${dossierName}`,
+      existing.sha
+    );
+    return { found: true, version: null, file: fileResult };
+  }
+
+  if (expectedVersion && dossierEntry.version !== expectedVersion) {
+    return {
+      found: true,
+      versionMismatch: true,
+      currentVersion: dossierEntry.version,
+      requestedVersion: expectedVersion,
+    };
+  }
+
+  const fileResult = await deleteFile(
+    filePath,
+    `Delete ${dossierName} v${dossierEntry.version}`,
+    existing.sha
+  );
+
+  const manifestResult = await removeFromManifest(manifest, dossierName);
+
+  return {
+    found: true,
+    version: dossierEntry.version,
+    file: fileResult,
+    manifest: manifestResult,
+  };
+}

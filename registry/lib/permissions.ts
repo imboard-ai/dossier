@@ -1,19 +1,11 @@
-// Permission checking utilities
+import { getRootNamespace } from './dossier';
+import type { JwtPayload, PublishPermission } from './types';
 
-const { getRootNamespace } = require('./dossier');
-
-/**
- * Check if a user can publish to a namespace
- * @param {Object} jwtPayload - Decoded JWT { sub, orgs }
- * @param {string} namespace - Target namespace, e.g., "imboard-ai/development"
- * @returns {Object} { allowed: boolean, reason: string }
- */
-function canPublishTo(jwtPayload, namespace) {
+export function canPublishTo(jwtPayload: JwtPayload, namespace: string): PublishPermission {
   const rootNamespace = getRootNamespace(namespace);
   const username = jwtPayload.sub;
   const orgs = jwtPayload.orgs || [];
 
-  // Personal namespace: root must match username
   if (rootNamespace === username) {
     return {
       allowed: true,
@@ -21,7 +13,6 @@ function canPublishTo(jwtPayload, namespace) {
     };
   }
 
-  // Org namespace: root must be in user's orgs
   if (orgs.includes(rootNamespace)) {
     return {
       allowed: true,
@@ -29,13 +20,8 @@ function canPublishTo(jwtPayload, namespace) {
     };
   }
 
-  // Not allowed
   return {
     allowed: false,
     reason: `You cannot publish to namespace '${rootNamespace}'. You can publish to: ${username}, ${orgs.join(', ') || '(no orgs)'}`,
   };
 }
-
-module.exports = {
-  canPublishTo,
-};

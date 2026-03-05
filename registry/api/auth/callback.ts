@@ -1,67 +1,75 @@
-// GET /auth/callback - GitHub OAuth callback
+import * as auth from '../../lib/auth';
+import config from '../../lib/config';
+import type { VercelRequest, VercelResponse } from '../../lib/types';
 
-const auth = require('../../lib/auth');
-const config = require('../../lib/config');
-
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({
       error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' },
     });
   }
 
-  const { code, error, error_description } = req.query;
+  const { code, error, error_description } = req.query as Record<string, string>;
 
-  // Handle OAuth errors from GitHub
   if (error) {
-    return res.status(400).send(
-      renderErrorPage('Authentication Failed', error_description || error)
-    );
+    return res
+      .status(400)
+      .send(renderErrorPage('Authentication Failed', error_description || error));
   }
 
-  // Validate code parameter
   if (!code) {
-    return res.status(400).send(
-      renderErrorPage('Missing Code', 'No authorization code provided. Please try logging in again.')
-    );
+    return res
+      .status(400)
+      .send(
+        renderErrorPage(
+          'Missing Code',
+          'No authorization code provided. Please try logging in again.'
+        )
+      );
   }
 
   try {
-    // 1. Exchange code for GitHub access token
     const accessToken = await auth.exchangeGitHubCode(code);
 
-    // 2. Fetch user info and orgs in parallel
     const [user, orgs] = await Promise.all([
       auth.fetchGitHubUser(accessToken),
       auth.fetchGitHubOrgs(accessToken),
     ]);
 
-    // 3. Create JWT with user claims
     const jwtPayload = {
       sub: user.login,
       email: user.email || null,
-      orgs: orgs,
+      orgs,
     };
     const token = auth.signJwt(jwtPayload);
 
-    // 4. Encode as display code
     const displayCode = auth.encodeAsDisplayCode(token);
 
-    // 5. Return HTML page with code for copy/paste
     const clientId = config.auth.github.clientId;
     return res.status(200).send(renderSuccessPage(user.login, orgs, displayCode, clientId));
   } catch (err) {
     console.error('OAuth callback error:', err);
-    return res.status(500).send(
-      renderErrorPage('Authentication Error', 'Failed to complete authentication. Please try again.')
-    );
+    return res
+      .status(500)
+      .send(
+        renderErrorPage(
+          'Authentication Error',
+          'Failed to complete authentication. Please try again.'
+        )
+      );
   }
-};
+}
 
-function renderSuccessPage(username, orgs, code, clientId) {
-  const orgsHtml = orgs.length > 0
-    ? `<div class="orgs-list">${orgs.map(org => `<span class="org-badge">${escapeHtml(org)}</span>`).join(' ')}</div>`
-    : '<div class="orgs-list"><span class="no-orgs">No organizations detected</span></div>';
+function renderSuccessPage(
+  username: string,
+  orgs: string[],
+  code: string,
+  clientId: string
+): string {
+  const orgsHtml =
+    orgs.length > 0
+      ? `<div class="orgs-list">${orgs.map((org) => `<span class="org-badge">${escapeHtml(org)}</span>`).join(' ')}</div>`
+      : '<div class="orgs-list"><span class="no-orgs">No organizations detected</span></div>';
 
   const grantUrl = `https://github.com/settings/connections/applications/${clientId}`;
 
@@ -182,7 +190,7 @@ function renderSuccessPage(username, orgs, code, clientId) {
 </html>`;
 }
 
-function renderErrorPage(title, message) {
+function renderErrorPage(title: string, message: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -224,8 +232,8 @@ function renderErrorPage(title, message) {
 </html>`;
 }
 
-function escapeHtml(text) {
-  const map = {
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',

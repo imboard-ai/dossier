@@ -1,9 +1,7 @@
-// GET /api/v1/search?q=<query>&page=N&per_page=M - Search dossiers
+import config from '../../lib/config';
+import { handleCors } from '../../lib/cors';
+import type { ManifestDossier, VercelRequest, VercelResponse } from '../../lib/types';
 
-const config = require('../../lib/config');
-const { handleCors } = require('../../lib/cors');
-
-// Default values for optional fields
 const DOSSIER_DEFAULTS = {
   description: null,
   category: null,
@@ -12,7 +10,7 @@ const DOSSIER_DEFAULTS = {
   tools_required: [],
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
@@ -21,7 +19,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { q, page: pageStr, per_page: perPageStr } = req.query;
+  const { q, page: pageStr, per_page: perPageStr } = req.query as Record<string, string>;
 
   if (!q || !q.trim()) {
     return res.status(400).json({
@@ -29,8 +27,8 @@ module.exports = async (req, res) => {
     });
   }
 
-  const page = Math.max(1, parseInt(pageStr, 10) || 1);
-  const perPage = Math.min(100, Math.max(1, parseInt(perPageStr, 10) || 20));
+  const page = Math.max(1, Number.parseInt(pageStr, 10) || 1);
+  const perPage = Math.min(100, Math.max(1, Number.parseInt(perPageStr, 10) || 20));
 
   try {
     const manifestUrl = config.getManifestUrl();
@@ -40,26 +38,28 @@ module.exports = async (req, res) => {
       throw new Error(`Failed to fetch manifest: ${response.status}`);
     }
 
-    const manifest = await response.json();
+    const manifest = (await response.json()) as { dossiers: ManifestDossier[] };
 
-    // Case-insensitive substring matching against name, title, description, category, tags
     const query = q.toLowerCase();
     const matched = manifest.dossiers.filter((d) => {
-      if (d.name && d.name.toLowerCase().includes(query)) return true;
-      if (d.title && d.title.toLowerCase().includes(query)) return true;
-      if (d.description && typeof d.description === 'string' && d.description.toLowerCase().includes(query)) return true;
-      if (d.category && typeof d.category === 'string' && d.category.toLowerCase().includes(query)) return true;
-      if (Array.isArray(d.category) && d.category.some((c) => c.toLowerCase().includes(query))) return true;
+      if (d.name?.toLowerCase().includes(query)) return true;
+      if (d.title?.toLowerCase().includes(query)) return true;
+      if (typeof d.description === 'string' && d.description.toLowerCase().includes(query))
+        return true;
+      if (typeof d.category === 'string' && d.category.toLowerCase().includes(query)) return true;
+      if (
+        Array.isArray(d.category) &&
+        d.category.some((c: string) => c.toLowerCase().includes(query))
+      )
+        return true;
       if (Array.isArray(d.tags) && d.tags.some((t) => t.toLowerCase().includes(query))) return true;
       return false;
     });
 
-    // Paginate
     const total = matched.length;
     const start = (page - 1) * perPage;
     const paged = matched.slice(start, start + perPage);
 
-    // Normalize with defaults and add URL
     const dossiers = paged.map((d) => ({
       ...DOSSIER_DEFAULTS,
       ...d,
@@ -79,4 +79,4 @@ module.exports = async (req, res) => {
       },
     });
   }
-};
+}

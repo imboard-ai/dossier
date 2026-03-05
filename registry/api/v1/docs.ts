@@ -1,8 +1,7 @@
-// GET /api/v1/docs - API Documentation
+import { handleCors } from '../../lib/cors';
+import type { VercelRequest, VercelResponse } from '../../lib/types';
 
-const { handleCors } = require('../../lib/cors');
-
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
@@ -111,7 +110,8 @@ module.exports = async (req, res) => {
               type: 'string',
               required: true,
               description: 'Full .ds.md file content with YAML frontmatter',
-              example: '---\nname: my-dossier\ntitle: My Dossier\nversion: 1.0.0\n---\n\n# Instructions\n...',
+              example:
+                '---\nname: my-dossier\ntitle: My Dossier\nversion: 1.0.0\n---\n\n# Instructions\n...',
             },
             changelog: {
               type: 'string',
@@ -171,4 +171,4 @@ Your dossier content here...`,
       example: 'User "yuvaldim" in org "imboard-ai" can publish to: yuvaldim/*, imboard-ai/*',
     },
   });
-};
+}

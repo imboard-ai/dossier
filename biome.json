@@ -37,10 +37,11 @@
     {
       "includes": ["registry/**"],
       "linter": {
-        "enabled": false
-      },
-      "formatter": {
-        "enabled": false
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
       }
     }
   ],
