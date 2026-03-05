@@ -14,6 +14,14 @@ Instead of writing brittle scripts that break on edge cases, you write clear ins
 
 > **❓ First time here?** See [FAQ.md](../explanation/faq.md) for common questions like "Why not just use AGENTS.md?", "Who controls this protocol?", and detailed comparisons with alternatives.
 
+### File extensions & frontmatter at a glance
+
+- **`.ds.md`** — Dossier files (immutable instructions, checksummed)
+- **`.dsw.md`** — Working files (mutable execution state, not verified)
+- **`---dossier`** — Custom frontmatter delimiter (contains JSON metadata, not YAML). Uses `---dossier` instead of `---` to avoid conflicts with standard YAML frontmatter parsers. If your markdown previewer shows the JSON block as text, that's expected.
+
+See the [FAQ](../explanation/faq.md#what-do-the-dsmd-and-dswmd-file-extensions-mean) for details.
+
 ---
 
 ## Choose Your Path
