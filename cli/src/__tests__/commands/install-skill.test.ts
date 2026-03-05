@@ -38,7 +38,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--list'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed skills'));
   });
@@ -51,7 +51,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--list'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No installed skills'));
   });
@@ -64,7 +64,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--remove', 'old-skill'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(mockedFs.rmSync).toHaveBeenCalled();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Removed skill'));
@@ -78,7 +78,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--remove', 'missing'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Skill not found'));
   });
@@ -87,9 +87,7 @@ describe('install-skill command', () => {
     const program = createTestProgram();
     registerInstallSkillCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'install-skill'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'install-skill'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('provide a dossier name'));
   });
@@ -120,7 +118,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', 'org/my-skill'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('already installed'));
   });

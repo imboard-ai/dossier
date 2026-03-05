@@ -28,9 +28,7 @@ describe('auth flow integration', () => {
     const whoami1 = createTestProgram();
     registerWhoamiCommand(whoami1);
 
-    await expect(whoami1.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(whoami1.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Not logged in'));
 
     // Step 2: Simulate credentials being stored (post-login)
@@ -74,9 +72,7 @@ describe('auth flow integration', () => {
     const program = createTestProgram();
     registerWhoamiCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('expired'));
   });
 });

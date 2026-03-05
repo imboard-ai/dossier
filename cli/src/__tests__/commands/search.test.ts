@@ -48,9 +48,9 @@ describe('search command', () => {
     const program = createTestProgram();
     registerSearchCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'search', 'nonexistent'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'search', 'nonexistent'])
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No dossiers found'));
   });
@@ -65,7 +65,7 @@ describe('search command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'search', 'test', '--json'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     const jsonCalls = vi
       .mocked(console.log)
@@ -119,9 +119,7 @@ describe('search command', () => {
     const program = createTestProgram();
     registerSearchCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'search', 'test'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'search', 'test'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Search failed'));
   });

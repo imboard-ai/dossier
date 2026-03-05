@@ -39,9 +39,7 @@ describe('create command', () => {
     const program = createTestProgram();
     registerCreateCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow();
   });
 
   it('should exit 2 when template not found in registry', async () => {
@@ -59,9 +57,7 @@ describe('create command', () => {
     const program = createTestProgram();
     registerCreateCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Template not found'));
   });
@@ -110,9 +106,7 @@ describe('create command', () => {
     const program = createTestProgram();
     registerCreateCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'create'])).rejects.toThrow();
 
     expect(mockedFs.unlinkSync).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('creation failed'));

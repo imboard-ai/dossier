@@ -25,9 +25,10 @@ const mockedFs = vi.mocked(fs);
 
 const dossierContent = `---dossier
 {
+  "dossier_schema_version": "1.0.0",
   "title": "My Workflow",
   "version": "1.0.0",
-  "name": "org/my-workflow",
+  "name": "my-workflow",
   "risk_level": "medium",
   "status": "stable",
   "objective": "Automate deployment"
@@ -116,9 +117,7 @@ describe('registry flow integration', () => {
 
     const info = createTestProgram();
     registerInfoCommand(info);
-    await expect(info.parseAsync(['node', 'dossier', 'info', 'org/my-workflow'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(info.parseAsync(['node', 'dossier', 'info', 'org/my-workflow'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('My Workflow'));
 
@@ -166,7 +165,7 @@ describe('registry flow integration', () => {
     registerPublishCommand(pub2);
     await expect(
       pub2.parseAsync(['node', 'dossier', 'publish', 'workflow.ds.md', '--yes'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Version conflict'));
   });

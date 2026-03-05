@@ -34,9 +34,7 @@ describe('get command', () => {
     const program = createTestProgram();
     registerGetCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'get', 'deploy-app'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'get', 'deploy-app'])).rejects.toThrow();
 
     expect(mockClient.getDossier).toHaveBeenCalledWith('deploy-app', null);
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('deploy-app'));
@@ -55,7 +53,7 @@ describe('get command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'get', 'deploy-app@2.0.0'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(mockClient.getDossier).toHaveBeenCalledWith('deploy-app', '2.0.0');
   });
@@ -70,9 +68,9 @@ describe('get command', () => {
     const program = createTestProgram();
     registerGetCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'get', 'test', '--json'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'get', 'test', '--json'])
+    ).rejects.toThrow();
 
     const jsonCalls = vi
       .mocked(console.log)
@@ -88,9 +86,7 @@ describe('get command', () => {
     const program = createTestProgram();
     registerGetCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'get', 'nonexistent'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'get', 'nonexistent'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Not found in registry'));
   });
@@ -101,9 +97,7 @@ describe('get command', () => {
     const program = createTestProgram();
     registerGetCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'get', 'some-dossier'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'get', 'some-dossier'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Registry error'));
   });

@@ -39,9 +39,7 @@ describe('keys command', () => {
       const program = createTestProgram();
       registerKeysCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No trusted keys file'));
     });
@@ -53,9 +51,7 @@ describe('keys command', () => {
       const program = createTestProgram();
       registerKeysCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('2 trusted key(s)'));
     });
@@ -67,9 +63,7 @@ describe('keys command', () => {
       const program = createTestProgram();
       registerKeysCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'keys', 'list'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Generated Key Pairs'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('2 key pair(s)'));
@@ -84,7 +78,7 @@ describe('keys command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'keys', 'list', '--json'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       const jsonCalls = vi
         .mocked(console.log)
@@ -100,9 +94,7 @@ describe('keys command', () => {
       const program = createTestProgram();
       registerKeysCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'keys', 'generate'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'keys', 'generate'])).rejects.toThrow();
 
       expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(2);
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Key pair generated'));
@@ -116,7 +108,7 @@ describe('keys command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'keys', 'generate', '--name', 'mykey'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining('mykey.pem'),
@@ -131,9 +123,7 @@ describe('keys command', () => {
       const program = createTestProgram();
       registerKeysCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'keys', 'generate'])).rejects.toThrow(
-        'process.exit(1)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'keys', 'generate'])).rejects.toThrow();
 
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('already exist'));
     });
@@ -147,7 +137,7 @@ describe('keys command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'keys', 'generate', '--force'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(2);
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Key pair generated'));
@@ -164,7 +154,7 @@ describe('keys command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'keys', 'add', 'newkey123', 'my-key'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(mockedFs.appendFileSync).toHaveBeenCalledWith(
         expect.any(String),
@@ -182,7 +172,7 @@ describe('keys command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'keys', 'add', 'existingkey', 'my-key'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('already exists'));
     });

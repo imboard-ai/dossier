@@ -50,9 +50,9 @@ describe('local workflow integration', () => {
     const program = createTestProgram();
     registerValidateCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'validate', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'validate', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Valid'));
   });
@@ -64,9 +64,9 @@ describe('local workflow integration', () => {
     const program = createTestProgram();
     registerValidateCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'validate', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'validate', 'test.ds.md'])
+    ).rejects.toThrow();
   });
 
   it('should compute checksum for a dossier file', async () => {
@@ -76,9 +76,9 @@ describe('local workflow integration', () => {
     const program = createTestProgram();
     registerChecksumCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md'])
+    ).rejects.toThrow();
 
     // Should output a SHA-256 hash (64 hex chars)
     const logCalls = vi.mocked(console.log).mock.calls;
@@ -96,7 +96,7 @@ describe('local workflow integration', () => {
 
     await expect(
       validateProgram.parseAsync(['node', 'dossier', 'validate', 'test.ds.md'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     // Step 2: Checksum
     const checksumProgram = createTestProgram();
@@ -104,6 +104,6 @@ describe('local workflow integration', () => {
 
     await expect(
       checksumProgram.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
   });
 });

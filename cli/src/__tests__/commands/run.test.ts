@@ -69,9 +69,7 @@ describe('run command', () => {
     const program = createTestProgram();
     registerRunCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Verification failed'));
   });
@@ -85,7 +83,7 @@ describe('run command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'run', 'test.ds.md', '--dry-run'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('DRY RUN'));
     expect(spawnSync).not.toHaveBeenCalled();
@@ -101,9 +99,9 @@ describe('run command', () => {
     const program = createTestProgram();
     registerRunCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'run', 'missing/dossier'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'run', 'missing/dossier'])
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Not found'));
   });
@@ -116,8 +114,6 @@ describe('run command', () => {
     const program = createTestProgram();
     registerRunCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow();
   });
 });

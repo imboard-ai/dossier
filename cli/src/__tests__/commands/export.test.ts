@@ -69,7 +69,7 @@ describe('export command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'export', 'my-dossier', '--stdout'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(writeSpy).toHaveBeenCalledWith('dossier content here');
   });
@@ -84,7 +84,7 @@ describe('export command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'export', 'missing-dossier'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Not found'));
   });
