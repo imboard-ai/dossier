@@ -130,15 +130,7 @@ export function registerRunCommand(program: Command): void {
           const parsed = parseDossierContent(content);
           fm = parsed.frontmatter;
         } catch {
-          // Fall back to YAML frontmatter
-          const yamlMatch = content.match(/^---\n([\s\S]*?)\n---\n?/);
-          if (yamlMatch) {
-            fm = {};
-            for (const line of yamlMatch[1].split('\n')) {
-              const kv = line.match(/^(\w[\w_-]*):\s*(.+)$/);
-              if (kv) fm[kv[1]] = kv[2].trim();
-            }
-          }
+          // Non-fatal: metadata display is best-effort
         }
 
         if (fm && (fm.title || fm.risk_level || fm.objective)) {

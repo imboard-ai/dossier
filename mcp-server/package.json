@@ -43,6 +43,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
+    "@ai-dossier/core": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.21.0",
     "zod": "^3.25.76"
   },

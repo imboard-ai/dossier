@@ -28,43 +28,8 @@ export function registerInfoCommand(program: Command): void {
           frontmatter = parsed.frontmatter as Record<string, any>;
           body = parsed.body;
         } catch {
-          // Fall back to YAML frontmatter
-          const yamlMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-          if (yamlMatch) {
-            frontmatter = {};
-            const lines = yamlMatch[1].split('\n');
-            let currentKey: string | null = null;
-            for (const line of lines) {
-              const kvMatch = line.match(/^(\w[\w_-]*):\s*(.*)$/);
-              if (kvMatch) {
-                currentKey = kvMatch[1];
-                const val = kvMatch[2].trim();
-                if (val === '' || val === '|' || val === '>') {
-                  frontmatter[currentKey] = '';
-                } else if (val.startsWith('[') || val.startsWith('{')) {
-                  try {
-                    frontmatter[currentKey] = JSON.parse(val);
-                  } catch {
-                    frontmatter[currentKey] = val;
-                  }
-                } else {
-                  frontmatter[currentKey] = val;
-                }
-              } else if (currentKey && line.match(/^\s*-\s+(.+)$/)) {
-                const item = line.match(/^\s*-\s+(.+)$/)![1].trim();
-                if (!Array.isArray(frontmatter[currentKey])) {
-                  frontmatter[currentKey] = frontmatter[currentKey]
-                    ? [frontmatter[currentKey]]
-                    : [];
-                }
-                frontmatter[currentKey].push(item);
-              }
-            }
-            body = yamlMatch[2];
-          } else {
-            console.error('\n❌ Invalid dossier format: no frontmatter found\n');
-            process.exit(1);
-          }
+          console.error('\n❌ Invalid dossier format: no frontmatter found\n');
+          process.exit(1);
         }
       } else {
         source = `registry: ${fileOrName}`;

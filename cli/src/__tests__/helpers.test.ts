@@ -40,7 +40,7 @@ describe('constants', () => {
   });
 
   it('VALID_STATUSES should include standard statuses', () => {
-    expect(VALID_STATUSES).toEqual(['draft', 'stable', 'deprecated', 'experimental']);
+    expect(VALID_STATUSES).toEqual(['Draft', 'Stable', 'Deprecated', 'Experimental']);
   });
 });
 
@@ -120,13 +120,13 @@ describe('parseDossierMetadataFromContent', () => {
 
   it('should return error for content without frontmatter', () => {
     const result = parseDossierMetadataFromContent('# Just markdown', '/test.ds.md');
-    expect(result.error).toBe('No frontmatter found');
+    expect(result.error).toBe('Invalid frontmatter');
   });
 
-  it('should return error for invalid JSON frontmatter', () => {
-    const content = '---dossier\n{invalid json}\n---\n\nBody';
+  it('should return error for invalid frontmatter', () => {
+    const content = '---dossier\nkey: [invalid\n---\n\nBody';
     const result = parseDossierMetadataFromContent(content, '/test.ds.md');
-    expect(result.error).toBe('Invalid JSON frontmatter');
+    expect(result.error).toBe('Invalid frontmatter');
   });
 
   it('should handle array categories', () => {

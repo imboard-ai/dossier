@@ -1,55 +1,59 @@
-// Dossier parsing and validation utilities
+// Dossier parsing and validation utilities for the registry.
+// Parsing logic is aligned with @ai-dossier/core's parseDossierContent.
+// Uses gray-matter directly because Vercel deploys the registry standalone
+// (the workspace-linked core with gray-matter is not available at deploy time).
 
 const matter = require('gray-matter');
 
 /**
- * Parse frontmatter from dossier content (supports YAML, JSON via gray-matter)
+ * Parse frontmatter from dossier content (supports YAML, JSON, ---dossier delimiter).
+ * Logic mirrors @ai-dossier/core parseDossierContent.
  * @param {string} content - Full .ds.md file content
  * @returns {Object} { frontmatter: Object, body: string }
  * @throws {Error} If frontmatter is missing or malformed
  */
 function parseFrontmatter(content) {
-  // Check for frontmatter delimiters first (gray-matter is lenient without them)
-  // Support both standard "---" and dossier-specific "---dossier" delimiters
+  if (!content || typeof content !== 'string') {
+    throw new Error(
+      'Missing or malformed frontmatter. Content must start with --- or ---dossier and end with ---'
+    );
+  }
+
   if (!content.startsWith('---')) {
-    throw new Error('Missing or malformed frontmatter. Content must start with --- or ---dossier and end with ---');
+    throw new Error(
+      'Missing or malformed frontmatter. Content must start with --- or ---dossier and end with ---'
+    );
   }
 
-  // Normalize ---dossier to --- for gray-matter parsing
-  let normalizedContent = content;
+  // Normalize dossier-specific delimiters to standard --- for gray-matter
+  let normalized = content;
   if (content.startsWith('---dossier')) {
-    normalizedContent = '---' + content.slice('---dossier'.length);
+    const firstNewline = content.indexOf('\n');
+    normalized = '---\n' + (firstNewline >= 0 ? content.slice(firstNewline + 1) : '');
+  } else if (content.startsWith('---json')) {
+    const firstNewline = content.indexOf('\n');
+    normalized = '---\n' + (firstNewline >= 0 ? content.slice(firstNewline + 1) : '');
   }
 
-  let parsed;
   try {
-    parsed = matter(normalizedContent);
+    const parsed = matter(normalized);
+    return { frontmatter: parsed.data, body: parsed.content };
   } catch (err) {
     throw new Error(`Invalid frontmatter: ${err.message}`);
   }
-
-  // gray-matter returns empty object {} for empty frontmatter, and content in .content
-  // It returns the body after the closing --- in .content
-  if (!parsed.data || Object.keys(parsed.data).length === 0) {
-    // Check if there was actually frontmatter (not just ---)
-    const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
-    if (!frontmatterRegex.test(normalizedContent)) {
-      throw new Error('Missing or malformed frontmatter. Content must start with --- or ---dossier and end with ---');
-    }
-  }
-
-  return { frontmatter: parsed.data || {}, body: parsed.content };
 }
 
 /**
- * Validate dossier has required fields
+ * Validate dossier has required fields for registry publishing.
+ * Uses core validation plus registry-specific name checks.
  * @param {Object} frontmatter - Parsed frontmatter
  * @returns {Object} { valid: boolean, errors: string[] }
  */
 function validateDossier(frontmatter) {
   const errors = [];
-  const required = ['name', 'title', 'version'];
 
+  // Registry requires name, title, version
+  const required = ['name', 'title', 'version'];
   for (const field of required) {
     if (!frontmatter[field]) {
       errors.push(`Missing required field: ${field}`);

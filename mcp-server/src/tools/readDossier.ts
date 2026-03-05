@@ -5,6 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { parseDossierContent } from '@ai-dossier/core';
 import { CliNotFoundError, execCli } from '../utils/cli-wrapper';
 import { logger } from '../utils/logger';
 
@@ -15,21 +16,6 @@ export interface ReadDossierInput {
 export interface ReadDossierOutput {
   metadata: Record<string, unknown>;
   body: string;
-}
-
-/**
- * Extract the body content from a dossier file (everything after the frontmatter).
- */
-function extractBody(content: string): string {
-  // JSON frontmatter: ---dossier\n...\n---
-  const jsonMatch = content.match(/^---dossier\s*\n[\s\S]*?\n---\n?([\s\S]*)$/);
-  if (jsonMatch) return jsonMatch[1];
-
-  // YAML frontmatter: ---\n...\n---
-  const yamlMatch = content.match(/^---\s*\n[\s\S]*?\n---\n?([\s\S]*)$/);
-  if (yamlMatch) return yamlMatch[1];
-
-  return content;
 }
 
 /**
@@ -50,9 +36,14 @@ export async function readDossier(input: ReadDossierInput): Promise<ReadDossierO
   try {
     const metadata = await execCli<Record<string, unknown>>('info', [dossierPath, '--json']);
 
-    // Read body directly from file (info --json returns only metadata)
+    // Read body using core parser (single source of truth for frontmatter extraction)
     const fileContent = readFileSync(resolvedPath, 'utf8');
-    const body = extractBody(fileContent);
+    let body: string;
+    try {
+      body = parseDossierContent(fileContent).body;
+    } catch {
+      body = fileContent;
+    }
 
     logger.info('Dossier read successfully', {
       dossierFile: dossierPath,
