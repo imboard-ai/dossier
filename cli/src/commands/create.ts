@@ -4,20 +4,23 @@ import os from 'node:os';
 import path from 'node:path';
 import type { Command } from 'commander';
 import * as config from '../config';
-import { detectLlm, REPO_ROOT } from '../helpers';
+import { detectLlm } from '../helpers';
+import { getClient, parseNameVersion } from '../registry-client';
+
+const DEFAULT_CREATE_TEMPLATE = 'imboard-ai/meta/create-dossier';
 
 export function registerCreateCommand(program: Command): void {
   program
     .command('create')
     .description('Create new dossier')
     .argument('[file]', 'Output file path')
-    .option('--template <name>', 'Reference template/example to use as pattern')
+    .option('--template <name>', 'Registry template dossier to use', DEFAULT_CREATE_TEMPLATE)
     .option('--title <title>', 'Dossier title')
     .option('--objective <text>', 'Primary objective')
     .option('--risk <level>', 'Risk level (low, medium, high, critical)')
     .option('--category <category>', 'Category (devops, data-science, development, etc.)')
     .option('--tags <tags>', 'Comma-separated tags')
-    .option('--llm <name>', 'LLM to use (claude-code, cursor, auto)', 'auto')
+    .option('--llm <name>', 'LLM to use (claude-code, auto)', 'auto')
     .action(async (file: string | undefined, options: any) => {
       try {
         const llmOption = options.llm || config.getConfig('defaultLlm') || 'auto';
@@ -27,19 +30,60 @@ export function registerCreateCommand(program: Command): void {
           process.exit(2);
         }
 
-        const metaDossierPath = path.join(
-          REPO_ROOT,
-          'examples',
-          'authoring',
-          'create-dossier.ds.md'
-        );
-
-        if (!fs.existsSync(metaDossierPath)) {
-          console.error('❌ Error: Meta-dossier not found');
-          console.error(`   Expected: ${metaDossierPath}`);
-          console.error('\nThis is likely a package installation issue.');
-          console.error('Please report this at: https://github.com/imboard-ai/ai-dossier/issues\n');
+        if (llm !== 'claude-code') {
+          console.error(`❌ Unknown LLM: ${llm}\n`);
+          console.error('Supported: claude-code, auto\n');
           process.exit(2);
+        }
+
+        // Fetch template from registry
+        const [dossierName, version] = parseNameVersion(options.template);
+        let metaDossierContent = '';
+
+        // Check cache first
+        const cacheDir = path.join(os.homedir(), '.dossier', 'cache');
+        const dossierCacheDir = path.join(cacheDir, ...dossierName.split('/'));
+        let cached = false;
+
+        if (fs.existsSync(dossierCacheDir)) {
+          const metaFiles = fs
+            .readdirSync(dossierCacheDir)
+            .filter((f: string) => f.endsWith('.meta.json'));
+          for (const mf of metaFiles) {
+            const ver = mf.replace('.meta.json', '');
+            if (version && ver !== version) continue;
+            const contentFile = path.join(dossierCacheDir, `${ver}.ds.md`);
+            if (fs.existsSync(contentFile)) {
+              metaDossierContent = fs.readFileSync(contentFile, 'utf8');
+              cached = true;
+              console.log(`📦 Using cached template: ${dossierName}@${ver}\n`);
+              break;
+            }
+          }
+        }
+
+        if (!cached) {
+          try {
+            const client = getClient();
+            let resolvedVersion = version;
+            if (!resolvedVersion) {
+              const meta = (await client.getDossier(dossierName)) as any;
+              resolvedVersion = meta.version || 'latest';
+            }
+            const result = await client.getDossierContent(dossierName, resolvedVersion);
+            metaDossierContent = result.content;
+            console.log(`📥 Fetched template: ${dossierName}@${resolvedVersion}\n`);
+          } catch (err: any) {
+            if (err.statusCode === 404) {
+              console.error(`❌ Template not found: ${options.template}`);
+              console.error(
+                '   Check the template name or use --template to specify a different one\n'
+              );
+            } else {
+              console.error(`❌ Failed to fetch template: ${err.message}\n`);
+            }
+            process.exit(2);
+          }
         }
 
         const contextHeader = `
@@ -53,7 +97,7 @@ ${options.objective ? `- **Objective**: ${options.objective}` : '- **Objective**
 ${options.risk ? `- **Risk level**: ${options.risk}` : '- **Risk level**: Not specified (prompt user)'}
 ${options.category ? `- **Category**: ${options.category}` : '- **Category**: Not specified (prompt user)'}
 ${options.tags ? `- **Tags**: ${options.tags}` : '- **Tags**: Not specified (optional)'}
-${options.template ? `- **Template reference**: ${options.template}` : '- **Template**: Not specified (use default structure)'}
+${options.template !== DEFAULT_CREATE_TEMPLATE ? `- **Template reference**: ${options.template}` : '- **Template**: Default (create-dossier)'}
 
 **Instructions**: Use the values provided above. For any fields marked "Not specified", prompt the user interactively. When all required information is gathered, create the dossier file according to the meta-dossier instructions below.
 
@@ -61,21 +105,10 @@ ${options.template ? `- **Template reference**: ${options.template}` : '- **Temp
 
 `;
 
-        const metaDossierContent = fs.readFileSync(metaDossierPath, 'utf8');
-
         const tmpFile = path.join(os.tmpdir(), `dossier-create-${Date.now()}.ds.md`);
         fs.writeFileSync(tmpFile, contextHeader + metaDossierContent, 'utf8');
 
         console.log('🤖 Launching dossier creation assistant (interactive mode)...\n');
-
-        if (llm !== 'claude-code') {
-          console.log(`❌ Unknown LLM: ${llm}\n`);
-          console.log('Supported: claude-code, auto\n');
-          try {
-            fs.unlinkSync(tmpFile);
-          } catch {}
-          process.exit(2);
-        }
 
         try {
           const result = spawnSync('claude', [tmpFile], { stdio: 'inherit' });

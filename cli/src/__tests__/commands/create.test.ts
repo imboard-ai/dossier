@@ -16,6 +16,16 @@ vi.mock('../../helpers', async (importOriginal) => {
     detectLlm: vi.fn(),
   };
 });
+vi.mock('../../registry-client', () => ({
+  getClient: vi.fn(() => ({
+    getDossier: vi.fn().mockResolvedValue({ version: '1.0.0' }),
+    getDossierContent: vi.fn().mockResolvedValue({ content: '# Meta dossier content' }),
+  })),
+  parseNameVersion: vi.fn((name: string) => {
+    const parts = name.split('@');
+    return [parts[0], parts[1] || ''];
+  }),
+}));
 
 const mockedFs = vi.mocked(fs);
 
@@ -34,9 +44,17 @@ describe('create command', () => {
     );
   });
 
-  it('should exit 2 when meta-dossier not found', async () => {
+  it('should exit 2 when template not found in registry', async () => {
     vi.mocked(detectLlm).mockReturnValue('claude-code');
     mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.readdirSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
+
+    const { getClient } = await import('../../registry-client');
+    vi.mocked(getClient).mockReturnValue({
+      getDossier: vi.fn().mockRejectedValue({ statusCode: 404 }),
+    } as any);
 
     const program = createTestProgram();
     registerCreateCommand(program);
@@ -45,14 +63,22 @@ describe('create command', () => {
       'process.exit(2)'
     );
 
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Meta-dossier not found'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Template not found'));
   });
 
-  it('should launch LLM with dossier content', async () => {
+  it('should fetch template from registry and launch LLM', async () => {
     vi.mocked(detectLlm).mockReturnValue('claude-code');
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.readFileSync.mockReturnValue('# Meta dossier content');
+    mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.readdirSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
     vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any);
+
+    const { getClient } = await import('../../registry-client');
+    vi.mocked(getClient).mockReturnValue({
+      getDossier: vi.fn().mockResolvedValue({ version: '1.0.0' }),
+      getDossierContent: vi.fn().mockResolvedValue({ content: '# Meta dossier content' }),
+    } as any);
 
     const program = createTestProgram();
     registerCreateCommand(program);
@@ -69,9 +95,17 @@ describe('create command', () => {
 
   it('should clean up temp file on exec failure', async () => {
     vi.mocked(detectLlm).mockReturnValue('claude-code');
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.readFileSync.mockReturnValue('# Meta dossier');
+    mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.readdirSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
     vi.mocked(spawnSync).mockReturnValue({ status: 1 } as any);
+
+    const { getClient } = await import('../../registry-client');
+    vi.mocked(getClient).mockReturnValue({
+      getDossier: vi.fn().mockResolvedValue({ version: '1.0.0' }),
+      getDossierContent: vi.fn().mockResolvedValue({ content: '# Meta dossier' }),
+    } as any);
 
     const program = createTestProgram();
     registerCreateCommand(program);
