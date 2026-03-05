@@ -16,7 +16,7 @@ export function registerLoginCommand(program: Command): void {
           token: result.token,
           username: result.username,
           orgs: result.orgs,
-          expiresAt: null,
+          expiresAt: result.expiresAt,
         });
 
         console.log(`\n✅ Logged in as ${result.username}`);

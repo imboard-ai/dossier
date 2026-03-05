@@ -12,12 +12,14 @@ export interface OAuthResult {
   username: string;
   orgs: string[];
   email: string | null;
+  expiresAt: string | null;
 }
 
 interface JwtPayload {
   sub: string;
   orgs?: string[];
   email?: string;
+  exp?: number;
 }
 
 class OAuthError extends Error {
@@ -130,6 +132,7 @@ async function runOAuthFlow(registryUrl: string): Promise<OAuthResult> {
     username,
     orgs: payload.orgs || [],
     email: payload.email || null,
+    expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
   };
 }
 
