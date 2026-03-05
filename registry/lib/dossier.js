@@ -1,12 +1,7 @@
 // Dossier parsing and validation utilities
 // Uses @ai-dossier/core as the single source of truth for parsing.
 
-const {
-  parseDossierContent,
-  validateFrontmatter: coreValidateFrontmatter,
-  VALID_STATUSES,
-  VALID_RISK_LEVELS,
-} = require('@ai-dossier/core');
+const { parseDossierContent } = require('@ai-dossier/core');
 
 /**
  * Parse frontmatter from dossier content (supports YAML, JSON via @ai-dossier/core)
