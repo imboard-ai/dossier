@@ -1,15 +1,12 @@
 {
-  "name": "dossier-registry",
+  "name": "@ai-dossier/registry",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "lib": "lib",
-    "test": "tests"
-  },
+  "private": true,
+  "description": "Dossier Registry API - Vercel serverless backend",
   "scripts": {
-    "test": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "generate:jwt-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
     "auth:url": "./scripts/auth-url.sh",
     "auth:url:local": "./scripts/auth-url.sh local",
@@ -23,16 +20,18 @@
   "keywords": [],
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
   "license": "AGPL-3.0-only",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/imboard-ai/ai-dossier/issues"
   },
   "homepage": "https://github.com/imboard-ai/ai-dossier/tree/main/registry#readme",
   "dependencies": {
-    "gray-matter": "^4.0.3",
+    "@ai-dossier/core": "*",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "jest": "^30.2.0"
+    "@types/jsonwebtoken": "^9.0.9",
+    "@vercel/node": "^5.1.8",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
   }
 }

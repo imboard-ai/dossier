@@ -1,9 +1,8 @@
-// GET /api/v1/me - Get current user info (protected)
+import * as auth from '../../lib/auth';
+import { handleCors } from '../../lib/cors';
+import type { VercelRequest, VercelResponse } from '../../lib/types';
 
-const auth = require('../../lib/auth');
-const { handleCors } = require('../../lib/cors');
-
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
@@ -12,7 +11,6 @@ module.exports = async (req, res) => {
     });
   }
 
-  // Extract JWT from Authorization header
   const token = auth.extractBearerToken(req);
 
   if (!token) {
@@ -25,28 +23,21 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Verify and decode JWT
     const payload = auth.verifyJwt(token);
 
-    // Build response with user info and computed permissions
     const username = payload.sub;
     const orgs = payload.orgs || [];
 
-    // User can publish to their personal namespace and any org they belong to
-    const canPublishTo = [
-      `${username}/*`,
-      ...orgs.map((org) => `${org}/*`),
-    ];
+    const canPublishTo = [`${username}/*`, ...orgs.map((org) => `${org}/*`)];
 
     return res.status(200).json({
-      username: username,
+      username,
       email: payload.email || null,
-      orgs: orgs,
+      orgs,
       can_publish_to: canPublishTo,
     });
   } catch (err) {
-    // Handle JWT errors
-    if (err.name === 'TokenExpiredError') {
+    if (err instanceof Error && err.name === 'TokenExpiredError') {
       return res.status(401).json({
         error: {
           code: 'TOKEN_EXPIRED',
@@ -55,7 +46,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    if (err.name === 'JsonWebTokenError') {
+    if (err instanceof Error && err.name === 'JsonWebTokenError') {
       return res.status(401).json({
         error: {
           code: 'INVALID_TOKEN',
@@ -64,7 +55,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Unexpected error
     console.error('JWT verification error:', err);
     return res.status(401).json({
       error: {
@@ -73,4 +63,4 @@ module.exports = async (req, res) => {
       },
     });
   }
-};
+}

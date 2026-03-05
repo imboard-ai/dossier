@@ -1,16 +1,22 @@
-// GET /api/v1/dossiers - List all dossiers
-// POST /api/v1/dossiers - Publish a dossier
-
-const config = require('../../../lib/config');
-const auth = require('../../../lib/auth');
-const dossier = require('../../../lib/dossier');
-const github = require('../../../lib/github');
-const { canPublishTo } = require('../../../lib/permissions');
-const { handleCors } = require('../../../lib/cors');
+import * as auth from '../../../lib/auth';
+import config from '../../../lib/config';
+import { handleCors } from '../../../lib/cors';
+import * as dossier from '../../../lib/dossier';
+import * as github from '../../../lib/github';
+import { canPublishTo } from '../../../lib/permissions';
+import type { ManifestDossier, VercelRequest, VercelResponse } from '../../../lib/types';
 
 const MAX_CONTENT_SIZE = 1024 * 1024; // 1MB
 
-module.exports = async (req, res) => {
+const DOSSIER_DEFAULTS = {
+  description: null,
+  category: null,
+  tags: [],
+  authors: [],
+  tools_required: [],
+};
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method === 'GET') {
@@ -24,21 +30,9 @@ module.exports = async (req, res) => {
   return res.status(405).json({
     error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET and POST are allowed' },
   });
-};
+}
 
-// Default values for optional fields - ensures consistent API response schema
-const DOSSIER_DEFAULTS = {
-  description: null,
-  category: null,
-  tags: [],
-  authors: [],
-  tools_required: [],
-};
-
-/**
- * GET /api/v1/dossiers - List all dossiers
- */
-async function handleList(req, res) {
+async function handleList(_req: VercelRequest, res: VercelResponse) {
   try {
     const manifestUrl = config.getManifestUrl();
     const response = await fetch(manifestUrl);
@@ -47,13 +41,12 @@ async function handleList(req, res) {
       throw new Error(`Failed to fetch manifest: ${response.status}`);
     }
 
-    const manifest = await response.json();
+    const manifest = (await response.json()) as { dossiers: ManifestDossier[] };
 
-    // Normalize dossiers with consistent schema and add URL
-    const dossiers = manifest.dossiers.map(dossier => ({
+    const dossiers = manifest.dossiers.map((d) => ({
       ...DOSSIER_DEFAULTS,
-      ...dossier,
-      url: config.getCdnUrl(dossier.path),
+      ...d,
+      url: config.getCdnUrl(d.path),
     }));
 
     return res.status(200).json({
@@ -75,11 +68,7 @@ async function handleList(req, res) {
   }
 }
 
-/**
- * POST /api/v1/dossiers - Publish a dossier
- */
-async function handlePublish(req, res) {
-  // 1. Check authentication
+async function handlePublish(req: VercelRequest, res: VercelResponse) {
   const token = auth.extractBearerToken(req);
   if (!token) {
     return res.status(401).json({
@@ -90,11 +79,11 @@ async function handlePublish(req, res) {
     });
   }
 
-  let jwtPayload;
+  let jwtPayload: import('../../../lib/types').JwtPayload;
   try {
     jwtPayload = auth.verifyJwt(token);
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
+    if (err instanceof Error && err.name === 'TokenExpiredError') {
       return res.status(401).json({
         error: { code: 'TOKEN_EXPIRED', message: 'Token has expired. Please login again.' },
       });
@@ -104,7 +93,6 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 2. Parse request body
   const { namespace, content, changelog } = req.body || {};
 
   if (!namespace) {
@@ -119,7 +107,6 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 3. Validate content size
   if (content.length > MAX_CONTENT_SIZE) {
     return res.status(413).json({
       error: {
@@ -129,7 +116,6 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 4. Validate namespace format
   const namespaceValidation = dossier.validateNamespace(namespace);
   if (!namespaceValidation.valid) {
     return res.status(400).json({
@@ -137,7 +123,6 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 5. Check permissions
   const permission = canPublishTo(jwtPayload, namespace);
   if (!permission.allowed) {
     return res.status(403).json({
@@ -145,13 +130,12 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 6. Parse and validate dossier content
-  let parsed;
+  let parsed: ReturnType<typeof dossier.parseFrontmatter>;
   try {
     parsed = dossier.parseFrontmatter(content);
   } catch (err) {
     return res.status(400).json({
-      error: { code: 'INVALID_CONTENT', message: err.message },
+      error: { code: 'INVALID_CONTENT', message: err instanceof Error ? err.message : String(err) },
     });
   }
 
@@ -162,15 +146,14 @@ async function handlePublish(req, res) {
     });
   }
 
-  // 7. Build full path and publish
-  const fullPath = dossier.buildFullName(namespace, parsed.frontmatter.name);
+  const fullPath = dossier.buildFullName(namespace, parsed.frontmatter.name as string);
   const changelogMessage = changelog || 'No changelog provided';
 
   try {
-    const result = await github.publishDossier(
+    await github.publishDossier(
       fullPath,
       content,
-      parsed.frontmatter,
+      parsed.frontmatter as unknown as ManifestDossier,
       changelogMessage
     );
 
@@ -186,7 +169,7 @@ async function handlePublish(req, res) {
     return res.status(502).json({
       error: {
         code: 'PUBLISH_ERROR',
-        message: `Failed to publish dossier: ${err.message}`,
+        message: 'Failed to publish dossier',
       },
     });
   }

@@ -1,41 +1,36 @@
-// GET /api/v1/dossiers/{name} - Get dossier metadata
-// GET /api/v1/dossiers/{name}/content - Return content with digest header
-// DELETE /api/v1/dossiers/{name} - Delete dossier
-// DELETE /api/v1/dossiers/{name}?version={version} - Delete specific version
+import crypto from 'node:crypto';
+import * as auth from '../../../lib/auth';
+import config from '../../../lib/config';
+import { handleCors } from '../../../lib/cors';
+import { getRootNamespace } from '../../../lib/dossier';
+import * as github from '../../../lib/github';
+import { canPublishTo } from '../../../lib/permissions';
+import type { VercelRequest, VercelResponse } from '../../../lib/types';
 
-const crypto = require('crypto');
-const config = require('../../../lib/config');
-const auth = require('../../../lib/auth');
-const github = require('../../../lib/github');
-const { getRootNamespace } = require('../../../lib/dossier');
-const { canPublishTo } = require('../../../lib/permissions');
-const { handleCors } = require('../../../lib/cors');
-
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE') {
-    return res.status(405).json({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET, HEAD, and DELETE are allowed' } });
+    return res.status(405).json({
+      error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET, HEAD, and DELETE are allowed' },
+    });
   }
 
-  const { name, version } = req.query;
-  // Handle both array (from Vercel) and string (from rewrite) formats
-  const pathParts = Array.isArray(name) ? name : name.split('/');
+  const { name, version } = req.query as Record<string, string | string[]>;
+  const pathParts = Array.isArray(name) ? name : (name as string).split('/');
 
-  // Check if this is a /content request
   const isContentRequest = pathParts[pathParts.length - 1] === 'content';
   const dossierName = isContentRequest ? pathParts.slice(0, -1).join('/') : pathParts.join('/');
 
   if (req.method === 'DELETE') {
-    return handleDelete(req, res, dossierName, version);
+    return handleDelete(req, res, dossierName, version as string);
   }
 
   try {
-    // Fetch manifest via GitHub API (not raw.githubusercontent.com) to avoid stale cache
     const manifest = await github.getManifest();
-    const dossier = manifest.dossiers.find((d) => d.name === dossierName);
+    const dossierEntry = manifest.dossiers.find((d) => d.name === dossierName);
 
-    if (!dossier) {
+    if (!dossierEntry) {
       return res.status(404).json({
         error: {
           code: 'DOSSIER_NOT_FOUND',
@@ -44,19 +39,17 @@ module.exports = async (req, res) => {
       });
     }
 
-    // If a specific version was requested, verify it matches
-    if (version && dossier.version !== version) {
+    if (version && dossierEntry.version !== version) {
       return res.status(404).json({
         error: {
           code: 'VERSION_NOT_FOUND',
-          message: `Dossier '${dossierName}' version '${version}' not found (latest: ${dossier.version})`,
+          message: `Dossier '${dossierName}' version '${version}' not found (latest: ${dossierEntry.version})`,
         },
       });
     }
 
-    // Handle /content endpoint - fetch and return content with digest
     if (isContentRequest) {
-      const fileContent = await github.getFileContent(dossier.path);
+      const fileContent = await github.getFileContent(dossierEntry.path);
 
       if (!fileContent) {
         return res.status(404).json({
@@ -74,13 +67,12 @@ module.exports = async (req, res) => {
       return res.status(200).send(fileContent.content);
     }
 
-    // Return metadata
     return res.status(200).json({
-      name: dossier.name,
-      title: dossier.title,
-      version: dossier.version,
-      category: dossier.category,
-      content_url: config.getCdnUrl(dossier.path),
+      name: dossierEntry.name,
+      title: dossierEntry.title,
+      version: dossierEntry.version,
+      category: dossierEntry.category,
+      content_url: config.getCdnUrl(dossierEntry.path),
     });
   } catch (error) {
     console.error('Error fetching dossier:', error);
@@ -91,14 +83,14 @@ module.exports = async (req, res) => {
       },
     });
   }
-};
+}
 
-/**
- * DELETE /api/v1/dossiers/{name} - Delete a dossier
- * DELETE /api/v1/dossiers/{name}?version={version} - Delete specific version
- */
-async function handleDelete(req, res, dossierName, version) {
-  // 1. Check authentication
+async function handleDelete(
+  req: VercelRequest,
+  res: VercelResponse,
+  dossierName: string,
+  version: string | undefined
+) {
   const token = auth.extractBearerToken(req);
   if (!token) {
     return res.status(401).json({
@@ -109,11 +101,11 @@ async function handleDelete(req, res, dossierName, version) {
     });
   }
 
-  let jwtPayload;
+  let jwtPayload: import('../../../lib/types').JwtPayload;
   try {
     jwtPayload = auth.verifyJwt(token);
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
+    if (err instanceof Error && err.name === 'TokenExpiredError') {
       return res.status(401).json({
         error: { code: 'TOKEN_EXPIRED', message: 'Token has expired. Please login again.' },
       });
@@ -123,7 +115,6 @@ async function handleDelete(req, res, dossierName, version) {
     });
   }
 
-  // 2. Check permissions - user must own the namespace
   const rootNamespace = getRootNamespace(dossierName);
   const permission = canPublishTo(jwtPayload, rootNamespace);
   if (!permission.allowed) {
@@ -132,7 +123,6 @@ async function handleDelete(req, res, dossierName, version) {
     });
   }
 
-  // 3. Delete the dossier
   try {
     const result = await github.deleteDossier(dossierName, version || null);
 
@@ -154,13 +144,11 @@ async function handleDelete(req, res, dossierName, version) {
       });
     }
 
-    // Success response
-    const response = {
+    const response: Record<string, string> = {
       message: 'Dossier deleted',
       name: dossierName,
     };
 
-    // Include version in response if specific version was deleted
     if (version) {
       response.version = version;
     }

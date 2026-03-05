@@ -1,9 +1,7 @@
-// GET /auth/login - Initiate GitHub OAuth flow
-// Redirects user to GitHub for authentication
+import config from '../../lib/config';
+import type { VercelRequest, VercelResponse } from '../../lib/types';
 
-const config = require('../../lib/config');
-
-module.exports = (req, res) => {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({
       error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' },
@@ -17,4 +15,4 @@ module.exports = (req, res) => {
   });
 
   res.redirect(`https://github.com/login/oauth/authorize?${params}`);
-};
+}
