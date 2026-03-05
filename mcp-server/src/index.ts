@@ -21,6 +21,7 @@ import { getProtocolResource } from './resources/protocol.js';
 import { getSecurityResource } from './resources/security.js';
 import { type ListDossiersInput, listDossiers } from './tools/listDossiers.js';
 import { type ReadDossierInput, readDossier } from './tools/readDossier.js';
+import { type ResolveGraphInput, resolveGraph } from './tools/resolveGraph.js';
 import { type SearchDossiersInput, searchDossiers } from './tools/searchDossiers.js';
 import { type VerifyDossierInput, verifyDossier } from './tools/verifyDossier.js';
 import { logger } from './utils/logger.js';
@@ -113,6 +114,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['query'],
         },
       },
+      {
+        name: 'resolve_graph',
+        description:
+          'Resolve a dossier dependency graph into an execution plan. Reads relationships (preceded_by, followed_by, conflicts_with) and produces a DAG with ordered phases, parallel groups, and conflict detection.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            dossier: {
+              type: 'string',
+              description: 'Path to dossier file (.ds.md) or registry name',
+            },
+          },
+          required: ['dossier'],
+        },
+      },
     ],
   };
 });
@@ -142,6 +158,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'search_dossiers': {
         const result = await searchDossiers(args as unknown as SearchDossiersInput);
+        return createToolResponse(result);
+      }
+
+      case 'resolve_graph': {
+        const result = await resolveGraph(args as unknown as ResolveGraphInput);
         return createToolResponse(result);
       }
 
