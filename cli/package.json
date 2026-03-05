@@ -27,7 +27,7 @@
     "cli"
   ],
   "author": "Imboard AI",
-  "license": "MIT",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/imboard-ai/ai-dossier.git",

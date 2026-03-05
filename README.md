@@ -1261,6 +1261,12 @@ Dossiers embody this philosophy - they give AI agents clear structure and guidan
 
 ---
 
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE). You are free to use, copy, modify, and distribute it, with one restriction: you may not offer it as a hosted or managed service to third parties.
+
+The canonical hosted registry is operated by [ImBoard.ai](https://github.com/imboard-ai) at `dossier-registry.vercel.app`.
+
 ## References
 
 [^1]: Liu, M. X., Liu, F., Fiannaca, A. J., Koo, T., Dixon, L., Terry, M., & Cai, C. J. (2024). "We Need Structured Output": Towards User-centered Constraints on Large Language Model Output. *CHI Conference on Human Factors in Computing Systems (CHI EA '24)*.

@@ -21,7 +21,7 @@
     "model-context-protocol"
   ],
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
-  "license": "MIT",
+  "license": "Elastic-2.0",
   "type": "commonjs",
   "files": [
     "dist/"

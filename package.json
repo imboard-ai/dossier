@@ -27,7 +27,7 @@
     "*.{ts,js,json}": "biome check --write --no-errors-on-unmatched"
   },
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
-  "license": "MIT",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/imboard-ai/ai-dossier.git"
