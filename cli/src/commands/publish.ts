@@ -15,8 +15,12 @@ export function registerPublishCommand(program: Command): void {
     .option('--changelog <message>', 'Changelog message for this version')
     .option('-y, --yes', 'Skip confirmation prompt')
     .option('--namespace <namespace>', 'Override namespace (e.g., imboard-ai/skills)')
+    .option('--json', 'Output as JSON')
     .action(
-      async (file: string, options: { changelog?: string; yes?: boolean; namespace?: string }) => {
+      async (
+        file: string,
+        options: { changelog?: string; yes?: boolean; namespace?: string; json?: boolean }
+      ) => {
         const credentials = loadCredentials();
         if (!credentials) {
           console.error('\n❌ Not logged in. Run `dossier login` first.\n');
@@ -89,15 +93,66 @@ export function registerPublishCommand(program: Command): void {
           (credentials.orgs.length > 0 ? credentials.orgs[0] : credentials.username);
         const name = frontmatter.name || frontmatter.title || path.basename(dossierFile, '.ds.md');
         const version = frontmatter.version || 'unknown';
+        const fullPath = `${namespace}/${name}`;
+        const registryPath = `${fullPath}@${version}`;
+
+        // Pre-publish existence check
+        const client = getClient(credentials.token);
+        let existingVersion: string | null = null;
+        let versionExists = false;
+        try {
+          const existing = (await client.getDossier(fullPath, version)) as any;
+          if (existing) {
+            versionExists = true;
+          }
+        } catch (err: any) {
+          // 404 = version doesn't exist (expected), other errors = warn but don't block
+        }
+
+        if (versionExists) {
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                {
+                  success: false,
+                  error: 'version_exists',
+                  message: `${registryPath} already exists`,
+                  path: fullPath,
+                  version,
+                },
+                null,
+                2
+              )
+            );
+          } else {
+            console.error(`\n❌ Version collision: ${registryPath} already exists.`);
+            console.error('   Bump the version in your dossier and try again.\n');
+          }
+          process.exit(1);
+          return;
+        }
+
+        // Check if dossier exists at any version (for overwrite warning)
+        try {
+          const existing = (await client.getDossier(fullPath)) as any;
+          if (existing) {
+            existingVersion = existing.version || null;
+          }
+        } catch (err: any) {
+          // Ignore — dossier doesn't exist or check failed
+        }
 
         if (!options.yes) {
           console.log('\n📦 Publishing dossier:\n');
+          console.log(`   Registry:  ${registryPath}`);
           console.log(`   File:      ${path.basename(dossierFile)}`);
-          console.log(`   Name:      ${name}`);
-          console.log(`   Version:   ${version}`);
-          console.log(`   Namespace: ${namespace}`);
           if (options.changelog) {
             console.log(`   Changelog: ${options.changelog}`);
+          }
+          if (existingVersion) {
+            console.log(
+              `\n   ⚠️  ${fullPath} already exists (latest: v${existingVersion}). Publishing will add v${version}.`
+            );
           }
           console.log('');
 
@@ -114,26 +169,60 @@ export function registerPublishCommand(program: Command): void {
         }
 
         try {
-          const client = getClient(credentials.token);
           const result = (await client.publishDossier(
             namespace,
             content,
             options.changelog || null
           )) as any;
 
-          const fullName = result.name || `${namespace}/${name}`;
-          console.log(`\n✅ Published ${fullName}@${version}`);
-          if (result.content_url) {
-            console.log(`   URL: ${result.content_url}`);
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                {
+                  success: true,
+                  path: result.name || fullPath,
+                  version,
+                  registryPath,
+                  url: result.content_url || null,
+                  existed: existingVersion !== null,
+                  previousVersion: existingVersion,
+                },
+                null,
+                2
+              )
+            );
+          } else {
+            console.log(`\n✅ Published ${registryPath}`);
+            if (existingVersion) {
+              console.log(`   Updated from v${existingVersion}`);
+            }
+            if (result.content_url) {
+              console.log(`   URL: ${result.content_url}`);
+            }
+            console.log('');
           }
-          console.log('');
         } catch (err: any) {
-          if (err.statusCode === 401) {
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                {
+                  success: false,
+                  error: err.code || 'publish_failed',
+                  message: err.message,
+                  path: fullPath,
+                  version,
+                  statusCode: err.statusCode || null,
+                },
+                null,
+                2
+              )
+            );
+          } else if (err.statusCode === 401) {
             console.error('\n❌ Session expired. Run `dossier login` to re-authenticate.\n');
           } else if (err.statusCode === 403) {
             console.error(`\n❌ Permission denied: ${err.message}\n`);
           } else if (err.statusCode === 409) {
-            console.error(`\n❌ Version conflict: ${err.message}\n`);
+            console.error(`\n❌ Version conflict: ${registryPath} — ${err.message}\n`);
           } else {
             console.error(`\n❌ Publish failed: ${err.message}`);
             if (err.statusCode) {
