@@ -33,11 +33,15 @@ import { type VerifyGraphInput, verifyGraph } from './tools/verifyGraph.js';
 import { logger } from './utils/logger.js';
 import { createToolResponse } from './utils/response.js';
 
+// Read version from package.json to avoid hardcoded drift
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { version } = require('../package.json') as { version: string };
+
 // Create MCP server instance
 const server = new Server(
   {
     name: '@ai-dossier/mcp-server',
-    version: '1.0.0',
+    version,
   },
   {
     capabilities: {
@@ -591,7 +595,7 @@ async function main() {
 
     logger.info('Dossier MCP Server started', {
       name: '@ai-dossier/mcp-server',
-      version: '1.0.0',
+      version,
       transport: 'stdio',
     });
 
