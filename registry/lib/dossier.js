@@ -1,10 +1,13 @@
-// Dossier parsing and validation utilities
-// Uses @ai-dossier/core as the single source of truth for parsing.
+// Dossier parsing and validation utilities for the registry.
+// Parsing logic is aligned with @ai-dossier/core's parseDossierContent.
+// Uses gray-matter directly because Vercel deploys the registry standalone
+// (the workspace-linked core with gray-matter is not available at deploy time).
 
-const { parseDossierContent } = require('@ai-dossier/core');
+const matter = require('gray-matter');
 
 /**
- * Parse frontmatter from dossier content (supports YAML, JSON via @ai-dossier/core)
+ * Parse frontmatter from dossier content (supports YAML, JSON, ---dossier delimiter).
+ * Logic mirrors @ai-dossier/core parseDossierContent.
  * @param {string} content - Full .ds.md file content
  * @returns {Object} { frontmatter: Object, body: string }
  * @throws {Error} If frontmatter is missing or malformed
@@ -22,9 +25,19 @@ function parseFrontmatter(content) {
     );
   }
 
+  // Normalize dossier-specific delimiters to standard --- for gray-matter
+  let normalized = content;
+  if (content.startsWith('---dossier')) {
+    const firstNewline = content.indexOf('\n');
+    normalized = '---\n' + (firstNewline >= 0 ? content.slice(firstNewline + 1) : '');
+  } else if (content.startsWith('---json')) {
+    const firstNewline = content.indexOf('\n');
+    normalized = '---\n' + (firstNewline >= 0 ? content.slice(firstNewline + 1) : '');
+  }
+
   try {
-    const parsed = parseDossierContent(content);
-    return { frontmatter: parsed.frontmatter, body: parsed.body };
+    const parsed = matter(normalized);
+    return { frontmatter: parsed.data, body: parsed.content };
   } catch (err) {
     throw new Error(`Invalid frontmatter: ${err.message}`);
   }

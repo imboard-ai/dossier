@@ -277,7 +277,7 @@ describe('validateFrontmatter', () => {
     const errors = validateFrontmatter(frontmatter);
 
     expect(errors).toContain(
-      'Invalid status: invalid_status. Must be one of: draft, stable, deprecated, experimental'
+      'Invalid status: invalid_status. Must be one of: Draft, Stable, Deprecated, Experimental'
     );
   });
 

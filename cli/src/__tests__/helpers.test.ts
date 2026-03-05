@@ -40,7 +40,7 @@ describe('constants', () => {
   });
 
   it('VALID_STATUSES should include standard statuses', () => {
-    expect(VALID_STATUSES).toEqual(['draft', 'stable', 'deprecated', 'experimental']);
+    expect(VALID_STATUSES).toEqual(['Draft', 'Stable', 'Deprecated', 'Experimental']);
   });
 });
 

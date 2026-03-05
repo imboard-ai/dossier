@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/imboard-ai/ai-dossier/tree/main/registry#readme",
   "dependencies": {
-    "@ai-dossier/core": "^1.0.1",
+    "gray-matter": "^4.0.3",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {

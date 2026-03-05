@@ -59,7 +59,10 @@ export function registerPublishCommand(program: Command): void {
         ) {
           errors.push(`Invalid risk_level: ${frontmatter.risk_level}`);
         }
-        if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status.toLowerCase())) {
+        if (
+          frontmatter.status &&
+          !VALID_STATUSES.some((s) => s.toLowerCase() === frontmatter.status.toLowerCase())
+        ) {
           errors.push(`Invalid status: ${frontmatter.status}`);
         }
         if (errors.length > 0) {

@@ -66,7 +66,10 @@ export function registerValidateCommand(program: Command): void {
           );
         }
 
-        if (frontmatter.status && !VALID_STATUSES.includes(frontmatter.status.toLowerCase())) {
+        if (
+          frontmatter.status &&
+          !VALID_STATUSES.some((s: string) => s.toLowerCase() === frontmatter.status.toLowerCase())
+        ) {
           warnings.push(
             `Unknown status: "${frontmatter.status}" (expected: ${VALID_STATUSES.join(', ')})`
           );

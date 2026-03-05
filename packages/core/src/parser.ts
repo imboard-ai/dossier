@@ -17,8 +17,8 @@ export const REQUIRED_FIELDS = ['dossier_schema_version', 'title', 'version'] as
 /** Recommended (but optional) fields. */
 export const RECOMMENDED_FIELDS = ['objective', 'risk_level', 'status'] as const;
 
-/** Valid values for the status field (lowercase for case-insensitive comparison). */
-export const VALID_STATUSES = ['draft', 'stable', 'deprecated', 'experimental'] as const;
+/** Valid values for the status field (Title Case, matching DossierStatus type and schema). */
+export const VALID_STATUSES = ['Draft', 'Stable', 'Deprecated', 'Experimental'] as const;
 
 /** Valid values for the risk_level field. */
 export const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
@@ -111,7 +111,7 @@ export function validateFrontmatter(frontmatter: DossierFrontmatter): string[] {
   // Validate status enum (case-insensitive)
   if (frontmatter.status) {
     const statusLower = String(frontmatter.status).toLowerCase();
-    if (!VALID_STATUSES.includes(statusLower as (typeof VALID_STATUSES)[number])) {
+    if (!VALID_STATUSES.some((s) => s.toLowerCase() === statusLower)) {
       errors.push(
         `Invalid status: ${frontmatter.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
       );
