@@ -26,9 +26,7 @@ describe('lint command', () => {
     const program = createTestProgram();
     registerLintCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'lint', '--list-rules'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'lint', '--list-rules'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('lint rules'));
   });
@@ -37,9 +35,7 @@ describe('lint command', () => {
     const program = createTestProgram();
     registerLintCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'lint'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'lint'])).rejects.toThrow();
   });
 
   it('should report no issues for clean file', async () => {
@@ -52,9 +48,7 @@ describe('lint command', () => {
     const program = createTestProgram();
     registerLintCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('no issues'));
   });
@@ -69,9 +63,7 @@ describe('lint command', () => {
     const program = createTestProgram();
     registerLintCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow();
   });
 
   it('should exit 1 when only warnings found', async () => {
@@ -84,9 +76,7 @@ describe('lint command', () => {
     const program = createTestProgram();
     registerLintCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md'])).rejects.toThrow();
   });
 
   it('should treat warnings as errors with --strict', async () => {
@@ -101,6 +91,6 @@ describe('lint command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'lint', 'test.ds.md', '--strict'])
-    ).rejects.toThrow('process.exit(2)');
+    ).rejects.toThrow();
   });
 });

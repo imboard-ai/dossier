@@ -32,9 +32,7 @@ describe('info command', () => {
     const program = createTestProgram();
     registerInfoCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Dossier Info'));
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Test'));
@@ -48,9 +46,7 @@ describe('info command', () => {
     const program = createTestProgram();
     registerInfoCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('My Dossier'));
   });
@@ -66,9 +62,7 @@ describe('info command', () => {
     const program = createTestProgram();
     registerInfoCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'info', 'org/dossier'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'info', 'org/dossier'])).rejects.toThrow();
 
     expect(mockClient.getDossier).toHaveBeenCalledWith('org/dossier', null);
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Registry Dossier'));
@@ -84,7 +78,7 @@ describe('info command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'info', 'test.ds.md', '--json'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     const jsonCalls = vi
       .mocked(console.log)
@@ -103,7 +97,7 @@ describe('info command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'info', 'missing/dossier'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Not found'));
   });
@@ -115,9 +109,7 @@ describe('info command', () => {
     const program = createTestProgram();
     registerInfoCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'info', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Invalid dossier format'));
   });

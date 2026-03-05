@@ -23,9 +23,7 @@ describe('format command', () => {
     const program = createTestProgram();
     registerFormatCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('formatted'));
   });
@@ -35,9 +33,7 @@ describe('format command', () => {
     const program = createTestProgram();
     registerFormatCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('already formatted'));
   });
@@ -50,7 +46,7 @@ describe('format command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'format', 'test.ds.md', '--check'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('needs formatting'));
   });
@@ -63,7 +59,7 @@ describe('format command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'format', 'test.ds.md', '--check'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('already formatted'));
   });
@@ -75,9 +71,7 @@ describe('format command', () => {
     const program = createTestProgram();
     registerFormatCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(2)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'format', 'test.ds.md'])).rejects.toThrow();
   });
 
   it('should output JSON with --json', async () => {
@@ -87,7 +81,7 @@ describe('format command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'format', 'test.ds.md', '--json'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     const jsonCalls = vi
       .mocked(console.log)

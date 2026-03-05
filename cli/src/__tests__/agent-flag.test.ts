@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const cliPath = path.resolve(__dirname, '../../src/cli.ts');
 
 function runCli(args: string[]): string {
-  return execFileSync('npx', ['ts-node', cliPath, ...args], {
+  return execFileSync('npx', ['tsx', cliPath, ...args], {
     encoding: 'utf-8',
     timeout: 15000,
   }).trim();

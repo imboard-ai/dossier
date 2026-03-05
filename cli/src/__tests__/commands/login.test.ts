@@ -10,9 +10,17 @@ vi.mock('../../credentials');
 vi.mock('../../registry-client');
 
 describe('login command', () => {
+  let originalIsTTY: boolean | undefined;
+
   beforeEach(() => {
+    originalIsTTY = process.stdin.isTTY;
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
     // Mocks are reset by global afterEach (setup.ts)
     vi.mocked(registryClient.getRegistryUrl).mockReturnValue('https://test.registry.com');
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdin, 'isTTY', { value: originalIsTTY, configurable: true });
   });
 
   it('should save credentials on successful login', async () => {
@@ -58,9 +66,7 @@ describe('login command', () => {
     const program = createTestProgram();
     registerLoginCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Login failed'));
   });

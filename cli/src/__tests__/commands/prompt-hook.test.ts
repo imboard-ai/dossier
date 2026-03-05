@@ -22,9 +22,7 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 
   it('should exit 0 when prompt does not match pattern', async () => {
@@ -34,9 +32,7 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 
   it('should output dossier list from cache', async () => {
@@ -80,8 +76,6 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 });

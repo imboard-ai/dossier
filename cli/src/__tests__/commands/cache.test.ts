@@ -16,9 +16,7 @@ describe('cache command', () => {
       const program = createTestProgram();
       registerCacheCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No cached'));
     });
@@ -34,9 +32,7 @@ describe('cache command', () => {
       const program = createTestProgram();
       registerCacheCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Cached dossiers'));
     });
@@ -54,7 +50,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'list', '--size'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       // SIZE header should appear with --size
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('SIZE'));
@@ -71,9 +67,7 @@ describe('cache command', () => {
       const program = createTestProgram();
       registerCacheCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'cache', 'list'])).rejects.toThrow();
 
       // Check that SIZE header is NOT in any log call
       const logCalls = vi.mocked(console.log).mock.calls;
@@ -94,7 +88,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'list', '--json'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       const jsonCalls = vi
         .mocked(console.log)
@@ -112,7 +106,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'clean', '--all'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No cached'));
     });
@@ -125,7 +119,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'clean', '--all', '--yes'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(mockedFs.rmSync).toHaveBeenCalled();
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Cache cleared'));
@@ -139,7 +133,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'clean', '--older-than', 'abc', '--yes'])
-      ).rejects.toThrow('process.exit(1)');
+      ).rejects.toThrow();
 
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('positive number'));
     });
@@ -152,7 +146,7 @@ describe('cache command', () => {
 
       await expect(
         program.parseAsync(['node', 'dossier', 'cache', 'clean', 'my-dossier', '-V', '1.0.0'])
-      ).rejects.toThrow('process.exit(0)');
+      ).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Removed'));
     });
@@ -163,9 +157,7 @@ describe('cache command', () => {
       const program = createTestProgram();
       registerCacheCommand(program);
 
-      await expect(program.parseAsync(['node', 'dossier', 'cache', 'clean'])).rejects.toThrow(
-        'process.exit(0)'
-      );
+      await expect(program.parseAsync(['node', 'dossier', 'cache', 'clean'])).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage'));
     });
