@@ -58,7 +58,7 @@ I want to use the dossier automation system. First, learn about it:
 
 1. Read README.md to understand what dossiers are
 2. Read one example: examples/devops/deploy-to-aws.md
-3. Read PROTOCOL.md to understand execution protocol
+3. Read docs/reference/protocol.md to understand execution protocol
 
 Then help me list and execute dossiers in this project.
 ```
@@ -122,11 +122,24 @@ The AI will follow the dossier instructions, adapt to your project, and execute 
 
 ---
 
-### Path 3: I Want Zero Friction 🚀 (Future)
+### Path 3: I Want Zero Friction 🚀
 
-**Coming Soon**: MCP Server for Claude Desktop and other MCP-compatible tools
+**Available Now**: MCP Server for Claude Desktop and other MCP-compatible tools
 
-With the MCP server, you can simply say:
+Add to `~/.claude/settings.local.json`:
+
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "npx",
+      "args": ["-y", "@ai-dossier/mcp-server"]
+    }
+  }
+}
+```
+
+Then simply say:
 
 ```
 "Use the project-init dossier"
@@ -138,9 +151,9 @@ And it just works! The AI automatically:
 - Reads the content
 - Executes following the protocol
 
-**Status**: Specification complete, implementation in progress.
+**Status**: ✅ Published to npm — `npx -y @ai-dossier/mcp-server`
 
-📚 See [mcp-server/README.md](./mcp-server/README.md) for details and contribute!
+📚 See [mcp-server/README.md](../../mcp-server/README.md) for details.
 
 ---
 
@@ -268,7 +281,7 @@ Read [PROTOCOL.md](../reference/protocol.md) to learn about:
 
 ```
 # Best practice: Have AI learn once per project
-"Read README.md and PROTOCOL.md to learn about dossiers.
+"Read README.md and docs/reference/protocol.md to learn about dossiers.
 Then find and list all dossiers in this project."
 
 # Then you can just reference by name
@@ -329,7 +342,7 @@ working on the authentication feature."
 
 ```
 "Execute this dossier following the Dossier Execution Protocol
-defined in PROTOCOL.md. This includes:
+defined in docs/reference/protocol.md. This includes:
 - Pre-execution analysis
 - Context gathering
 - Decision points
@@ -407,10 +420,10 @@ diagnose the issue. Then propose a fix."
 │   Edit: Objective, Prerequisites, Actions, Validation      │
 ├─────────────────────────────────────────────────────────────┤
 │ KEY FILES                                                   │
-│   README.md        - Dossier concept overview              │
-│   FAQ.md           - Common objections & comparisons       │
-│   SPECIFICATION.md - How to create dossiers                │
-│   PROTOCOL.md      - How to execute dossiers               │
+│   README.md                    - Dossier concept overview  │
+│   docs/explanation/faq.md      - Common objections         │
+│   docs/reference/specification.md - How to create dossiers │
+│   docs/reference/protocol.md  - How to execute dossiers    │
 │   examples/        - Real-world examples                    │
 └─────────────────────────────────────────────────────────────┘
 ```

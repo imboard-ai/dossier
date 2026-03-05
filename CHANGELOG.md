@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [@ai-dossier/cli@0.4.1] - 2026-03-06
+
+### Added
+- `--agent` flag for machine-readable capability manifest
+- `commands` command for JSON inventory of all CLI commands
+- CDN propagation warning after `publish` and `remove`
+- `--json` flag for `remove` and `whoami` commands
+
+### Fixed
+- Non-TTY stdin detection — graceful failure instead of hanging
+- Skip URL download in dry-run mode
+- Core crypto verification returns `VerifyResult` instead of bare boolean
+
+## [@ai-dossier/cli@0.4.0] - 2026-01-01
+
+### Added
+- `--json` flag for `list` and `publish` commands
+- `install-skill` cache validation, `--fresh` flag, and `--json` output
+- Publish collision warning with full path
+- Comprehensive test suite for security-critical code paths
+
+### Changed
+- Unified three disagreeing dossier parsers into one canonical implementation (core)
+
+## [@ai-dossier/cli@0.3.0] - 2025-12-01
+
+### Added
+- Full `@ai-dossier` npm scope — packages published to npm registry
+- Comprehensive test suite with 261+ tests
+- JSON output mode (`--json` flag) across commands
+- `sign` command using core library signers directly
+
+### Changed
+- **BREAKING**: Binary renamed from `dossier-verify` to `ai-dossier`
+- Package scope: `@imboard-ai/*` → `@ai-dossier/*`
+- MCP server tools now wrap CLI commands
+
+### Fixed
+- Quality review: fixed links, docs, parser deduplication, Node 18 support
+
 ## [@imboard-ai/dossier-cli@0.2.1] - 2025-11-15
 
 ### Added

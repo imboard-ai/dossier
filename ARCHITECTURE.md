@@ -30,7 +30,7 @@ Shared verification and parsing logic used by all tools. Handles:
 ### CLI Tool (`@ai-dossier/cli`)
 Command-line verification tool for end users:
 ```bash
-dossier-verify <file-or-url>
+ai-dossier verify <file-or-url>
 ```
 
 ### MCP Server (`@ai-dossier/mcp-server`)
@@ -38,14 +38,18 @@ Model Context Protocol integration for AI agents like Claude Code.
 
 ## File Format
 
-Dossiers are Markdown files with YAML frontmatter:
+Dossiers are Markdown files with a custom JSON frontmatter block (not YAML):
 
 ```markdown
----
-title: Example Dossier
-version: "1.0.0"
-checksum: "sha256:abc123..."
-signature: "minisign:xyz789..."
+---dossier
+{
+  "title": "Example Dossier",
+  "version": "1.0.0",
+  "checksum": {
+    "algorithm": "sha256",
+    "hash": "abc123..."
+  }
+}
 ---
 
 # Instructions
