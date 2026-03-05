@@ -33,6 +33,7 @@ import { registerResetHooksCommand } from './commands/reset-hooks';
 import { registerRunCommand } from './commands/run';
 import { registerSearchCommand } from './commands/search';
 import { registerSignCommand } from './commands/sign';
+import { registerSkillExportCommand } from './commands/skill-export';
 import { registerValidateCommand } from './commands/validate';
 // Import command registrations
 import { registerVerifyCommand } from './commands/verify';
@@ -72,6 +73,7 @@ registerPullCommand(program);
 registerExportCommand(program);
 registerCacheCommand(program);
 registerInstallSkillCommand(program);
+registerSkillExportCommand(program);
 registerKeysCommand(program);
 registerLintCommand(program);
 registerFormatCommand(program);
