@@ -23,11 +23,31 @@ export function registerPublishCommand(program: Command): void {
       ) => {
         const credentials = loadCredentials();
         if (!credentials) {
-          console.error('\n❌ Not logged in. Run `dossier login` first.\n');
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                { published: false, error: 'Not logged in', code: 'not_logged_in' },
+                null,
+                2
+              )
+            );
+          } else {
+            console.error('\n❌ Not logged in. Run `dossier login` first.\n');
+          }
           process.exit(1);
         }
         if (isExpired(credentials)) {
-          console.error('\n❌ Credentials expired. Run `dossier login` to re-authenticate.\n');
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                { published: false, error: 'Credentials expired', code: 'expired' },
+                null,
+                2
+              )
+            );
+          } else {
+            console.error('\n❌ Credentials expired. Run `dossier login` to re-authenticate.\n');
+          }
           process.exit(1);
         }
 
@@ -100,10 +120,10 @@ export function registerPublishCommand(program: Command): void {
             console.log(
               JSON.stringify(
                 {
-                  success: false,
-                  error: 'version_exists',
-                  message: `${registryPath} already exists`,
-                  path: fullPath,
+                  published: false,
+                  error: `${registryPath} already exists`,
+                  code: 'version_exists',
+                  name: fullPath,
                   version,
                 },
                 null,
@@ -168,13 +188,10 @@ export function registerPublishCommand(program: Command): void {
             console.log(
               JSON.stringify(
                 {
-                  success: true,
-                  path: result.name || fullPath,
+                  published: true,
+                  name: result.name || fullPath,
                   version,
-                  registryPath,
-                  url: result.content_url || null,
-                  existed: existingVersion !== null,
-                  previousVersion: existingVersion,
+                  content_url: result.content_url || null,
                   verification: {
                     verify_command: verifyCommand,
                     cdn_delay_seconds: cdnDelaySeconds,
@@ -201,12 +218,9 @@ export function registerPublishCommand(program: Command): void {
             console.log(
               JSON.stringify(
                 {
-                  success: false,
-                  error: err.code || 'publish_failed',
-                  message: err.message,
-                  path: fullPath,
-                  version,
-                  statusCode: err.statusCode || null,
+                  published: false,
+                  error: err.message,
+                  code: err.code || 'publish_failed',
                 },
                 null,
                 2
