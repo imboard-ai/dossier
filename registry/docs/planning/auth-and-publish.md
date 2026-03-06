@@ -85,7 +85,7 @@ These commands require a stored JWT:
 dossier login                          # Opens browser → GitHub OAuth → copy/paste code
 dossier logout                         # Deletes ~/.dossier/credentials
 dossier whoami                         # GET /api/v1/me (with JWT)
-dossier publish ./my.ds.md             # POST /api/v1/dossiers/{name} (with JWT)
+dossier publish ./my.ds.md             # POST /api/v1/dossiers (with JWT)
 ```
 
 ## CLI Credential Storage
@@ -144,7 +144,8 @@ The Registry API is a server-side service hosted on Vercel.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/me` | Get current user info from JWT |
-| `POST` | `/api/v1/dossiers/{name}` | Publish a dossier |
+| `POST` | `/api/v1/dossiers` | Publish a dossier |
+| `DELETE` | `/api/v1/dossiers/{name}` | Delete a dossier |
 
 ## Registry Environment Variables
 
@@ -258,25 +259,18 @@ Three distinct error codes are returned depending on the failure:
 }
 ```
 
-### POST /api/v1/dossiers/{name}
+### POST /api/v1/dossiers
 
 **Request:**
 ```http
-POST /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+POST /api/v1/dossiers
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-Content-Type: text/markdown
+Content-Type: application/json
 
----dossier
 {
-  "title": "Do I Wanna Know",
-  "version": "1.0.0",
-  ...
+  "namespace": "arctic-monkeys/songs",
+  "content": "---dossier\n{\n  \"name\": \"do-i-wanna-know\",\n  \"title\": \"Do I Wanna Know\",\n  \"version\": \"1.0.0\"\n}\n---\n\n# Do I Wanna Know\n\nDossier content here..."
 }
----
-
-# Do I Wanna Know
-
-Dossier content here...
 ```
 
 **Response (201 Created):**
@@ -284,9 +278,9 @@ Dossier content here...
 {
   "name": "arctic-monkeys/songs/do-i-wanna-know",
   "version": "1.0.0",
+  "title": "Do I Wanna Know",
   "content_url": "https://cdn.jsdelivr.net/gh/imboard-ai/dossier-content/arctic-monkeys/songs/do-i-wanna-know.ds.md",
-  "published_at": "2025-12-04T10:00:00Z",
-  "published_by": "alex-turner"
+  "published_at": "2025-12-04T10:00:00Z"
 }
 ```
 
@@ -298,7 +292,7 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 ```json
 {
   "error": {
-    "code": "NAMESPACE_FORBIDDEN",
+    "code": "FORBIDDEN",
     "message": "You don't have permission to publish to 'other-org/*'"
   }
 }
@@ -314,12 +308,45 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 }
 ```
 
-**Response (409 Conflict):**
+### DELETE /api/v1/dossiers/{name}
+
+**Request:**
+```http
+DELETE /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Optional query parameter: `?version=1.0.0` to delete a specific version.
+
+**Response (200 OK):**
+```json
+{
+  "message": "Dossier deleted",
+  "name": "arctic-monkeys/songs/do-i-wanna-know",
+  "version": "1.0.0"
+}
+```
+
+**Response (401 Unauthorized):**
+
+Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`).
+
+**Response (403 Forbidden):**
 ```json
 {
   "error": {
-    "code": "VERSION_EXISTS",
-    "message": "Version 1.0.0 already exists for this dossier"
+    "code": "FORBIDDEN",
+    "message": "You don't have permission to delete from 'other-org/*'"
+  }
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "error": {
+    "code": "DOSSIER_NOT_FOUND",
+    "message": "Dossier 'arctic-monkeys/songs/do-i-wanna-know' not found"
   }
 }
 ```
@@ -452,8 +479,7 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 │   │             │ ./song.ds.md         │                     │           │
 │   │             │                      │                     │           │
 │   │             │ POST /api/v1/        │                     │           │
-│   │             │   dossiers/arctic-   │                     │           │
-│   │             │   monkeys/songs/diwk │                     │           │
+│   │             │   dossiers           │                     │           │
 │   │             │ Headers:             │                     │           │
 │   │             │   Authorization:     │                     │           │
 │   │             │   Bearer <JWT>       │                     │           │
@@ -673,7 +699,7 @@ The `GITHUB_CLIENT_SECRET` is stored only in Registry environment variables, nev
 - [ ] JWT signing and verification
 
 ### Phase 2: Publish Endpoint
-- [ ] Implement `POST /api/v1/dossiers/{name}`
+- [ ] Implement `POST /api/v1/dossiers`
 - [ ] JWT verification middleware
 - [ ] Namespace permission checking
 - [ ] Path validation (security)
