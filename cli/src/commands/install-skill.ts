@@ -149,17 +149,20 @@ export function registerInstallSkillCommand(program: Command): void {
 
           if (!content) {
             if (!resolvedVersion) {
-              const meta = await multiRegistryGetDossier(dossierName);
+              const { result: meta } = await multiRegistryGetDossier(dossierName);
               if (!meta) {
                 throw { statusCode: 404, message: `Not found: ${dossierName}` };
               }
               resolvedVersion = meta.version || 'latest';
             }
-            const result = await multiRegistryGetContent(dossierName, resolvedVersion);
-            if (!result) {
+            const { result: fetchedContent } = await multiRegistryGetContent(
+              dossierName,
+              resolvedVersion
+            );
+            if (!fetchedContent) {
               throw { statusCode: 404, message: `Not found: ${dossierName}` };
             }
-            content = result.content;
+            content = fetchedContent.content;
           }
 
           fs.mkdirSync(skillDir, { recursive: true });

@@ -29,13 +29,12 @@ describe('pull command', () => {
 
   it('should download and cache a dossier', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Dossier',
-      digest: null,
-      _registry: 'public',
+      result: { content: '# Dossier', digest: null, _registry: 'public' },
+      errors: [],
     });
     mockedFs.existsSync.mockReturnValue(false);
 
@@ -51,8 +50,8 @@ describe('pull command', () => {
 
   it('should skip already cached dossier', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     mockedFs.existsSync.mockReturnValue(true);
 
@@ -67,13 +66,12 @@ describe('pull command', () => {
 
   it('should force re-download with --force', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Updated',
-      digest: null,
-      _registry: 'public',
+      result: { content: '# Updated', digest: null, _registry: 'public' },
+      errors: [],
     });
     mockedFs.existsSync.mockReturnValue(true);
 
@@ -87,7 +85,10 @@ describe('pull command', () => {
   });
 
   it('should handle 404 error', async () => {
-    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: null,
+      errors: [],
+    } as any);
     mockedFs.existsSync.mockReturnValue(false);
 
     const program = createTestProgram();
@@ -100,9 +101,8 @@ describe('pull command', () => {
 
   it('should pull specific version', async () => {
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Content',
-      digest: null,
-      _registry: 'public',
+      result: { content: '# Content', digest: null, _registry: 'public' },
+      errors: [],
     });
     mockedFs.existsSync.mockReturnValue(false);
 

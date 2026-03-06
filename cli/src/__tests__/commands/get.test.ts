@@ -25,15 +25,18 @@ describe('get command', () => {
 
   it('should display dossier metadata from registry', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      name: 'deploy-app',
-      title: 'Deploy Application',
-      version: '1.0.0',
-      status: 'stable',
-      category: ['devops'],
-      objective: 'Deploy to production',
-      authors: [{ name: 'Alice' }],
-      tags: ['deploy', 'ci'],
-      _registry: 'public',
+      result: {
+        name: 'deploy-app',
+        title: 'Deploy Application',
+        version: '1.0.0',
+        status: 'stable',
+        category: ['devops'],
+        objective: 'Deploy to production',
+        authors: [{ name: 'Alice' }],
+        tags: ['deploy', 'ci'],
+        _registry: 'public',
+      },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -48,10 +51,13 @@ describe('get command', () => {
 
   it('should pass version when using name@version', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      name: 'deploy-app',
-      title: 'Deploy Application',
-      version: '2.0.0',
-      _registry: 'public',
+      result: {
+        name: 'deploy-app',
+        title: 'Deploy Application',
+        version: '2.0.0',
+        _registry: 'public',
+      },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -66,10 +72,8 @@ describe('get command', () => {
 
   it('should output JSON with --json', async () => {
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      name: 'test',
-      title: 'Test',
-      version: '1.0.0',
-      _registry: 'public',
+      result: { name: 'test', title: 'Test', version: '1.0.0', _registry: 'public' },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -86,7 +90,10 @@ describe('get command', () => {
   });
 
   it('should exit 1 on not found', async () => {
-    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: null,
+      errors: [],
+    });
 
     const program = createTestProgram();
     registerGetCommand(program);

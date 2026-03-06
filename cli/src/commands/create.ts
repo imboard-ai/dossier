@@ -80,15 +80,22 @@ export function registerCreateCommand(program: Command): void {
             try {
               let resolvedVersion = version;
               if (!resolvedVersion) {
-                const meta = await multiRegistryGetDossier(dossierName);
+                const { result: meta } = await multiRegistryGetDossier(dossierName);
                 resolvedVersion = meta?.version || 'latest';
               }
-              const result = await multiRegistryGetContent(dossierName, resolvedVersion);
+              const { result, errors: contentErrors } = await multiRegistryGetContent(
+                dossierName,
+                resolvedVersion
+              );
               if (!result) {
                 console.error(`❌ Template not found: ${options.template}`);
                 console.error(
-                  '   Check the template name or use --template to specify a different one\n'
+                  '   Check the template name or use --template to specify a different one'
                 );
+                for (const e of contentErrors) {
+                  console.error(`   ${e.registry}: ${e.error}`);
+                }
+                console.error('');
                 process.exit(2);
               }
               metaDossierContent = result.content;

@@ -91,12 +91,12 @@ describe('install-skill command', () => {
   it('should install from registry', async () => {
     mockedFs.existsSync.mockReturnValue(false);
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Skill content',
-      _registry: 'public',
+      result: { content: '# Skill content', _registry: 'public' },
+      errors: [],
     } as any);
 
     const program = createTestProgram();

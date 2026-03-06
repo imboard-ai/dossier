@@ -35,6 +35,16 @@ export interface MultiRegistrySearchResult {
   errors: Array<{ registry: string; error: string }>;
 }
 
+export interface MultiRegistryGetDossierResult {
+  result: LabeledDossierInfo | null;
+  errors: Array<{ registry: string; error: string }>;
+}
+
+export interface MultiRegistryGetContentResult {
+  result: (DossierContentResult & { _registry: string }) | null;
+  errors: Array<{ registry: string; error: string }>;
+}
+
 function getTokenForRegistry(registryName: string): string | null {
   const creds = loadCredentials(registryName);
   return creds?.token || null;
@@ -127,11 +137,12 @@ async function multiRegistrySearch(
 /**
  * Get dossier info from the first registry that has it.
  * Tries all registries in parallel, returns the first success.
+ * Returns error details when all registries fail.
  */
 async function multiRegistryGetDossier(
   name: string,
   version: string | null = null
-): Promise<LabeledDossierInfo | null> {
+): Promise<MultiRegistryGetDossierResult> {
   const registries = resolveRegistries();
 
   const results = await Promise.allSettled(
@@ -143,22 +154,29 @@ async function multiRegistryGetDossier(
     })
   );
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      return result.value;
+  const errors: Array<{ registry: string; error: string }> = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      return { result: r.value, errors: [] };
     }
+    errors.push({
+      registry: registries[i].name,
+      error: r.reason?.message || String(r.reason),
+    });
   }
 
-  return null;
+  return { result: null, errors };
 }
 
 /**
  * Get dossier content from the first registry that has it.
+ * Returns error details when all registries fail.
  */
 async function multiRegistryGetContent(
   name: string,
   version: string | null = null
-): Promise<(DossierContentResult & { _registry: string }) | null> {
+): Promise<MultiRegistryGetContentResult> {
   const registries = resolveRegistries();
 
   const results = await Promise.allSettled(
@@ -170,13 +188,19 @@ async function multiRegistryGetContent(
     })
   );
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      return result.value;
+  const errors: Array<{ registry: string; error: string }> = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      return { result: r.value, errors: [] };
     }
+    errors.push({
+      registry: registries[i].name,
+      error: r.reason?.message || String(r.reason),
+    });
   }
 
-  return null;
+  return { result: null, errors };
 }
 
 export {

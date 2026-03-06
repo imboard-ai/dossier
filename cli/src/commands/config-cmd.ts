@@ -204,10 +204,22 @@ Environment variables:
         }
 
         if (options.reset) {
-          if (config.saveConfig(config.DEFAULT_CONFIG)) {
-            console.log('✅ Configuration reset to defaults\n');
-            Object.entries(config.DEFAULT_CONFIG).forEach(([k, v]) => {
-              console.log(`   ${k}: ${v}`);
+          const currentConfig = config.loadConfig();
+          const resetConfig: config.DossierConfig = { ...config.DEFAULT_CONFIG };
+          if (currentConfig.registries) {
+            resetConfig.registries = currentConfig.registries;
+          }
+          if (currentConfig.defaultRegistry) {
+            resetConfig.defaultRegistry = currentConfig.defaultRegistry;
+          }
+          if (config.saveConfig(resetConfig)) {
+            console.log('✅ Configuration reset to defaults (registry settings preserved)\n');
+            Object.entries(resetConfig).forEach(([k, v]) => {
+              if (typeof v === 'object' && v !== null) {
+                console.log(`   ${k}: ${JSON.stringify(v)}`);
+              } else {
+                console.log(`   ${k}: ${v}`);
+              }
             });
           } else {
             console.log('❌ Failed to reset configuration');

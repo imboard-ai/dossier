@@ -48,7 +48,14 @@ describe('create command', () => {
       throw new Error('ENOENT');
     });
 
-    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: null,
+      errors: [],
+    } as any);
+    vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
+      result: null,
+      errors: [],
+    } as any);
 
     const program = createTestProgram();
     registerCreateCommand(program);
@@ -67,12 +74,12 @@ describe('create command', () => {
     vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any);
 
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Meta dossier content',
-      _registry: 'public',
+      result: { content: '# Meta dossier content', _registry: 'public' },
+      errors: [],
     } as any);
 
     const program = createTestProgram();
@@ -97,12 +104,12 @@ describe('create command', () => {
     vi.mocked(spawnSync).mockReturnValue({ status: 1 } as any);
 
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      version: '1.0.0',
-      _registry: 'public',
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
     } as any);
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Meta dossier',
-      _registry: 'public',
+      result: { content: '# Meta dossier', _registry: 'public' },
+      errors: [],
     } as any);
 
     const program = createTestProgram();

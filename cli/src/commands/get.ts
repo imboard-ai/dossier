@@ -17,9 +17,13 @@ export function registerGetCommand(program: Command): void {
 
       let meta: DossierInfo & { _registry?: string };
       try {
-        const result = await multiRegistryGetDossier(dossierName, version || null);
+        const { result, errors } = await multiRegistryGetDossier(dossierName, version || null);
         if (!result) {
-          console.error(`\n❌ Not found in any registry: ${nameArg}\n`);
+          console.error(`\n❌ Not found in any registry: ${nameArg}`);
+          for (const e of errors) {
+            console.error(`   ${e.registry}: ${e.error}`);
+          }
+          console.error('');
           process.exit(1);
         }
         meta = result;

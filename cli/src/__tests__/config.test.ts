@@ -257,6 +257,21 @@ describe('config', () => {
       );
       expect(() => resolveWriteRegistry('mirror')).toThrow('read-only');
     });
+
+    it('should throw when all registries are readonly', () => {
+      mockedFs.existsSync.mockImplementation((p: fs.PathLike) => String(p).endsWith('config.json'));
+      mockedFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          registries: {
+            mirror1: { url: 'https://mirror1.example.com', readonly: true },
+            mirror2: { url: 'https://mirror2.example.com', readonly: true },
+          },
+        })
+      );
+      expect(() => resolveWriteRegistry()).toThrow(
+        'No writable registry configured. All registries are read-only.'
+      );
+    });
   });
 
   describe('resolveRegistryByName', () => {

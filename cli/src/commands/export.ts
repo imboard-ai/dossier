@@ -17,9 +17,13 @@ export function registerExportCommand(program: Command): void {
       let content: string;
       let digest: string | null;
       try {
-        const result = await multiRegistryGetContent(dossierName, version || null);
+        const { result, errors } = await multiRegistryGetContent(dossierName, version || null);
         if (!result) {
-          console.error(`\n❌ Not found: ${name}\n`);
+          console.error(`\n❌ Not found: ${name}`);
+          for (const e of errors) {
+            console.error(`   ${e.registry}: ${e.error}`);
+          }
+          console.error('');
           process.exit(1);
           return;
         }

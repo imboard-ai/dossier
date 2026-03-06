@@ -222,7 +222,7 @@ function resolveWriteRegistry(registryFlag?: string): ResolvedRegistry {
   const writable = registries.find((r) => !r.readonly);
   if (writable) return writable;
 
-  return registries[0];
+  throw new Error('No writable registry configured. All registries are read-only.');
 }
 
 /**
