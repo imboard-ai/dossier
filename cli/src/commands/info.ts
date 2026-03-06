@@ -37,10 +37,17 @@ export function registerInfoCommand(program: Command): void {
       } else {
         try {
           const [dossierName, version] = parseNameVersion(fileOrName);
-          const meta = await multiRegistryGetDossier(dossierName, version || null);
+          const { result: meta, errors: metaErrors } = await multiRegistryGetDossier(
+            dossierName,
+            version || null
+          );
           if (!meta) {
             console.error(`\n❌ Not found: ${fileOrName}`);
-            console.error('   Not a local file and not found in any registry\n');
+            console.error('   Not a local file and not found in any registry');
+            for (const e of metaErrors) {
+              console.error(`   ${e.registry}: ${e.error}`);
+            }
+            console.error('');
             process.exit(1);
           }
           frontmatter = meta;

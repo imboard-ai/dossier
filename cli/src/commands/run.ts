@@ -85,18 +85,30 @@ export function registerRunCommand(program: Command): void {
             try {
               let resolvedVersion = version;
               if (!resolvedVersion) {
-                const meta = await multiRegistryGetDossier(dossierName);
+                const { result: meta, errors: metaErrors } =
+                  await multiRegistryGetDossier(dossierName);
                 if (!meta) {
                   console.error(`\n❌ Not found: ${file}`);
-                  console.error('   Not a local file and not found in any registry\n');
+                  console.error('   Not a local file and not found in any registry');
+                  for (const e of metaErrors) {
+                    console.error(`   ${e.registry}: ${e.error}`);
+                  }
+                  console.error('');
                   process.exit(1);
                 }
                 resolvedVersion = meta.version || 'latest';
               }
-              const result = await multiRegistryGetContent(dossierName, resolvedVersion);
+              const { result, errors: contentErrors } = await multiRegistryGetContent(
+                dossierName,
+                resolvedVersion
+              );
               if (!result) {
                 console.error(`\n❌ Not found: ${file}`);
-                console.error('   Not a local file and not found in any registry\n');
+                console.error('   Not a local file and not found in any registry');
+                for (const e of contentErrors) {
+                  console.error(`   ${e.registry}: ${e.error}`);
+                }
+                console.error('');
                 process.exit(1);
               }
 
