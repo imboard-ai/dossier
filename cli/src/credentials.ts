@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_DIR } from './config';
+import { CONFIG_DIR, ensureConfigDir } from './config';
 
 export interface Credentials {
   token: string;
@@ -18,15 +18,6 @@ export interface Credentials {
 type CredentialsStore = Record<string, Credentials>;
 
 const CREDENTIALS_FILE = path.join(CONFIG_DIR, 'credentials.json');
-
-/**
- * Ensure the config directory exists.
- */
-function ensureConfigDir(): void {
-  if (!fs.existsSync(CONFIG_DIR)) {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  }
-}
 
 /**
  * Read and parse the credentials file, returning the raw JSON.
@@ -47,7 +38,10 @@ function readCredentialsFile(): Record<string, unknown> | null {
       fs.chmodSync(CREDENTIALS_FILE, 0o600);
     }
     return JSON.parse(fs.readFileSync(CREDENTIALS_FILE, 'utf8'));
-  } catch {
+  } catch (error) {
+    console.error(
+      `⚠️  Warning: Could not parse credentials file ${CREDENTIALS_FILE} (${(error as Error).message})`
+    );
     return null;
   }
 }
@@ -124,7 +118,13 @@ function saveCredentialsStore(store: CredentialsStore): void {
       expires_at: creds.expiresAt || null,
     };
   }
-  fs.writeFileSync(CREDENTIALS_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
+  try {
+    fs.writeFileSync(CREDENTIALS_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
+  } catch (error) {
+    throw new Error(
+      `Failed to save credentials to ${CREDENTIALS_FILE}: ${(error as Error).message}`
+    );
+  }
 }
 
 /**

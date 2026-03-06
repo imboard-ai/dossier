@@ -148,6 +148,30 @@ safe-run-dossier https://example.com/dossier.ds.md cursor
 
 ---
 
+## Multi-Registry Resolution
+
+The CLI queries all configured registries in parallel when resolving dossiers (e.g., `dossier get`, `dossier run`, `dossier pull`). This uses `Promise.allSettled()` so a single registry failure does not block results from other registries.
+
+### Error Handling
+
+All multi-registry operations return structured errors alongside results:
+
+```
+$ dossier get org/my-dossier
+# If registry A is down but registry B has it → returns result silently from B
+# If no registry has it → displays errors from each registry
+```
+
+When **all registries fail**, the CLI displays per-registry error details showing which registry failed and why. When at least one registry succeeds, the result is returned without surfacing errors from other registries.
+
+This means you can configure multiple registries for redundancy — the CLI will succeed as long as at least one registry can serve the requested dossier. Registries are queried in the order they appear in your configuration; the first successful response is used.
+
+### Configuration
+
+See `dossier config` for managing registry URLs. Multiple registries are queried in parallel, not sequentially.
+
+---
+
 ## What It Checks
 
 ### 1. Integrity (Checksum)
@@ -283,6 +307,99 @@ claude-run-dossier() {
 # Usage
 claude-run-dossier https://example.com/dossier.ds.md
 ```
+
+---
+
+## Registry Configuration
+
+The CLI supports multiple registries for discovering, pulling, and publishing dossiers.
+
+### Configuration File (`~/.dossier/config.json`)
+
+Configure registries in your user config:
+
+```json
+{
+  "registries": {
+    "public": {
+      "url": "https://dossier-registry.vercel.app",
+      "default": true
+    },
+    "internal": {
+      "url": "https://dossier.internal.example.com"
+    },
+    "readonly-mirror": {
+      "url": "https://mirror.example.com",
+      "readonly": true
+    }
+  },
+  "defaultRegistry": "public"
+}
+```
+
+### Project-Level Config (`.dossierrc.json`)
+
+Place a `.dossierrc.json` in your project root to add project-specific registries:
+
+```json
+{
+  "registries": {
+    "team": {
+      "url": "https://dossier.myteam.example.com"
+    }
+  },
+  "defaultRegistry": "team"
+}
+```
+
+Project registries are merged with user registries. User-configured registries take precedence on name conflicts to prevent credential exfiltration.
+
+### Environment Variable
+
+Set `DOSSIER_REGISTRY_URL` to add a virtual `env` registry:
+
+```bash
+export DOSSIER_REGISTRY_URL=https://custom-registry.example.com
+```
+
+### Resolution Priority
+
+When resolving registries, the CLI follows this priority:
+
+1. `--registry` flag on the command
+2. `DOSSIER_REGISTRY_URL` environment variable
+3. Project-level `.dossierrc.json`
+4. User-level `~/.dossier/config.json`
+5. Hardcoded default (public registry)
+
+### Per-Command Registry Flag
+
+Write commands accept `--registry <name>` to target a specific registry:
+
+```bash
+ai-dossier publish --registry team my-dossier.ds.md
+ai-dossier login --registry internal
+```
+
+Read commands (`search`, `get`, `pull`) query all configured registries in parallel.
+
+---
+
+## Agent Discovery (`--agent`)
+
+The `--agent` flag outputs a machine-readable JSON manifest describing the CLI's capabilities. This is designed for AI agents that need to discover what the CLI can do programmatically:
+
+```bash
+ai-dossier --agent
+```
+
+Output includes:
+- CLI version and available commands
+- Supported flags (`--json`, `-y`/`--yes`)
+- Capabilities (multi-registry, non-TTY safe, machine-readable errors)
+- Discovery command for full command listing
+
+This enables agents to auto-configure their integration with the Dossier CLI without parsing help text.
 
 ---
 

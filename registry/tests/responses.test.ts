@@ -1,34 +1,69 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getRequestId, methodNotAllowed, serverError } from '../lib/responses';
+import type { VercelRequest } from '../lib/types';
 import { createViMockRes } from './helpers/mocks';
 
 describe('methodNotAllowed', () => {
+  const mockReq = { method: 'POST', url: '/api/v1/test', headers: {} } as unknown as VercelRequest;
+
   it('returns 405 with single method', () => {
     const res = createViMockRes();
-    methodNotAllowed(res, 'GET');
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    methodNotAllowed(mockReq, res, 'GET');
 
     expect(res.status).toHaveBeenCalledWith(405);
     expect(res.json).toHaveBeenCalledWith({
       error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' },
     });
+    vi.restoreAllMocks();
   });
 
   it('returns 405 with two methods', () => {
     const res = createViMockRes();
-    methodNotAllowed(res, 'GET', 'POST');
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    methodNotAllowed(mockReq, res, 'GET', 'POST');
 
     expect(res.json).toHaveBeenCalledWith({
       error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET and POST are allowed' },
     });
+    vi.restoreAllMocks();
   });
 
   it('returns 405 with three methods using Oxford comma', () => {
     const res = createViMockRes();
-    methodNotAllowed(res, 'GET', 'HEAD', 'DELETE');
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    methodNotAllowed(mockReq, res, 'GET', 'HEAD', 'DELETE');
 
     expect(res.json).toHaveBeenCalledWith({
       error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET, HEAD, and DELETE are allowed' },
     });
+    vi.restoreAllMocks();
+  });
+
+  it('logs rejected method and path (without query string)', () => {
+    const res = createViMockRes();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const req = {
+      method: 'DELETE',
+      url: '/api/v1/search?q=sensitive',
+      headers: {},
+    } as unknown as VercelRequest;
+
+    methodNotAllowed(req, res, 'GET');
+
+    expect(warnSpy).toHaveBeenCalledOnce();
+    const loggedJson = JSON.parse(warnSpy.mock.calls[0][0] as string);
+    expect(loggedJson.level).toBe('warn');
+    expect(loggedJson.context).toBe('responses');
+    expect(loggedJson.message).toBe('method-not-allowed');
+    expect(loggedJson.method).toBe('DELETE');
+    expect(loggedJson.path).toBe('/api/v1/search');
+    expect(loggedJson.allowed).toEqual(['GET']);
+
+    warnSpy.mockRestore();
   });
 });
 
@@ -102,6 +137,27 @@ describe('serverError', () => {
     consoleSpy.mockRestore();
   });
 
+  it('includes context fields in log output', () => {
+    const res = createViMockRes();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    serverError(res, {
+      operation: 'dossier.publish',
+      error: new Error('GitHub API error'),
+      code: 'PUBLISH_ERROR',
+      message: 'Failed to publish dossier',
+      requestId: 'req-123',
+      context: { namespace: 'my-org', path: 'my-org/my-dossier' },
+    });
+
+    const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
+    expect(loggedJson.namespace).toBe('my-org');
+    expect(loggedJson.path).toBe('my-org/my-dossier');
+    expect(loggedJson.requestId).toBe('req-123');
+
+    consoleSpy.mockRestore();
+  });
+
   it('includes errorType in log but not in response', () => {
     const res = createViMockRes();
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -124,7 +180,7 @@ describe('serverError', () => {
 });
 
 describe('getRequestId', () => {
-  it('returns existing X-Request-Id header', () => {
+  it('returns existing X-Request-Id header when valid', () => {
     const req = { headers: { 'x-request-id': 'existing-id' } } as never;
     expect(getRequestId(req)).toBe('existing-id');
   });
@@ -138,5 +194,30 @@ describe('getRequestId', () => {
     const req = { headers: {} } as never;
     const id = getRequestId(req);
     expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  it('rejects request IDs longer than 64 characters and logs warning', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const req = { headers: { 'x-request-id': 'a'.repeat(65) } } as never;
+    const id = getRequestId(req);
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
+    expect(loggedJson.message).toBe('Rejected invalid X-Request-Id');
+    consoleSpy.mockRestore();
+  });
+
+  it('rejects request IDs with invalid characters and logs warning', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const req = { headers: { 'x-request-id': '<script>alert(1)</script>' } } as never;
+    const id = getRequestId(req);
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
+    expect(loggedJson.message).toBe('Rejected invalid X-Request-Id');
+    consoleSpy.mockRestore();
+  });
+
+  it('accepts alphanumeric IDs with hyphens', () => {
+    const req = { headers: { 'x-request-id': 'abc-123-DEF' } } as never;
+    expect(getRequestId(req)).toBe('abc-123-DEF');
   });
 });

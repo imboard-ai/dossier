@@ -11,13 +11,31 @@ function formatAllowed(methods: string[]): string {
   return `${methods.slice(0, -1).join(', ')}, and ${methods[methods.length - 1]}`;
 }
 
+const VALID_REQUEST_ID = /^[a-zA-Z0-9-]{1,64}$/;
+
+/** Extracts the request ID from the x-request-id header, or generates a new UUID if absent. */
 export function getRequestId(req: VercelRequest): string {
   const header = req.headers['x-request-id'];
   const existing = Array.isArray(header) ? header[0] : header;
-  return existing || crypto.randomUUID();
+  if (existing && VALID_REQUEST_ID.test(existing)) return existing;
+  const generated = crypto.randomUUID();
+  if (existing) {
+    log.warn('Rejected invalid X-Request-Id', { provided: existing, generated });
+  }
+  return generated;
 }
 
-export function methodNotAllowed(res: VercelResponse, ...allowed: string[]): VercelResponse {
+/** Returns a 405 Method Not Allowed response listing the permitted HTTP methods. */
+export function methodNotAllowed(
+  req: VercelRequest,
+  res: VercelResponse,
+  ...allowed: string[]
+): VercelResponse {
+  log.warn('method-not-allowed', {
+    method: req.method,
+    path: req.url?.split('?')[0],
+    allowed,
+  });
   return res.status(HTTP_STATUS.METHOD_NOT_ALLOWED).json({
     error: {
       code: 'METHOD_NOT_ALLOWED',
@@ -26,6 +44,7 @@ export function methodNotAllowed(res: VercelResponse, ...allowed: string[]): Ver
   });
 }
 
+/** Returns a structured JSON error response with logging, request tracing, and a configurable status code (defaults to 502). */
 export function serverError(
   res: VercelResponse,
   opts: {
@@ -35,6 +54,7 @@ export function serverError(
     message: string;
     status?: number;
     requestId?: string;
+    context?: Record<string, unknown>;
   }
 ): VercelResponse {
   const requestId = opts.requestId || crypto.randomUUID();
@@ -45,6 +65,7 @@ export function serverError(
     errorType,
     error: errorMessage,
     stack: opts.error instanceof Error ? opts.error.stack : undefined,
+    ...opts.context,
   });
   return res.status(opts.status ?? HTTP_STATUS.BAD_GATEWAY).json({
     error: {

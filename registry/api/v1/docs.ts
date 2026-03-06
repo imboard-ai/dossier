@@ -64,13 +64,16 @@ const searchEndpoint = {
   description: 'Search dossiers by query',
   authentication: false,
   parameters: {
-    q: 'string - Search query (matches name, title, description, category, tags)',
+    q: 'string - Search query (matches name, title, description, category, tags). Max 1000 characters.',
     page: 'number - Page number (default: 1)',
     per_page: 'number - Results per page (default: 20, max: 100)',
   },
   response: {
     dossiers: 'array - List of matching dossier metadata',
     pagination: paginationDoc,
+  },
+  errors: {
+    400: 'MISSING_QUERY, QUERY_TOO_LONG',
   },
 };
 
@@ -102,7 +105,7 @@ const publishDossierEndpoint = {
       changelog: {
         type: 'string',
         required: false,
-        description: 'Description of changes for this version',
+        description: 'Description of changes for this version. Max 500 characters.',
         example: 'Initial release',
       },
     },
@@ -115,9 +118,9 @@ const publishDossierEndpoint = {
     published_at: 'string - ISO timestamp',
   },
   errors: {
-    400: 'MISSING_FIELD, INVALID_NAMESPACE, INVALID_CONTENT',
+    400: 'MISSING_FIELD, INVALID_FIELD, INVALID_NAMESPACE, INVALID_CONTENT, CHANGELOG_TOO_LONG',
     401: 'MISSING_TOKEN, INVALID_TOKEN, TOKEN_EXPIRED',
-    403: 'FORBIDDEN - Cannot publish to this namespace',
+    403: 'FORBIDDEN - Cannot publish to this namespace (includes `namespace` field)',
     413: 'CONTENT_TOO_LARGE - Max 1MB',
     502: 'PUBLISH_ERROR - Includes request_id for log correlation',
   },
@@ -137,7 +140,7 @@ const deleteDossierEndpoint = {
   },
   errors: {
     401: 'MISSING_TOKEN, INVALID_TOKEN, TOKEN_EXPIRED',
-    403: 'FORBIDDEN - Cannot delete from this namespace',
+    403: 'FORBIDDEN - Cannot delete from this namespace (includes `namespace` field)',
     404: 'DOSSIER_NOT_FOUND, VERSION_NOT_FOUND',
     502: 'DELETE_ERROR - Includes request_id for log correlation',
   },
@@ -206,7 +209,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
-    return methodNotAllowed(res, 'GET');
+    return methodNotAllowed(req, res, 'GET');
   }
 
   const baseUrl = `https://${req.headers.host}`;

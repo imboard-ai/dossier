@@ -293,7 +293,8 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 {
   "error": {
     "code": "FORBIDDEN",
-    "message": "You don't have permission to publish to 'other-org/*'"
+    "message": "Cannot publish to namespace 'other-org/some-dossier'",
+    "namespace": "other-org/some-dossier"
   }
 }
 ```

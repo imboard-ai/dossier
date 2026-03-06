@@ -226,6 +226,64 @@ Follow the steps carefully and validate each stage.
 
 ---
 
+## CLI Installation & Registry Setup
+
+### Install the CLI
+
+```bash
+npm install -g @ai-dossier/cli
+```
+
+### Authentication
+
+```bash
+# Interactive login (opens browser)
+ai-dossier login
+
+# Non-interactive (CI/CD, agents)
+export DOSSIER_REGISTRY_TOKEN=<your-token>
+```
+
+### Registry Configuration
+
+By default the CLI uses the public Dossier registry. Teams can configure additional registries in `~/.dossier/config.json`:
+
+```json
+{
+  "registries": {
+    "public": {
+      "url": "https://dossier-registry.vercel.app",
+      "default": true
+    },
+    "internal": {
+      "url": "https://dossier.internal.example.com"
+    }
+  }
+}
+```
+
+Or per-project via `.dossierrc.json` in your project root:
+
+```json
+{
+  "registries": {
+    "team": { "url": "https://dossier.myteam.example.com" }
+  },
+  "defaultRegistry": "team"
+}
+```
+
+Authenticate to each registry:
+
+```bash
+ai-dossier login                      # default registry
+ai-dossier login --registry internal  # named registry
+```
+
+See the [CLI README](../../cli/README.md#registry-configuration) for full registry configuration details.
+
+---
+
 ## Next Steps
 
 ### 1. Explore Examples

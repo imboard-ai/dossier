@@ -1,6 +1,6 @@
 import { authorizePublish } from '../../../lib/auth';
 import config from '../../../lib/config';
-import { HTTP_STATUS, MAX_CONTENT_SIZE } from '../../../lib/constants';
+import { HTTP_STATUS, MAX_CHANGELOG_LENGTH, MAX_CONTENT_SIZE } from '../../../lib/constants';
 import { handleCors } from '../../../lib/cors';
 import * as dossier from '../../../lib/dossier';
 import * as github from '../../../lib/github';
@@ -10,6 +10,9 @@ import { getRequestId, methodNotAllowed, serverError } from '../../../lib/respon
 import type { ManifestDossier, VercelRequest, VercelResponse } from '../../../lib/types';
 
 const log = createLogger('dossiers/index');
+
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — stripping dangerous chars
+const CONTROL_CHARS = /[\x00-\x1f\x7f]/g;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
@@ -25,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handlePublish(req, res, requestId);
   }
 
-  return methodNotAllowed(res, 'GET', 'POST');
+  return methodNotAllowed(req, res, 'GET', 'POST');
 }
 
 async function handleList(_req: VercelRequest, res: VercelResponse, requestId: string) {
@@ -56,7 +59,10 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
   const contentType = req.headers['content-type'];
   if (!contentType || !contentType.includes('application/json')) {
     return res.status(HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE).json({
-      error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Content-Type must be application/json' },
+      error: {
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        message: `Content-Type must be application/json, received: ${contentType || '(none)'}`,
+      },
     });
   }
 
@@ -83,6 +89,15 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
   if (changelog !== undefined && typeof changelog !== 'string') {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       error: { code: 'INVALID_FIELD', message: 'Field changelog must be a string' },
+    });
+  }
+
+  if (typeof changelog === 'string' && changelog.length > MAX_CHANGELOG_LENGTH) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      error: {
+        code: 'CHANGELOG_TOO_LONG',
+        message: `Changelog exceeds maximum length of ${MAX_CHANGELOG_LENGTH} characters`,
+      },
     });
   }
 
@@ -122,7 +137,12 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
   }
 
   const fullPath = dossier.buildFullName(namespace, parsed.frontmatter.name as string);
-  const changelogMessage = changelog || 'No changelog provided';
+  // Strip control characters (except space) to prevent git commit message injection
+  const sanitizedChangelog = changelog ? changelog.replace(CONTROL_CHARS, '').trim() : '';
+  if (changelog && sanitizedChangelog !== changelog) {
+    log.warn('Stripped control characters from changelog', { requestId, namespace });
+  }
+  const changelogMessage = sanitizedChangelog || 'No changelog provided';
 
   try {
     await github.publishDossier(
@@ -131,6 +151,13 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
       parsed.frontmatter as unknown as ManifestDossier,
       changelogMessage
     );
+
+    log.info('Dossier published', {
+      requestId,
+      namespace,
+      name: fullPath,
+      version: parsed.frontmatter.version,
+    });
 
     return res.status(HTTP_STATUS.CREATED).json({
       name: fullPath,
@@ -152,6 +179,7 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
       code: 'PUBLISH_ERROR',
       message: 'Failed to publish dossier',
       requestId,
+      context: { namespace, path: fullPath },
     });
   }
 }

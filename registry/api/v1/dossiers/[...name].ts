@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Request-Id', requestId);
 
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE') {
-    return methodNotAllowed(res, 'GET', 'HEAD', 'DELETE');
+    return methodNotAllowed(req, res, 'GET', 'HEAD', 'DELETE');
   }
 
   const name = req.query.name;
@@ -147,6 +147,8 @@ async function handleDelete(
         },
       });
     }
+
+    log.info('Dossier deleted', { requestId, dossier: dossierName, version });
 
     const response: Record<string, string> = {
       message: 'Dossier deleted',
