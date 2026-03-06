@@ -15,6 +15,22 @@ import {
 } from '../helpers';
 import { multiRegistryGetContent, multiRegistryGetDossier } from '../multi-registry';
 import { parseNameVersion } from '../registry-client';
+import { appendRunLog } from '../run-log';
+
+/**
+ * Check if a newer version exists in the registry.
+ * Returns the latest version string, or null if no update / error / timeout.
+ */
+async function checkForUpdate(dossierName: string, cachedVersion: string): Promise<string | null> {
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+  const check = multiRegistryGetDossier(dossierName).then(({ result }) => {
+    if (result?.version && result.version !== cachedVersion) {
+      return result.version;
+    }
+    return null;
+  });
+  return Promise.race([check, timeout]);
+}
 
 export function registerRunCommand(program: Command): void {
   program
@@ -55,6 +71,16 @@ export function registerRunCommand(program: Command): void {
           ? (...args: unknown[]) => console.error(...args)
           : (...args: unknown[]) => console.log(...args);
 
+        const runContext = {
+          dossierArg: file,
+          resolvedVersion: 'unknown',
+          source: 'local' as 'cache' | 'registry' | 'local' | 'url',
+          registry: undefined as string | undefined,
+          updateAvailable: undefined as string | undefined,
+        };
+
+        let updateCheckPromise: Promise<string | null> | null = null;
+
         // If not a URL or local file, treat as a registry name
         if (!isUrl && !isLocalFile) {
           const [dossierName, version] = parseNameVersion(file);
@@ -76,6 +102,40 @@ export function registerRunCommand(program: Command): void {
                   if (!options.pull) {
                     resolvedFile = contentFile;
                     cached = true;
+                    runContext.source = 'cache';
+                    runContext.resolvedVersion = ver;
+
+                    // Check meta for previously-detected update
+                    const metaPath = path.join(dossierCacheDir, mf);
+                    try {
+                      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+                      if (meta.latest_known_version && meta.latest_known_version !== ver) {
+                        runContext.updateAvailable = meta.latest_known_version;
+                      }
+                      const checkedAt = meta.latest_checked_at
+                        ? new Date(meta.latest_checked_at).getTime()
+                        : 0;
+                      const oneHourAgo = Date.now() - 3600000;
+                      if (checkedAt < oneHourAgo) {
+                        updateCheckPromise = checkForUpdate(dossierName, ver)
+                          .then((latestVer) => {
+                            try {
+                              meta.latest_known_version = latestVer || ver;
+                              meta.latest_checked_at = new Date().toISOString();
+                              fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf8');
+                            } catch {
+                              /* ignore meta write errors */
+                            }
+                            if (latestVer) runContext.updateAvailable = latestVer;
+                            return latestVer;
+                          })
+                          .catch(() => null);
+                      }
+                    } catch {
+                      // Meta read failed — start a fresh check
+                      updateCheckPromise = checkForUpdate(dossierName, ver).catch(() => null);
+                    }
+
                     log(`📦 Using cached: ${dossierName}@${ver}\n`);
                     break;
                   }
@@ -130,11 +190,17 @@ export function registerRunCommand(program: Command): void {
                   'utf8'
                 );
                 resolvedFile = contentFile;
+                runContext.source = 'registry';
+                runContext.resolvedVersion = resolvedVersion || 'unknown';
+                runContext.registry = result._registry;
                 log(`📥 Fetched: ${dossierName}@${resolvedVersion}\n`);
               } else {
                 const tmpFile = path.join(os.tmpdir(), `dossier-${Date.now()}.ds.md`);
                 fs.writeFileSync(tmpFile, result.content, 'utf8');
                 resolvedFile = tmpFile;
+                runContext.source = 'registry';
+                runContext.resolvedVersion = resolvedVersion || 'unknown';
+                runContext.registry = result._registry;
                 log(`📥 Fetched: ${dossierName}@${resolvedVersion} (not cached)\n`);
               }
             } catch (err: unknown) {
@@ -152,6 +218,7 @@ export function registerRunCommand(program: Command): void {
 
         // If resolvedFile is still a URL, download it first
         if (resolvedFile.startsWith('http://') || resolvedFile.startsWith('https://')) {
+          runContext.source = 'url';
           try {
             resolvedFile = downloadUrlToTempFile(resolvedFile);
           } catch (err: unknown) {
@@ -209,24 +276,90 @@ export function registerRunCommand(program: Command): void {
 
         // Nested session detection
         if (process.env.CLAUDE_CODE === '1' || process.env.CLAUDECODE === '1') {
+          // Wait for update check before showing warning
+          if (updateCheckPromise) {
+            await updateCheckPromise.catch(() => null);
+          }
+          if (runContext.updateAvailable) {
+            console.error(
+              `\n⚠️  Update available: ${file}@${runContext.updateAvailable} (cached: ${runContext.resolvedVersion})`
+            );
+            console.error('   Run with --pull to update\n');
+          }
+
           console.error('ℹ️  Running inside Claude Code — outputting dossier content\n');
+
+          const llmOption =
+            options.llm || (config.getConfig('defaultLlm') as string | undefined) || 'auto';
+          appendRunLog({
+            timestamp: new Date().toISOString(),
+            dossier: file,
+            resolved_version: runContext.resolvedVersion,
+            source: runContext.source,
+            registry: runContext.registry,
+            verification: 'nested-skip',
+            llm: llmOption,
+            user: `${process.env.USER || 'unknown'}@${os.hostname()}`,
+            cwd: process.cwd(),
+            nested: true,
+            update_available: runContext.updateAvailable,
+          });
+
           process.stdout.write(dossierContent);
           fs.unlinkSync(secureTmpFile);
           fs.rmdirSync(secureTmpDir);
           process.exit(0);
         }
 
+        // Wait for update check before verification
+        if (updateCheckPromise) {
+          await updateCheckPromise.catch(() => null);
+        }
+        if (runContext.updateAvailable) {
+          console.log(
+            `\n⚠️  Update available: ${file}@${runContext.updateAvailable} (cached: ${runContext.resolvedVersion})`
+          );
+          console.log('   Run with --pull to update\n');
+        }
+
         const result = await runVerification(resolvedFile, options);
+
+        const llmOption =
+          options.llm || (config.getConfig('defaultLlm') as string | undefined) || 'auto';
 
         if (!result.passed) {
           console.log('❌ Verification failed - cannot execute\n');
+          appendRunLog({
+            timestamp: new Date().toISOString(),
+            dossier: file,
+            resolved_version: runContext.resolvedVersion,
+            source: runContext.source,
+            registry: runContext.registry,
+            verification: 'failed',
+            llm: llmOption,
+            user: `${process.env.USER || 'unknown'}@${os.hostname()}`,
+            cwd: process.cwd(),
+            nested: false,
+            update_available: runContext.updateAvailable,
+          });
           fs.unlinkSync(secureTmpFile);
           fs.rmdirSync(secureTmpDir);
           process.exit(1);
         }
 
-        const llmOption =
-          options.llm || (config.getConfig('defaultLlm') as string | undefined) || 'auto';
+        appendRunLog({
+          timestamp: new Date().toISOString(),
+          dossier: file,
+          resolved_version: runContext.resolvedVersion,
+          source: runContext.source,
+          registry: runContext.registry,
+          verification: options.skipAllChecks ? 'skipped' : 'passed',
+          llm: llmOption,
+          user: `${process.env.USER || 'unknown'}@${os.hostname()}`,
+          cwd: process.cwd(),
+          nested: false,
+          update_available: runContext.updateAvailable,
+        });
 
         console.log('📝 Audit Log:');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

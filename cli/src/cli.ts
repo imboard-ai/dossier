@@ -17,6 +17,7 @@ import { registerExportCommand } from './commands/export';
 import { registerFormatCommand } from './commands/format';
 import { registerFromFileCommand } from './commands/from-file';
 import { registerGetCommand } from './commands/get';
+import { registerHistoryCommand } from './commands/history';
 import { registerInfoCommand } from './commands/info';
 import { registerInitCommand } from './commands/init';
 import { registerInstallSkillCommand } from './commands/install-skill';
@@ -98,6 +99,7 @@ registerLogoutCommand(program);
 registerWhoamiCommand(program);
 registerConfigCommand(program);
 registerCacheCommand(program);
+registerHistoryCommand(program);
 
 // Hidden
 registerPromptHookCommand(program);

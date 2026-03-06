@@ -6,6 +6,7 @@ import * as config from '../../config';
 import * as helpers from '../../helpers';
 import * as multiRegistry from '../../multi-registry';
 import * as registryClient from '../../registry-client';
+import * as runLog from '../../run-log';
 import { createTestProgram, parseNameVersionImpl } from '../helpers/test-utils';
 
 vi.mock('node:fs');
@@ -14,6 +15,7 @@ vi.mock('../../config');
 vi.mock('../../multi-registry');
 vi.mock('../../registry-client');
 vi.mock('../../helpers');
+vi.mock('../../run-log');
 
 const mockedFs = vi.mocked(fs);
 
@@ -112,5 +114,111 @@ describe('run command', () => {
     registerRunCommand(program);
 
     await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow();
+  });
+
+  it('should call appendRunLog on successful run', async () => {
+    mockedFs.existsSync.mockReturnValue(true);
+    mockedFs.readFileSync.mockReturnValue('---dossier\n{"title":"Test"}\n---\nBody');
+    vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any);
+
+    const program = createTestProgram();
+    registerRunCommand(program);
+
+    await program.parseAsync(['node', 'dossier', 'run', 'test.ds.md']);
+
+    expect(runLog.appendRunLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dossier: 'test.ds.md',
+        verification: 'passed',
+        nested: false,
+      })
+    );
+  });
+
+  it('should call appendRunLog with failed verification', async () => {
+    mockedFs.existsSync.mockReturnValue(true);
+    mockedFs.readFileSync.mockReturnValue('---dossier\n{"title":"Test"}\n---\nBody');
+    vi.mocked(helpers.runVerification).mockResolvedValue({ passed: false, checks: [] });
+
+    const program = createTestProgram();
+    registerRunCommand(program);
+
+    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow();
+
+    expect(runLog.appendRunLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dossier: 'test.ds.md',
+        verification: 'failed',
+        nested: false,
+      })
+    );
+  });
+
+  it('should call appendRunLog in nested mode', async () => {
+    process.env.CLAUDE_CODE = '1';
+    mockedFs.existsSync.mockReturnValue(true);
+    mockedFs.readFileSync.mockReturnValue('---dossier\n{"title":"Test"}\n---\nBody');
+
+    const program = createTestProgram();
+    registerRunCommand(program);
+
+    await expect(program.parseAsync(['node', 'dossier', 'run', 'test.ds.md'])).rejects.toThrow();
+
+    expect(runLog.appendRunLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dossier: 'test.ds.md',
+        verification: 'nested-skip',
+        nested: true,
+      })
+    );
+  });
+
+  it('should log verification as skipped with --skip-all-checks', async () => {
+    mockedFs.existsSync.mockReturnValue(true);
+    mockedFs.readFileSync.mockReturnValue('---dossier\n{"title":"Test"}\n---\nBody');
+    vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any);
+
+    const program = createTestProgram();
+    registerRunCommand(program);
+
+    await program.parseAsync(['node', 'dossier', 'run', 'test.ds.md', '--skip-all-checks']);
+
+    expect(runLog.appendRunLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        verification: 'skipped',
+      })
+    );
+  });
+
+  it('should show stale cache warning when meta has newer version', async () => {
+    // Set up as registry name (not local file)
+    mockedFs.existsSync.mockImplementation((p: any) => {
+      const ps = String(p);
+      // Not a local file, but cache dir + content file exist
+      if (ps.includes('cache/org/test')) return true;
+      if (ps.endsWith('.ds.md') && ps.includes('cache')) return true;
+      return false;
+    });
+    mockedFs.readdirSync.mockReturnValue(['1.0.0.meta.json'] as any);
+    mockedFs.readFileSync.mockImplementation((p: any) => {
+      const ps = String(p);
+      if (ps.includes('.meta.json')) {
+        return JSON.stringify({
+          cached_at: '2026-03-06T10:00:00Z',
+          version: '1.0.0',
+          latest_known_version: '2.0.0',
+          latest_checked_at: new Date().toISOString(),
+        });
+      }
+      return '---dossier\n{"title":"Test"}\n---\nBody';
+    });
+    vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any);
+
+    const program = createTestProgram();
+    registerRunCommand(program);
+
+    await program.parseAsync(['node', 'dossier', 'run', 'org/test']);
+
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Update available'));
   });
 });
