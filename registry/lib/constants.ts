@@ -25,6 +25,12 @@ export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 /** User-Agent header for outgoing GitHub API requests. */
 export const USER_AGENT = 'Dossier-Registry';
 
+/** Cookie name for OAuth CSRF state parameter. */
+export const OAUTH_STATE_COOKIE = 'dossier_oauth_state';
+
+/** OAuth state cookie max age in seconds (10 minutes). */
+export const OAUTH_STATE_MAX_AGE = 600;
+
 /** Default items per page for search/list. */
 export const DEFAULT_PER_PAGE = 20;
 
