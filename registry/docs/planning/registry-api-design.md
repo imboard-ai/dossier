@@ -441,8 +441,7 @@ dossier search "aws deploy" --category devops --signed
 {
   "access_token": "eyJ...",
   "token_type": "Bearer",
-  "expires_in": 3600,
-  "refresh_token": "...",
+  "expires_in": 604800,
   "scope": ["read", "write"]
 }
 ```
@@ -554,8 +553,7 @@ Content-Type: application/json
 ```
 
 **Token Lifetimes:**
-- Access token: 1 hour
-- Refresh token: 30 days
+- JWT token: 7 days (no refresh token; user must re-login after expiry)
 - API key: configurable (default: 1 year)
 
 ---
