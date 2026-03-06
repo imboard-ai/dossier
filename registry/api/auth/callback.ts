@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import * as auth from '../../lib/auth';
 import config from '../../lib/config';
 import { OAUTH_STATE_COOKIE } from '../../lib/constants';
+import { methodNotAllowed } from '../../lib/responses';
 import type { VercelRequest, VercelResponse } from '../../lib/types';
 
 function parseCookie(req: VercelRequest, name: string): string | undefined {
@@ -11,11 +12,46 @@ function parseCookie(req: VercelRequest, name: string): string | undefined {
   return match ? match.split('=')[1]?.trim() : undefined;
 }
 
+function validateOAuthState(
+  req: VercelRequest,
+  res: VercelResponse,
+  state: string | undefined
+): boolean {
+  const expectedState = parseCookie(req, OAUTH_STATE_COOKIE);
+
+  // Clear the state cookie regardless of outcome
+  res.setHeader(
+    'Set-Cookie',
+    `${OAUTH_STATE_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/auth; Max-Age=0`
+  );
+
+  const valid =
+    state &&
+    expectedState &&
+    state.length === expectedState.length &&
+    crypto.timingSafeEqual(Buffer.from(state), Buffer.from(expectedState));
+
+  if (!valid) {
+    console.warn(
+      '[auth/callback] State validation failed:',
+      !state ? 'missing query state' : !expectedState ? 'missing cookie state' : 'state mismatch'
+    );
+    res
+      .status(403)
+      .send(
+        renderErrorPage(
+          'Invalid State',
+          'OAuth state mismatch — possible CSRF attack. Please try logging in again.'
+        )
+      );
+  }
+
+  return !!valid;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({
-      error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' },
-    });
+    return methodNotAllowed(res, 'GET');
   }
 
   const { code, error, error_description, state } = req.query as Record<string, string>;
@@ -27,36 +63,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .send(renderErrorPage('Authentication Failed', error_description || error));
   }
 
-  const expectedState = parseCookie(req, OAUTH_STATE_COOKIE);
-
-  // Clear the state cookie regardless of outcome
-  res.setHeader(
-    'Set-Cookie',
-    `${OAUTH_STATE_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/auth; Max-Age=0`
-  );
-
-  const stateValid =
-    state &&
-    expectedState &&
-    state.length === expectedState.length &&
-    crypto.timingSafeEqual(Buffer.from(state), Buffer.from(expectedState));
-
-  if (!stateValid) {
-    console.warn(
-      '[auth/callback] State validation failed:',
-      !state ? 'missing query state' : !expectedState ? 'missing cookie state' : 'state mismatch'
-    );
-    return res
-      .status(403)
-      .send(
-        renderErrorPage(
-          'Invalid State',
-          'OAuth state mismatch — possible CSRF attack. Please try logging in again.'
-        )
-      );
+  if (!validateOAuthState(req, res, state)) {
+    return;
   }
 
   if (!code) {
+    console.warn('[auth/callback] Missing authorization code in callback');
     return res
       .status(400)
       .send(
@@ -92,16 +104,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).send(renderSuccessPage(user.login, orgs, displayCode, clientId));
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
-    console.error('[auth/callback] OAuth callback failed:', error.message, error.stack);
+    const errorRef = crypto.randomBytes(4).toString('hex');
+    console.error(
+      `[auth/callback] OAuth callback failed (ref=${errorRef}):`,
+      error.message,
+      error.stack
+    );
     return res
       .status(500)
       .send(
         renderErrorPage(
           'Authentication Error',
-          'Failed to complete authentication. Please try again.'
+          'Failed to complete authentication. Please try again.',
+          errorRef
         )
       );
   }
+}
+
+function basePageStyles(): string {
+  return `
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }`;
 }
 
 function renderSuccessPage(
@@ -123,26 +164,7 @@ function renderSuccessPage(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dossier Login - Success</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-    }
+  <style>${basePageStyles()}
     h1 { color: #1a1a1a; margin-bottom: 8px; font-size: 24px; }
     .subtitle { color: #666; margin-bottom: 16px; }
     .orgs-section { margin-bottom: 20px; }
@@ -234,36 +256,20 @@ function renderSuccessPage(
 </html>`;
 }
 
-function renderErrorPage(title: string, message: string): string {
+function renderErrorPage(title: string, message: string, errorRef?: string): string {
+  const refHtml = errorRef ? `<p class="error-ref">Reference: ${escapeHtml(errorRef)}</p>` : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dossier Login - Error</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-    }
+  <style>${basePageStyles()}
     h1 { color: #dc3545; margin-bottom: 16px; font-size: 24px; }
     .message { color: #666; line-height: 1.6; }
     .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-ref { color: #999; font-size: 12px; margin-top: 16px; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -271,6 +277,7 @@ function renderErrorPage(title: string, message: string): string {
     <div class="error-icon">&#10060;</div>
     <h1>${escapeHtml(title)}</h1>
     <p class="message">${escapeHtml(message)}</p>
+    ${refHtml}
   </div>
 </body>
 </html>`;

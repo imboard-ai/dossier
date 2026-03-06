@@ -161,7 +161,7 @@ Authorization: Bearer <JWT>
 ## Testing
 
 ### OAuth Flow
-1. Open: `https://github.com/login/oauth/authorize?client_id=<CLIENT_ID>&scope=read:user%20read:org&redirect_uri=https://dossier-registry.vercel.app/auth/callback`
+1. Open: `https://dossier-registry.vercel.app/auth/login`
 2. Authorize the app
 3. Copy the displayed code
 4. Decode: `echo "<CODE>" | base64 -d` to get JWT
