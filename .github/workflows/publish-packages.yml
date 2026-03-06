@@ -47,7 +47,7 @@ jobs:
         run: npm run lint
 
       - name: Build
-        run: make build
+        run: make build-all
 
       - name: Test
         run: make test
@@ -105,7 +105,7 @@ jobs:
           git push origin "v$VERSION"
 
       - name: Build all packages
-        run: make build
+        run: make build-all
 
       - name: Check if @ai-dossier/core needs publishing
         id: check-core

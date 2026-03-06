@@ -1,7 +1,7 @@
 # Dossier Build System
 # Handles build order dependencies across npm workspaces
 
-.PHONY: all build clean test test-coverage install help lint format check
+.PHONY: all build build-all clean test test-coverage install help lint format check
 .DEFAULT_GOAL := help
 
 ## help: Show this help message
@@ -22,8 +22,11 @@ install:
 	npm install
 	@echo "✓ Dependencies installed"
 
-## build: Build all packages in dependency order
-build: lint build-core build-mcp build-cli
+## build: Lint then build all packages (for local development)
+build: lint build-all
+
+## build-all: Build all packages in dependency order (no lint)
+build-all: build-core build-mcp build-cli
 	@echo "✓ All packages built successfully"
 
 ## build-core: Build @ai-dossier/core package
