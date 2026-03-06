@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('node:fs');
 
@@ -65,7 +65,8 @@ describe('config', () => {
       expect(config.customKey).toBe('value');
     });
 
-    it('should return defaults on read error', () => {
+    it('should return defaults on read error and include error details', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockedFs.existsSync.mockReturnValue(true);
       mockedFs.readFileSync.mockImplementation(() => {
         throw new Error('EACCES');
@@ -73,6 +74,8 @@ describe('config', () => {
 
       const config = loadConfig();
       expect(config).toEqual(DEFAULT_CONFIG);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('EACCES'));
+      errorSpy.mockRestore();
     });
 
     it('should return defaults on invalid JSON', () => {
@@ -243,9 +246,10 @@ describe('config', () => {
       expect(reg.url).toBe(DEFAULT_REGISTRY_URL);
     });
 
-    it('should throw when named registry not found', () => {
+    it('should throw when named registry not found with hint', () => {
       mockedFs.existsSync.mockReturnValue(false);
       expect(() => resolveWriteRegistry('nonexistent')).toThrow("Registry 'nonexistent' not found");
+      expect(() => resolveWriteRegistry('nonexistent')).toThrow('dossier config --list-registries');
     });
 
     it('should throw when named registry is readonly', () => {

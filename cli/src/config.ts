@@ -63,8 +63,10 @@ function loadConfig(): DossierConfig {
 
     // Merge with defaults to ensure all keys exist
     return { ...DEFAULT_CONFIG, ...config };
-  } catch (_error) {
-    console.error('⚠️  Warning: Could not read config file, using defaults');
+  } catch (error) {
+    console.error(
+      `⚠️  Warning: Could not read config file (${(error as Error).message}), using defaults`
+    );
     return { ...DEFAULT_CONFIG };
   }
 }
@@ -195,7 +197,9 @@ function resolveWriteRegistry(registryFlag?: string): ResolvedRegistry {
     const found = registries.find((r) => r.name === registryFlag);
     if (!found) {
       const names = registries.map((r) => r.name).join(', ');
-      throw new Error(`Registry '${registryFlag}' not found. Available: ${names}`);
+      throw new Error(
+        `Registry '${registryFlag}' not found. Available: ${names}. Run 'dossier config --list-registries' to see configured registries.`
+      );
     }
     if (found.readonly) {
       throw new Error(`Registry '${registryFlag}' is read-only`);

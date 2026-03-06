@@ -60,6 +60,19 @@ describe('credentials', () => {
       expect(parsed.public.expires_at).toBe('2030-01-01');
     });
 
+    it('should throw with context when write fails', () => {
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      mockedFs.readFileSync.mockReturnValue('{}');
+      mockedFs.writeFileSync.mockImplementation(() => {
+        throw new Error('EACCES: permission denied');
+      });
+
+      const creds = { token: 'tok', username: 'user', orgs: [], expiresAt: null };
+      expect(() => saveCredentials(creds)).toThrow('Failed to save credentials');
+      expect(() => saveCredentials(creds)).toThrow('EACCES: permission denied');
+      mockedFs.writeFileSync.mockReset();
+    });
+
     it('should default orgs to empty array', () => {
       const creds = {
         token: 'tok',
@@ -113,10 +126,15 @@ describe('credentials', () => {
       expect(loadCredentials()).toBeNull();
     });
 
-    it('should return null on invalid JSON', () => {
+    it('should return null on invalid JSON and log warning', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
       mockedFs.readFileSync.mockReturnValue('not json');
       expect(loadCredentials()).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not parse credentials file')
+      );
+      errorSpy.mockRestore();
     });
 
     it('should default orgs to empty array when missing', () => {
@@ -203,6 +221,7 @@ describe('credentials', () => {
     });
 
     it('should warn and fix insecure permissions', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockedFs.statSync.mockReturnValue({ mode: 0o100644 } as any);
       mockedFs.readFileSync.mockReturnValue(
         JSON.stringify({
@@ -211,8 +230,9 @@ describe('credentials', () => {
       );
 
       loadCredentials();
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('insecure permissions'));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('insecure permissions'));
       expect(mockedFs.chmodSync).toHaveBeenCalledWith(CREDENTIALS_FILE, 0o600);
+      errorSpy.mockRestore();
     });
   });
 
