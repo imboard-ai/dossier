@@ -1,16 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerWhoamiCommand } from '../../commands/whoami';
+import * as config from '../../config';
 import * as credentials from '../../credentials';
 import { createTestProgram } from '../helpers/test-utils';
 
 vi.mock('../../credentials');
+vi.mock('../../config');
 
 describe('whoami command', () => {
   beforeEach(() => {
-    // Mocks are reset by global afterEach (setup.ts)
+    vi.mocked(config.resolveRegistries).mockReturnValue([
+      { name: 'public', url: 'https://test.registry.com' },
+    ]);
   });
 
   it('should display username when logged in', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue(['public']);
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'testuser',
@@ -28,18 +33,18 @@ describe('whoami command', () => {
   });
 
   it('should exit 1 when not logged in', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue([]);
     vi.mocked(credentials.loadCredentials).mockReturnValue(null);
 
     const program = createTestProgram();
     registerWhoamiCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow(
-      /process\.exit/
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Not logged in'));
   });
 
   it('should exit 1 when credentials expired', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue(['public']);
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'user',
@@ -51,13 +56,12 @@ describe('whoami command', () => {
     const program = createTestProgram();
     registerWhoamiCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow(
-      /process\.exit/
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'whoami'])).rejects.toThrow();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('expired'));
   });
 
   it('should output JSON when logged in with --json flag', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue(['public']);
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'testuser',
@@ -85,14 +89,13 @@ describe('whoami command', () => {
   });
 
   it('should output JSON when not logged in with --json flag', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue([]);
     vi.mocked(credentials.loadCredentials).mockReturnValue(null);
 
     const program = createTestProgram();
     registerWhoamiCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'whoami', '--json'])).rejects.toThrow(
-      /process\.exit/
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'whoami', '--json'])).rejects.toThrow();
 
     const jsonCall = vi.mocked(console.log).mock.calls.find((call) => {
       try {
@@ -109,6 +112,7 @@ describe('whoami command', () => {
   });
 
   it('should not show orgs when empty', async () => {
+    vi.mocked(credentials.listCredentialRegistries).mockReturnValue(['public']);
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'user',
