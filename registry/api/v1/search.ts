@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE, HTTP_STATUS, MAX_PER_PAGE, MAX_QUERY_LENGTH } from '../../lib/constants';
 import { handleCors } from '../../lib/cors';
 import { fetchManifestDossiers, normalizeDossier } from '../../lib/manifest';
-import { methodNotAllowed, serverError } from '../../lib/responses';
+import { getRequestId, methodNotAllowed, serverError } from '../../lib/responses';
 import type { VercelRequest, VercelResponse } from '../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -10,6 +10,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return methodNotAllowed(req, res, 'GET');
   }
+
+  const requestId = getRequestId(req);
+  res.setHeader('X-Request-Id', requestId);
 
   const q = Array.isArray(req.query.q) ? req.query.q[0] : req.query.q;
   const pageStr = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
@@ -67,6 +70,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error,
       code: 'UPSTREAM_ERROR',
       message: 'Failed to search dossiers',
+      requestId,
+      context: { query: q },
     });
   }
 }

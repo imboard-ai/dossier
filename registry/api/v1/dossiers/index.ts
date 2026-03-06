@@ -59,7 +59,10 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
   const contentType = req.headers['content-type'];
   if (!contentType || !contentType.includes('application/json')) {
     return res.status(HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE).json({
-      error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Content-Type must be application/json' },
+      error: {
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        message: `Content-Type must be application/json, received: ${contentType || '(none)'}`,
+      },
     });
   }
 
@@ -169,6 +172,7 @@ async function handlePublish(req: VercelRequest, res: VercelResponse, requestId:
       code: 'PUBLISH_ERROR',
       message: 'Failed to publish dossier',
       requestId,
+      context: { namespace, path: fullPath },
     });
   }
 }

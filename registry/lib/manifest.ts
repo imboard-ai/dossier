@@ -17,7 +17,9 @@ export async function fetchManifestDossiers(): Promise<ManifestDossier[]> {
   }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch manifest from ${manifestUrl}: HTTP ${response.status}`);
+    throw new Error(
+      `Failed to fetch manifest from ${manifestUrl}: HTTP ${response.status} ${response.statusText}`
+    );
   }
 
   const manifest = (await response.json()) as { dossiers?: ManifestDossier[] };

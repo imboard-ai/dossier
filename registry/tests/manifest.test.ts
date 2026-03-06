@@ -31,11 +31,14 @@ describe('fetchManifestDossiers', () => {
     expect(result).toEqual(mockDossiers);
   });
 
-  it('throws on non-ok response with URL', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+  it('throws on non-ok response with URL and statusText', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' })
+    );
 
     await expect(fetchManifestDossiers()).rejects.toThrow(
-      'Failed to fetch manifest from https://raw.githubusercontent.com/org/repo/main/index.json: HTTP 500'
+      'Failed to fetch manifest from https://raw.githubusercontent.com/org/repo/main/index.json: HTTP 500 Internal Server Error'
     );
   });
 
