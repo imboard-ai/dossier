@@ -18,6 +18,7 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 
 ### Distribution & Publishing
 - [Publishing npm packages](publishing-packages.md) - Guide for package maintainers
+- [Multi-registry setup](../getting-started/installation.md#registry-configuration) - Configuring multiple registries for teams
 - Sharing dossiers safely
 - Hosting dossiers on GitHub
 - Creating dossier registries
