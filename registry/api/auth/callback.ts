@@ -3,6 +3,7 @@ import * as auth from '../../lib/auth';
 import config from '../../lib/config';
 import { HTTP_STATUS, OAUTH_STATE_COOKIE } from '../../lib/constants';
 import createLogger from '../../lib/logger';
+import { queryString } from '../../lib/query';
 import { methodNotAllowed } from '../../lib/responses';
 import type { VercelRequest, VercelResponse } from '../../lib/types';
 
@@ -53,10 +54,6 @@ function validateOAuthState(
   }
 
   return !!valid;
-}
-
-function queryString(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
 }
 
 async function exchangeCodeAndRenderSuccess(res: VercelResponse, code: string): Promise<void> {
