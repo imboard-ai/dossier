@@ -63,65 +63,88 @@ async function handleList(_req: VercelRequest, res: VercelResponse, requestId: s
   }
 }
 
-async function handlePublish(req: VercelRequest, res: VercelResponse, requestId: string) {
+export type PublishInput = { namespace: string; content: string; changelog: string | undefined };
+
+/** Validates the publish request body and headers. Returns validated fields on success, or `null` after sending an error response. */
+export function validatePublishInput(
+  req: VercelRequest,
+  res: VercelResponse,
+  requestId: string
+): PublishInput | null {
   const contentType = req.headers['content-type'];
   if (!contentType || !contentType.includes('application/json')) {
-    return jsonError(
+    jsonError(
       res,
       HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
       'UNSUPPORTED_MEDIA_TYPE',
       `Content-Type must be application/json, received: ${contentType || '(none)'}`,
       requestId
     );
+    return null;
   }
 
   const { namespace, content, changelog } = req.body || {};
 
   if (!namespace || typeof namespace !== 'string') {
-    return badRequest(
+    badRequest(
       res,
       'MISSING_FIELD',
       'Missing required field: namespace (must be a string)',
       requestId
     );
+    return null;
   }
 
   if (!content || typeof content !== 'string') {
-    return badRequest(
+    badRequest(
       res,
       'MISSING_FIELD',
       'Missing required field: content (must be a string)',
       requestId
     );
+    return null;
   }
 
   if (changelog !== undefined && typeof changelog !== 'string') {
-    return badRequest(res, 'INVALID_FIELD', 'Field changelog must be a string', requestId);
+    badRequest(res, 'INVALID_FIELD', 'Field changelog must be a string', requestId);
+    return null;
   }
 
   if (typeof changelog === 'string' && changelog.length > MAX_CHANGELOG_LENGTH) {
-    return badRequest(
+    badRequest(
       res,
       'CHANGELOG_TOO_LONG',
       `Changelog exceeds maximum length of ${MAX_CHANGELOG_LENGTH} characters`,
       requestId
     );
+    return null;
   }
 
   if (content.length > MAX_CONTENT_SIZE) {
-    return jsonError(
+    jsonError(
       res,
       HTTP_STATUS.CONTENT_TOO_LARGE,
       'CONTENT_TOO_LARGE',
       `Content exceeds maximum size of ${MAX_CONTENT_SIZE / 1024}KB`,
       requestId
     );
+    return null;
   }
 
   const namespaceValidation = dossier.validateNamespace(namespace);
   if (!namespaceValidation.valid) {
-    return invalidNamespaceError(res, requestId, namespaceValidation.error);
+    invalidNamespaceError(res, requestId, namespaceValidation.error);
+    return null;
   }
+
+  return { namespace, content, changelog };
+}
+
+async function handlePublish(req: VercelRequest, res: VercelResponse, requestId: string) {
+  const input = validatePublishInput(req, res, requestId);
+  if (!input) return;
+
+  const { namespace, content, changelog } = input;
 
   try {
     const authorized = await authorizePublish(req, res, namespace);
