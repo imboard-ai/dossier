@@ -112,7 +112,7 @@ The Registry API is a server-side service hosted on Vercel.
 
 For the complete endpoint specification (public, protected, and phased rollout), see the [API Specification](./registry-api-design.md#api-specification) in the API design doc.
 
-The auth-specific endpoints are `/auth/login`, `/auth/callback`, `/api/v1/me`, and `POST /api/v1/dossiers/{name}`. Their detailed flows are documented below in [Part 3](#part-3-cli--registry-communication) and [Part 4](#part-4-flows).
+The auth-specific endpoints are `/auth/login`, `/auth/callback`, `/api/v1/me`, `POST /api/v1/dossiers`, and `DELETE /api/v1/dossiers/{name}`. Their detailed flows are documented below in [Part 3](#part-3-cli--registry-communication) and [Part 4](#part-4-flows).
 
 ## Registry Environment Variables
 
@@ -226,25 +226,18 @@ Three distinct error codes are returned depending on the failure:
 }
 ```
 
-### POST /api/v1/dossiers/{name}
+### POST /api/v1/dossiers
 
 **Request:**
 ```http
-POST /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+POST /api/v1/dossiers
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-Content-Type: text/markdown
+Content-Type: application/json
 
----dossier
 {
-  "title": "Do I Wanna Know",
-  "version": "1.0.0",
-  ...
+  "namespace": "arctic-monkeys/songs",
+  "content": "---dossier\n{\n  \"name\": \"do-i-wanna-know\",\n  \"title\": \"Do I Wanna Know\",\n  \"version\": \"1.0.0\"\n}\n---\n\n# Do I Wanna Know\n\nDossier content here..."
 }
----
-
-# Do I Wanna Know
-
-Dossier content here...
 ```
 
 **Response (201 Created):**
@@ -252,9 +245,9 @@ Dossier content here...
 {
   "name": "arctic-monkeys/songs/do-i-wanna-know",
   "version": "1.0.0",
+  "title": "Do I Wanna Know",
   "content_url": "https://cdn.jsdelivr.net/gh/imboard-ai/dossier-content/arctic-monkeys/songs/do-i-wanna-know.ds.md",
-  "published_at": "2025-12-04T10:00:00Z",
-  "published_by": "alex-turner"
+  "published_at": "2025-12-04T10:00:00Z"
 }
 ```
 
@@ -277,18 +270,63 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 ```json
 {
   "error": {
-    "code": "INVALID_DOSSIER_FORMAT",
-    "message": "Invalid frontmatter: missing required field 'title'"
+    "code": "INVALID_CONTENT",
+    "message": "Missing required field: name; Missing required field: title"
   }
 }
 ```
 
-**Response (409 Conflict):**
+### DELETE /api/v1/dossiers/{name}
+
+**Request:**
+```http
+DELETE /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Optional query parameter: `?version=1.0.0` to delete a specific version.
+
+**Response (200 OK):**
+```json
+{
+  "message": "Dossier deleted",
+  "name": "arctic-monkeys/songs/do-i-wanna-know",
+  "version": "1.0.0"
+}
+```
+
+Note: `version` is only included when a specific version was requested via `?version=X.Y.Z`.
+
+**Response (401 Unauthorized):**
+
+Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`).
+
+**Response (403 Forbidden):**
 ```json
 {
   "error": {
-    "code": "VERSION_EXISTS",
-    "message": "Version 1.0.0 already exists for this dossier"
+    "code": "FORBIDDEN",
+    "message": "You don't have permission to delete from 'other-org/*'"
+  }
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "error": {
+    "code": "DOSSIER_NOT_FOUND",
+    "message": "Dossier 'arctic-monkeys/songs/do-i-wanna-know' not found"
+  }
+}
+```
+
+Also returned when the requested version doesn't match:
+```json
+{
+  "error": {
+    "code": "VERSION_NOT_FOUND",
+    "message": "Version '1.0.0' not found. Current version is '2.0.0'"
   }
 }
 ```
@@ -421,8 +459,7 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 │   │             │ ./song.ds.md         │                     │           │
 │   │             │                      │                     │           │
 │   │             │ POST /api/v1/        │                     │           │
-│   │             │   dossiers/arctic-   │                     │           │
-│   │             │   monkeys/songs/diwk │                     │           │
+│   │             │   dossiers           │                     │           │
 │   │             │ Headers:             │                     │           │
 │   │             │   Authorization:     │                     │           │
 │   │             │   Bearer <JWT>       │                     │           │
