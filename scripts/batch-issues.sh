@@ -129,6 +129,7 @@ while [[ $# -gt 0 ]]; do
           "[.[].number | select(. >= ${range_start} and . <= ${range_end})] | sort | .[]")
         if [[ -z "$range_issues" ]]; then
           log "  No open issues found in range ${range_start}..${range_end}"
+          exit 0
         else
           while IFS= read -r num; do
             ISSUES+=("$num")
