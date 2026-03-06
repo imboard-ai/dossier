@@ -302,8 +302,8 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
 ```json
 {
   "error": {
-    "code": "INVALID_DOSSIER_FORMAT",
-    "message": "Invalid frontmatter: missing required field 'title'"
+    "code": "INVALID_CONTENT",
+    "message": "Missing required field: name; Missing required field: title"
   }
 }
 ```
@@ -327,6 +327,8 @@ Optional query parameter: `?version=1.0.0` to delete a specific version.
 }
 ```
 
+Note: `version` is only included when a specific version was requested via `?version=X.Y.Z`.
+
 **Response (401 Unauthorized):**
 
 Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`).
@@ -347,6 +349,16 @@ Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOK
   "error": {
     "code": "DOSSIER_NOT_FOUND",
     "message": "Dossier 'arctic-monkeys/songs/do-i-wanna-know' not found"
+  }
+}
+```
+
+Also returned when the requested version doesn't match:
+```json
+{
+  "error": {
+    "code": "VERSION_NOT_FOUND",
+    "message": "Version '1.0.0' not found. Current version is '2.0.0'"
   }
 }
 ```
