@@ -1,10 +1,9 @@
-import crypto from 'node:crypto';
-import * as auth from '../../../lib/auth';
+import { sha256Hex } from '@ai-dossier/core';
+import { authorizePublish } from '../../../lib/auth';
 import config from '../../../lib/config';
 import { handleCors } from '../../../lib/cors';
-import { getRootNamespace } from '../../../lib/dossier';
+import { validateNamespace } from '../../../lib/dossier';
 import * as github from '../../../lib/github';
-import { canPublishTo } from '../../../lib/permissions';
 import type { VercelRequest, VercelResponse } from '../../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -22,10 +21,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isContentRequest = pathParts[pathParts.length - 1] === 'content';
   const dossierName = isContentRequest ? pathParts.slice(0, -1).join('/') : pathParts.join('/');
 
+  const namespaceCheck = validateNamespace(dossierName);
+  if (!namespaceCheck.valid) {
+    return res.status(400).json({
+      error: { code: 'INVALID_NAMESPACE', message: namespaceCheck.error },
+    });
+  }
+
   if (req.method === 'DELETE') {
     return handleDelete(req, res, dossierName, version as string);
   }
 
+  return handleGet(res, dossierName, version as string | undefined, isContentRequest);
+}
+
+async function handleGet(
+  res: VercelResponse,
+  dossierName: string,
+  version: string | undefined,
+  isContentRequest: boolean
+) {
   try {
     const manifest = await github.getManifest();
     const dossierEntry = manifest.dossiers.find((d) => d.name === dossierName);
@@ -60,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const digest = crypto.createHash('sha256').update(fileContent.content).digest('hex');
+      const digest = sha256Hex(fileContent.content);
 
       res.setHeader('Content-Type', 'text/markdown');
       res.setHeader('X-Dossier-Digest', `sha256:${digest}`);
@@ -75,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       content_url: config.getCdnUrl(dossierEntry.path),
     });
   } catch (error) {
-    console.error('Error fetching dossier:', error);
+    console.error(`[dossier/get] Error fetching '${dossierName}':`, error);
     return res.status(502).json({
       error: {
         code: 'UPSTREAM_ERROR',
@@ -91,37 +106,8 @@ async function handleDelete(
   dossierName: string,
   version: string | undefined
 ) {
-  const token = auth.extractBearerToken(req);
-  if (!token) {
-    return res.status(401).json({
-      error: {
-        code: 'MISSING_TOKEN',
-        message: 'Authorization header required. Use: Bearer <token>',
-      },
-    });
-  }
-
-  let jwtPayload: import('../../../lib/types').JwtPayload;
-  try {
-    jwtPayload = auth.verifyJwt(token);
-  } catch (err) {
-    if (err instanceof Error && err.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        error: { code: 'TOKEN_EXPIRED', message: 'Token has expired. Please login again.' },
-      });
-    }
-    return res.status(401).json({
-      error: { code: 'INVALID_TOKEN', message: 'Invalid token. Please login again.' },
-    });
-  }
-
-  const rootNamespace = getRootNamespace(dossierName);
-  const permission = canPublishTo(jwtPayload, rootNamespace);
-  if (!permission.allowed) {
-    return res.status(403).json({
-      error: { code: 'FORBIDDEN', message: permission.reason },
-    });
-  }
+  const authorized = await authorizePublish(req, res, dossierName);
+  if (!authorized) return;
 
   try {
     const result = await github.deleteDossier(dossierName, version || null);
@@ -155,7 +141,7 @@ async function handleDelete(
 
     return res.status(200).json(response);
   } catch (err) {
-    console.error('Error deleting dossier:', err);
+    console.error(`[dossier/delete] Error deleting '${dossierName}':`, err);
     return res.status(502).json({
       error: {
         code: 'DELETE_ERROR',

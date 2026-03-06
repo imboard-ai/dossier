@@ -120,6 +120,26 @@ const publishDossierEndpoint = {
   },
 };
 
+const deleteDossierEndpoint = {
+  description: 'Delete a dossier',
+  authentication: true,
+  parameters: {
+    name: 'string - Full dossier name (e.g., imboard-ai/development/setup-react)',
+    version: 'string (query, optional) - Specific version to delete',
+  },
+  response: {
+    message: 'string - "Dossier deleted"',
+    name: 'string - Full dossier name',
+    version: 'string (optional) - Deleted version',
+  },
+  errors: {
+    401: 'MISSING_TOKEN, INVALID_TOKEN, TOKEN_EXPIRED',
+    403: 'FORBIDDEN - Cannot delete from this namespace',
+    404: 'DOSSIER_NOT_FOUND, VERSION_NOT_FOUND',
+    502: 'DELETE_ERROR - Failed to delete dossier',
+  },
+};
+
 const endpoints = {
   'GET /api/v1/health': healthEndpoint,
   'GET /api/v1/docs': docsEndpoint,
@@ -128,6 +148,7 @@ const endpoints = {
   'GET /api/v1/dossiers/{name}': getDossierEndpoint,
   'GET /api/v1/search': searchEndpoint,
   'GET /api/v1/dossiers/{name}/content': getDossierContentEndpoint,
+  'DELETE /api/v1/dossiers/{name}': deleteDossierEndpoint,
   'POST /api/v1/dossiers': publishDossierEndpoint,
 };
 

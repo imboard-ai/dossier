@@ -1,5 +1,6 @@
 import type { DossierFrontmatter } from '@ai-dossier/core';
 import { parseDossierContent } from '@ai-dossier/core';
+import { MAX_NAME_LENGTH, MAX_NAMESPACE_DEPTH, SLUG_PATTERN } from './constants';
 import type { DossierValidation, NamespaceValidation } from './types';
 
 /**
@@ -31,14 +32,14 @@ export function validateDossier(frontmatter: DossierFrontmatter): DossierValidat
     if (typeof frontmatter.name !== 'string') {
       errors.push(`Name must be a string, got ${typeof frontmatter.name}`);
     } else {
-      if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(frontmatter.name)) {
+      if (!SLUG_PATTERN.test(frontmatter.name)) {
         errors.push(
           `Invalid name "${frontmatter.name}": must be lowercase alphanumeric with hyphens, cannot start/end with hyphen`
         );
       }
-      if (frontmatter.name.length > 64) {
+      if (frontmatter.name.length > MAX_NAME_LENGTH) {
         errors.push(
-          `Name too long (${frontmatter.name.length} chars): must be 64 characters or less`
+          `Name too long (${frontmatter.name.length} chars): must be ${MAX_NAME_LENGTH} characters or less`
         );
       }
     }
@@ -76,12 +77,12 @@ export function validateNamespace(namespace: string): NamespaceValidation {
   }
 
   const segments = namespace.split('/');
-  if (segments.length > 5) {
-    return { valid: false, error: 'Namespace too deep (max 5 levels)' };
+  if (segments.length > MAX_NAMESPACE_DEPTH) {
+    return { valid: false, error: `Namespace too deep (max ${MAX_NAMESPACE_DEPTH} levels)` };
   }
 
   for (const segment of segments) {
-    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(segment)) {
+    if (!SLUG_PATTERN.test(segment)) {
       return { valid: false, error: `Invalid namespace segment: ${segment}` };
     }
   }

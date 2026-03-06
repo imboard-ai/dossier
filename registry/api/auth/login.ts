@@ -10,9 +10,10 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const params = new URLSearchParams({
     client_id: config.auth.github.clientId,
-    redirect_uri: `https://${req.headers.host}/auth/callback`,
+    redirect_uri: `${config.baseUrl}/auth/callback`,
     scope: config.auth.github.scopes,
   });
 
+  console.log(`[auth/login] Redirecting to GitHub OAuth`);
   res.redirect(`https://github.com/login/oauth/authorize?${params}`);
 }

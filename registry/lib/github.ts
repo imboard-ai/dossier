@@ -1,35 +1,53 @@
+import path from 'node:path';
 import config from './config';
+import { DOSSIER_DEFAULTS, USER_AGENT } from './constants';
 import type { DeleteResult, FileContent, Manifest, ManifestDossier } from './types';
 
 const GITHUB_API = 'https://api.github.com';
 
+function sanitizePath(filePath: string): string {
+  const normalized = path.posix.normalize(filePath);
+  if (normalized.startsWith('/') || normalized.split('/').includes('..')) {
+    throw new Error(`Path traversal detected: ${filePath}`);
+  }
+  return normalized;
+}
+
 async function githubRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${GITHUB_API}${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${config.content.botToken}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'Dossier-Registry',
-      ...(options.headers as Record<string, string>),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${config.content.botToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': USER_AGENT,
+        ...(options.headers as Record<string, string>),
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`GitHub API request failed for ${url}: ${message}`);
+  }
 
   return response;
 }
 
-export async function getFileContent(path: string): Promise<FileContent | null> {
+export async function getFileContent(filePath: string): Promise<FileContent | null> {
+  const safePath = sanitizePath(filePath);
   const { org, repo } = config.content;
-  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`);
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${safePath}`);
 
   if (response.status === 404) {
     return null;
   }
 
   if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.status}`);
+    const body = await response.text().catch(() => '(no body)');
+    throw new Error(`GitHub API error: ${response.status} - ${body}`);
   }
 
   const data = (await response.json()) as { content: string; sha: string };
@@ -39,30 +57,33 @@ export async function getFileContent(path: string): Promise<FileContent | null> 
   };
 }
 
-export async function deleteFile(path: string, message: string, sha: string): Promise<unknown> {
+export async function deleteFile(filePath: string, message: string, sha: string): Promise<unknown> {
+  const safePath = sanitizePath(filePath);
   const { org, repo } = config.content;
 
-  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`, {
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${safePath}`, {
     method: 'DELETE',
     body: JSON.stringify({ message, sha }),
   });
 
+  const data = (await response.json()) as { message?: string };
+
   if (!response.ok) {
-    const error = (await response.json()) as { message?: string };
     throw new Error(
-      `GitHub API error: ${response.status} - ${error.message || JSON.stringify(error)}`
+      `GitHub API error: ${response.status} - ${data.message || JSON.stringify(data)}`
     );
   }
 
-  return response.json();
+  return data;
 }
 
 export async function createOrUpdateFile(
-  path: string,
+  filePath: string,
   content: string,
   message: string,
   sha: string | null = null
 ): Promise<unknown> {
+  const safePath = sanitizePath(filePath);
   const { org, repo } = config.content;
   const body: Record<string, string> = {
     message,
@@ -73,19 +94,20 @@ export async function createOrUpdateFile(
     body.sha = sha;
   }
 
-  const response = await githubRequest(`/repos/${org}/${repo}/contents/${path}`, {
+  const response = await githubRequest(`/repos/${org}/${repo}/contents/${safePath}`, {
     method: 'PUT',
     body: JSON.stringify(body),
   });
 
+  const data = (await response.json()) as { message?: string };
+
   if (!response.ok) {
-    const error = (await response.json()) as { message?: string };
     throw new Error(
-      `GitHub API error: ${response.status} - ${error.message || JSON.stringify(error)}`
+      `GitHub API error: ${response.status} - ${data.message || JSON.stringify(data)}`
     );
   }
 
-  return response.json();
+  return data;
 }
 
 export async function getManifest(): Promise<Manifest> {
@@ -95,7 +117,13 @@ export async function getManifest(): Promise<Manifest> {
     return { dossiers: [], sha: null };
   }
 
-  const manifest = JSON.parse(result.content);
+  let manifest: Omit<Manifest, 'sha'>;
+  try {
+    manifest = JSON.parse(result.content);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`Failed to parse manifest (index.json): ${message}`);
+  }
   return { ...manifest, sha: result.sha };
 }
 
@@ -158,22 +186,21 @@ export async function publishDossier(
     ? `Update ${metadata.name} to v${metadata.version}: ${changelog}`
     : `Publish ${metadata.name} v${metadata.version}: ${changelog}`;
 
+  console.log(`[publish] Step 1/2: Writing content file ${filePath}`);
   const fileResult = await createOrUpdateFile(
     filePath,
     content,
     fileMessage,
     existing?.sha ?? null
   );
+  console.log(`[publish] Step 1/2 complete: content file written`);
 
+  console.log(`[publish] Step 2/2: Updating manifest for ${metadata.name}`);
   const manifest = await getManifest();
 
-  const OPTIONAL_MANIFEST_FIELDS = [
-    'description',
-    'category',
-    'tags',
-    'authors',
-    'tools_required',
-  ] as const;
+  const OPTIONAL_MANIFEST_FIELDS = Object.keys(DOSSIER_DEFAULTS) as Array<
+    keyof typeof DOSSIER_DEFAULTS
+  >;
 
   const dossierEntry: ManifestDossier = {
     name: fullPath,
@@ -188,7 +215,18 @@ export async function publishDossier(
     }
   }
 
-  const manifestResult = await updateManifest(manifest, dossierEntry);
+  let manifestResult: unknown;
+  try {
+    manifestResult = await updateManifest(manifest, dossierEntry);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[publish] CRITICAL: File ${filePath} written but manifest update failed. Orphaned file needs cleanup.`,
+      message
+    );
+    throw err;
+  }
+  console.log(`[publish] Step 2/2 complete: manifest updated for ${metadata.name}`);
 
   return { file: fileResult, manifest: manifestResult };
 }
@@ -226,13 +264,27 @@ export async function deleteDossier(
     };
   }
 
+  console.log(`[delete] Step 1/2: Deleting content file ${filePath}`);
   const fileResult = await deleteFile(
     filePath,
     `Delete ${dossierName} v${dossierEntry.version}`,
     existing.sha
   );
+  console.log(`[delete] Step 1/2 complete: content file deleted`);
 
-  const manifestResult = await removeFromManifest(manifest, dossierName);
+  console.log(`[delete] Step 2/2: Removing ${dossierName} from manifest`);
+  let manifestResult: unknown;
+  try {
+    manifestResult = await removeFromManifest(manifest, dossierName);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[delete] CRITICAL: File ${filePath} deleted but manifest update failed. Manual cleanup required.`,
+      message
+    );
+    throw err;
+  }
+  console.log(`[delete] Step 2/2 complete: manifest updated`);
 
   return {
     found: true,

@@ -45,8 +45,9 @@ describe('docs handler', () => {
     expect(endpointKeys).toContain('GET /api/v1/dossiers/{name}');
     expect(endpointKeys).toContain('GET /api/v1/search');
     expect(endpointKeys).toContain('GET /api/v1/dossiers/{name}/content');
+    expect(endpointKeys).toContain('DELETE /api/v1/dossiers/{name}');
     expect(endpointKeys).toContain('POST /api/v1/dossiers');
-    expect(endpointKeys).toHaveLength(8);
+    expect(endpointKeys).toHaveLength(9);
   });
 
   it('should include authentication, frontmatter, and namespaces sections', async () => {
