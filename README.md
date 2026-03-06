@@ -29,6 +29,7 @@
 🎯 **Why**: Replace brittle scripts with adaptive, verifiable automation that handles edge cases naturally
 ⚡ **How**: Create dossier → Run with your AI → Get validated results with evidence
 🔒 **Safety**: Built-in checksums, cryptographic signatures, and CLI verification tools
+🔗 **Multi-registry**: Configure multiple registries for teams and organizations
 🌐 **Works with**: Claude, ChatGPT, Cursor, any LLM—no vendor lock-in
 
 **Status**: v1.0 protocol | 15+ production examples | Active development

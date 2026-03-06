@@ -286,6 +286,99 @@ claude-run-dossier https://example.com/dossier.ds.md
 
 ---
 
+## Registry Configuration
+
+The CLI supports multiple registries for discovering, pulling, and publishing dossiers.
+
+### Configuration File (`~/.dossier/config.json`)
+
+Configure registries in your user config:
+
+```json
+{
+  "registries": {
+    "public": {
+      "url": "https://dossier-registry.vercel.app",
+      "default": true
+    },
+    "internal": {
+      "url": "https://dossier.internal.example.com"
+    },
+    "readonly-mirror": {
+      "url": "https://mirror.example.com",
+      "readonly": true
+    }
+  },
+  "defaultRegistry": "public"
+}
+```
+
+### Project-Level Config (`.dossierrc.json`)
+
+Place a `.dossierrc.json` in your project root to add project-specific registries:
+
+```json
+{
+  "registries": {
+    "team": {
+      "url": "https://dossier.myteam.example.com"
+    }
+  },
+  "defaultRegistry": "team"
+}
+```
+
+Project registries are merged with user registries. User-configured registries take precedence on name conflicts to prevent credential exfiltration.
+
+### Environment Variable
+
+Set `DOSSIER_REGISTRY_URL` to add a virtual `env` registry:
+
+```bash
+export DOSSIER_REGISTRY_URL=https://custom-registry.example.com
+```
+
+### Resolution Priority
+
+When resolving registries, the CLI follows this priority:
+
+1. `--registry` flag on the command
+2. `DOSSIER_REGISTRY_URL` environment variable
+3. Project-level `.dossierrc.json`
+4. User-level `~/.dossier/config.json`
+5. Hardcoded default (public registry)
+
+### Per-Command Registry Flag
+
+Write commands accept `--registry <name>` to target a specific registry:
+
+```bash
+ai-dossier publish --registry team my-dossier.ds.md
+ai-dossier login --registry internal
+```
+
+Read commands (`search`, `get`, `pull`) query all configured registries in parallel.
+
+---
+
+## Agent Discovery (`--agent`)
+
+The `--agent` flag outputs a machine-readable JSON manifest describing the CLI's capabilities. This is designed for AI agents that need to discover what the CLI can do programmatically:
+
+```bash
+ai-dossier --agent
+```
+
+Output includes:
+- CLI version and available commands
+- Supported flags (`--json`, `-y`/`--yes`)
+- Capabilities (multi-registry, non-TTY safe, machine-readable errors)
+- Discovery command for full command listing
+
+This enables agents to auto-configure their integration with the Dossier CLI without parsing help text.
+
+---
+
 ## Architecture
 
 ### How It Works
