@@ -69,7 +69,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm install
@@ -124,7 +123,7 @@ jobs:
         if: steps.check-core.outputs.skip != 'true'
         run: |
           cd packages/core
-          npm publish --provenance --access public
+          npm publish --provenance --access public --registry https://registry.npmjs.org
 
       - name: Check if @ai-dossier/cli needs publishing
         id: check-cli
@@ -143,7 +142,7 @@ jobs:
         if: steps.check-cli.outputs.skip != 'true'
         run: |
           cd cli
-          npm publish --provenance --access public
+          npm publish --provenance --access public --registry https://registry.npmjs.org
 
       - name: Check if @ai-dossier/mcp-server needs publishing
         id: check-mcp
@@ -162,7 +161,7 @@ jobs:
         if: steps.check-mcp.outputs.skip != 'true'
         run: |
           cd mcp-server
-          npm publish --provenance --access public
+          npm publish --provenance --access public --registry https://registry.npmjs.org
 
   verify:
     needs: publish
