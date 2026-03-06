@@ -24,6 +24,7 @@ export function getRequestId(req: VercelRequest): string {
   return generated;
 }
 
+/** Returns a 405 Method Not Allowed response listing the permitted HTTP methods. */
 export function methodNotAllowed(
   req: VercelRequest,
   res: VercelResponse,
