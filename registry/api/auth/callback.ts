@@ -1,6 +1,15 @@
+import crypto from 'node:crypto';
 import * as auth from '../../lib/auth';
 import config from '../../lib/config';
+import { OAUTH_STATE_COOKIE } from '../../lib/constants';
 import type { VercelRequest, VercelResponse } from '../../lib/types';
+
+function parseCookie(req: VercelRequest, name: string): string | undefined {
+  const header = req.headers.cookie;
+  if (!header) return undefined;
+  const match = header.split(';').find((c) => c.trim().startsWith(`${name}=`));
+  return match ? match.split('=')[1]?.trim() : undefined;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -9,12 +18,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const { code, error, error_description } = req.query as Record<string, string>;
+  const { code, error, error_description, state } = req.query as Record<string, string>;
 
   if (error) {
+    console.warn('[auth/callback] OAuth provider error:', error, error_description);
     return res
       .status(400)
       .send(renderErrorPage('Authentication Failed', error_description || error));
+  }
+
+  const expectedState = parseCookie(req, OAUTH_STATE_COOKIE);
+
+  // Clear the state cookie regardless of outcome
+  res.setHeader(
+    'Set-Cookie',
+    `${OAUTH_STATE_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/auth; Max-Age=0`
+  );
+
+  const stateValid =
+    state &&
+    expectedState &&
+    state.length === expectedState.length &&
+    crypto.timingSafeEqual(Buffer.from(state), Buffer.from(expectedState));
+
+  if (!stateValid) {
+    console.warn(
+      '[auth/callback] State validation failed:',
+      !state ? 'missing query state' : !expectedState ? 'missing cookie state' : 'state mismatch'
+    );
+    return res
+      .status(403)
+      .send(
+        renderErrorPage(
+          'Invalid State',
+          'OAuth state mismatch — possible CSRF attack. Please try logging in again.'
+        )
+      );
   }
 
   if (!code) {
