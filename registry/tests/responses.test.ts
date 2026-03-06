@@ -43,12 +43,12 @@ describe('methodNotAllowed', () => {
     vi.restoreAllMocks();
   });
 
-  it('logs rejected method and URL', () => {
+  it('logs rejected method and path (without query string)', () => {
     const res = createViMockRes();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const req = {
       method: 'DELETE',
-      url: '/api/v1/search',
+      url: '/api/v1/search?q=sensitive',
       headers: {},
     } as unknown as VercelRequest;
 
@@ -60,7 +60,7 @@ describe('methodNotAllowed', () => {
     expect(loggedJson.context).toBe('responses');
     expect(loggedJson.message).toBe('method-not-allowed');
     expect(loggedJson.method).toBe('DELETE');
-    expect(loggedJson.url).toBe('/api/v1/search');
+    expect(loggedJson.path).toBe('/api/v1/search');
     expect(loggedJson.allowed).toEqual(['GET']);
 
     warnSpy.mockRestore();

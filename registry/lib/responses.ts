@@ -24,7 +24,7 @@ export function methodNotAllowed(
 ): VercelResponse {
   log.warn('method-not-allowed', {
     method: req.method,
-    url: req.url,
+    path: req.url?.split('?')[0],
     allowed,
   });
   return res.status(HTTP_STATUS.METHOD_NOT_ALLOWED).json({
