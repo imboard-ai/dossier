@@ -2,29 +2,7 @@ import crypto from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { authenticateRequest } from '../lib/auth';
 import { OAUTH_STATE_COOKIE } from '../lib/constants';
-import { createMockRes } from './helpers/mocks';
-
-// Structured log entries are single-line JSON with this shape:
-// { "level": "info|warn|error", "context": "module", "message": "...", ...extras }
-// info → console.log (stdout), warn → console.warn (stderr), error → console.error (stderr)
-
-/** Search console spy calls for a parsed JSON log entry matching the given message. */
-function findLogEntry(
-  spy: ReturnType<typeof vi.spyOn>,
-  message: string
-): Record<string, unknown> | undefined {
-  return (
-    spy.mock.calls
-      .map((call) => {
-        try {
-          return JSON.parse(call[0] as string);
-        } catch {
-          return null;
-        }
-      })
-      .find((entry) => entry?.message === message) ?? undefined
-  );
-}
+import { createMockReq, createMockRes, findLogEntry } from './helpers/mocks';
 
 describe('successful mutation logging', () => {
   it('logs successful publish with structured data', async () => {
@@ -65,7 +43,7 @@ describe('successful mutation logging', () => {
     const handlerModule = await import('../api/v1/dossiers/index');
     const handler = handlerModule.default;
 
-    const req = {
+    const req = createMockReq({
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -76,7 +54,7 @@ describe('successful mutation logging', () => {
         namespace: 'testorg',
         content: '---\nname: my-dossier\nversion: 1.0.0\n---\n# Hello',
       },
-    } as any;
+    });
 
     const { res, getStatus } = createMockRes();
 
@@ -130,11 +108,11 @@ describe('successful mutation logging', () => {
     const handlerModule = await import('../api/v1/dossiers/[...name]');
     const handler = handlerModule.default;
 
-    const req = {
+    const req = createMockReq({
       method: 'DELETE',
       query: { name: ['testorg', 'my-dossier'], version: '1.0.0' },
       headers: { authorization: 'Bearer valid-token', 'x-request-id': 'req-456' },
-    } as any;
+    });
 
     const { res, getStatus } = createMockRes();
 
@@ -180,9 +158,9 @@ describe('auth error response includes namespace', () => {
     const authModule = await import('../lib/auth');
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const req = {
+    const req = createMockReq({
       headers: { authorization: 'Bearer valid-token' },
-    } as any;
+    });
 
     const { res, getStatus, getBody } = createMockRes();
 
@@ -190,8 +168,9 @@ describe('auth error response includes namespace', () => {
 
     expect(result).toBe(false);
     expect(getStatus()).toBe(403);
-    expect((getBody() as any).error.namespace).toBe('other-org/some-dossier');
-    expect((getBody() as any).error.code).toBe('FORBIDDEN');
+    const body = getBody() as { error: { namespace: string; code: string } };
+    expect(body.error.namespace).toBe('other-org/some-dossier');
+    expect(body.error.code).toBe('FORBIDDEN');
 
     consoleSpy.mockRestore();
     vi.doUnmock('jsonwebtoken');
@@ -206,11 +185,11 @@ describe('error correlation IDs', () => {
 
     // Provide valid state so we reach the try/catch block (code exchange will fail)
     const state = crypto.randomBytes(32).toString('hex');
-    const req = {
+    const req = createMockReq({
       method: 'GET',
       query: { code: 'bad-code', state },
       headers: { cookie: `${OAUTH_STATE_COOKIE}=${state}` },
-    } as any;
+    });
 
     const { res, getStatus, getBody } = createMockRes();
 
@@ -221,9 +200,10 @@ describe('error correlation IDs', () => {
     expect(getStatus()).toBe(500);
 
     // Error page should contain a reference code (8 hex chars)
-    const refMatch = (getBody() as string).match(/Reference:\s*([a-f0-9]{8})/);
+    const body = getBody() as string;
+    const refMatch = body.match(/Reference:\s*([a-f0-9]{8})/);
     expect(refMatch).not.toBeNull();
-    const errorRef = refMatch![1];
+    const errorRef = refMatch?.[1];
 
     // Console log should contain the same ref
     const logCall = consoleSpy.mock.calls.find((call) =>
@@ -264,7 +244,7 @@ describe('error correlation IDs', () => {
     const loginModule = await import('../api/auth/login');
     const handler = loginModule.default;
 
-    const req = { method: 'GET' } as any;
+    const req = createMockReq({ method: 'GET' });
 
     const { res, getStatus, getBody } = createMockRes();
 
@@ -273,11 +253,12 @@ describe('error correlation IDs', () => {
     handler(req, res as any);
 
     expect(getStatus()).toBe(500);
-    expect((getBody() as any).error.ref).toMatch(/^[a-f0-9]{8}$/);
+    const body = getBody() as { error: { ref: string } };
+    expect(body.error.ref).toMatch(/^[a-f0-9]{8}$/);
 
     // Console log should contain the same ref
     const logCall = consoleSpy.mock.calls.find((call) =>
-      String(call[0]).includes(`ref=${(getBody() as any).error.ref}`)
+      String(call[0]).includes(`ref=${body.error.ref}`)
     );
     expect(logCall).toBeDefined();
 
@@ -294,7 +275,12 @@ describe('auth failure logging', () => {
   it('logs missing token attempts', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const req = { method: 'POST', url: '/api/v1/dossiers', headers: {} } as any;
+    const req = createMockReq({
+      method: 'POST',
+      url: '/api/v1/dossiers',
+      headers: {},
+    });
+
     const { res, getStatus } = createMockRes();
 
     await authenticateRequest(req, res as any);
@@ -329,11 +315,12 @@ describe('auth failure logging', () => {
     const authModule = await import('../lib/auth');
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const req = {
+    const req = createMockReq({
       method: 'DELETE',
       url: '/api/v1/dossiers/foo/bar',
       headers: { authorization: 'Bearer bad-token' },
-    } as any;
+    });
+
     const { res, getStatus } = createMockRes();
 
     await authModule.authenticateRequest(req, res as any);
