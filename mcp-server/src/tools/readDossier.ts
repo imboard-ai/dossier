@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import {
   collectDeclaredUrls,
+  type DossierFrontmatter,
   findUndeclaredUrls,
   parseDossierContent,
   scanBodyForUrls,
@@ -53,17 +54,22 @@ export async function readDossier(input: ReadDossierInput): Promise<ReadDossierO
     });
 
     const securityNotices: string[] = [];
-    const bodyUrls = scanBodyForUrls(body);
-    if (bodyUrls.length > 0) {
-      const declaredUrls = collectDeclaredUrls(
-        metadata as import('@ai-dossier/core').DossierFrontmatter
-      );
-      const undeclared = findUndeclaredUrls(bodyUrls, declaredUrls);
-      if (undeclared.length > 0) {
-        securityNotices.push(
-          `WARNING: ${undeclared.length} undeclared external URL(s) found in body: ${undeclared.join(', ')}. These URLs are NOT covered by the dossier trust chain.`
-        );
+    try {
+      const bodyUrls = scanBodyForUrls(body);
+      if (bodyUrls.length > 0) {
+        const declaredUrls = collectDeclaredUrls(metadata as DossierFrontmatter);
+        const undeclared = findUndeclaredUrls(bodyUrls, declaredUrls);
+        if (undeclared.length > 0) {
+          securityNotices.push(
+            `WARNING: ${undeclared.length} undeclared external URL(s) found in body: ${undeclared.join(', ')}. These URLs are NOT covered by the dossier trust chain.`
+          );
+        }
       }
+    } catch (scanError) {
+      logger.warn('Failed to scan dossier body for external URLs', {
+        dossierFile: dossierPath,
+        error: scanError instanceof Error ? scanError.message : String(scanError),
+      });
     }
 
     return {
