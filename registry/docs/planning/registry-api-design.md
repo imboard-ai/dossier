@@ -442,9 +442,10 @@ dossier search "aws deploy" --category devops --signed
   "access_token": "eyJ...",
   "token_type": "Bearer",
   "expires_in": 604800
-  "scope": ["read", "write"]
 }
 ```
+
+> **Note:** The current implementation issues a single JWT with a 7-day expiry. There is no separate refresh token. The `scope` field is not used.
 
 ---
 
