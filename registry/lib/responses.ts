@@ -44,7 +44,6 @@ export function methodNotAllowed(
   });
 }
 
-/** Returns a structured JSON error response with logging, request tracing, and a configurable status code (defaults to 502). */
 /** Returns a 400 response for path traversal attempts, with a warning log. */
 export function invalidPathError(
   res: VercelResponse,
@@ -57,6 +56,7 @@ export function invalidPathError(
   });
 }
 
+/** Returns a structured JSON error response with logging, request tracing, and a configurable status code (defaults to 502). */
 export function serverError(
   res: VercelResponse,
   opts: {
