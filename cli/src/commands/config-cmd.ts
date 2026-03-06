@@ -4,7 +4,9 @@ import * as config from '../config';
 export function registerConfigCommand(program: Command): void {
   program
     .command('config')
-    .description('Manage dossier configuration')
+    .description(
+      'Manage dossier configuration and registry settings. Use --add-registry, --remove-registry, and --list-registries to manage multiple registries.'
+    )
     .argument('[key]', 'Configuration key (e.g., defaultLlm)')
     .argument('[value]', 'Value to set (omit to get current value)')
     .option('--list', 'List all configuration')
@@ -17,6 +19,23 @@ export function registerConfigCommand(program: Command): void {
     .option('--default', 'Mark registry as default (used with --add-registry)')
     .option('--readonly', 'Mark registry as read-only (used with --add-registry)')
     .option('--json', 'Output as JSON')
+    .addHelpText(
+      'after',
+      `
+Project-level config:
+  Place a .dossierrc.json in your project root for team-shared registry settings:
+  {
+    "registries": { "internal": { "url": "https://dossier.company.com" } },
+    "defaultRegistry": "internal"
+  }
+
+Environment variables:
+  DOSSIER_REGISTRY_URL    Override/add a registry URL (creates virtual "env" registry)
+  DOSSIER_REGISTRY_TOKEN  Auth token for the default registry
+  DOSSIER_REGISTRY_USER   Username for registry authentication
+  DOSSIER_REGISTRY_ORGS   Comma-separated org scopes for registry queries
+`
+    )
     .action(
       (
         key: string | undefined,
@@ -80,6 +99,19 @@ export function registerConfigCommand(program: Command): void {
             console.error(
               'Example: dossier config --add-registry internal --url https://dossier.company.com\n'
             );
+            process.exit(1);
+          }
+
+          // Validate HTTPS — reject http:// and other insecure protocols
+          try {
+            const parsed = new URL(options.url);
+            if (parsed.protocol !== 'https:') {
+              console.error(`\n❌ Registry URL must use HTTPS: ${options.url}\n`);
+              console.error('Only https:// URLs are allowed to protect credentials in transit.\n');
+              process.exit(1);
+            }
+          } catch {
+            console.error(`\n❌ Invalid URL: ${options.url}\n`);
             process.exit(1);
           }
 
@@ -172,10 +204,22 @@ export function registerConfigCommand(program: Command): void {
         }
 
         if (options.reset) {
-          if (config.saveConfig(config.DEFAULT_CONFIG)) {
-            console.log('✅ Configuration reset to defaults\n');
-            Object.entries(config.DEFAULT_CONFIG).forEach(([k, v]) => {
-              console.log(`   ${k}: ${v}`);
+          const currentConfig = config.loadConfig();
+          const resetConfig: config.DossierConfig = { ...config.DEFAULT_CONFIG };
+          if (currentConfig.registries) {
+            resetConfig.registries = currentConfig.registries;
+          }
+          if (currentConfig.defaultRegistry) {
+            resetConfig.defaultRegistry = currentConfig.defaultRegistry;
+          }
+          if (config.saveConfig(resetConfig)) {
+            console.log('✅ Configuration reset to defaults (registry settings preserved)\n');
+            Object.entries(resetConfig).forEach(([k, v]) => {
+              if (typeof v === 'object' && v !== null) {
+                console.log(`   ${k}: ${JSON.stringify(v)}`);
+              } else {
+                console.log(`   ${k}: ${v}`);
+              }
             });
           } else {
             console.log('❌ Failed to reset configuration');

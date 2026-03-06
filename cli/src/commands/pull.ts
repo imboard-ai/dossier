@@ -10,7 +10,9 @@ import { parseNameVersion } from '../registry-client';
 export function registerPullCommand(program: Command): void {
   program
     .command('pull')
-    .description('Download a dossier from the registry to local cache')
+    .description(
+      'Download a dossier from the registry to local cache. Searches all configured registries.'
+    )
     .argument('<name...>', 'Dossier name(s) (use name@version for a specific version)')
     .option('--force', 'Re-download even if already cached')
     .action(async (names: string[], options: { force?: boolean }) => {
@@ -21,9 +23,12 @@ export function registerPullCommand(program: Command): void {
 
         try {
           if (!version) {
-            const meta = await multiRegistryGetDossier(dossierName);
+            const { result: meta, errors: metaErrors } = await multiRegistryGetDossier(dossierName);
             if (!meta) {
               console.error(`❌ ${nameArg}: not found in any registry`);
+              for (const e of metaErrors) {
+                console.error(`   ${e.registry}: ${e.error}`);
+              }
               continue;
             }
             version = meta.version || 'latest';
@@ -39,9 +44,15 @@ export function registerPullCommand(program: Command): void {
             continue;
           }
 
-          const result = await multiRegistryGetContent(dossierName, version);
+          const { result, errors: contentErrors } = await multiRegistryGetContent(
+            dossierName,
+            version
+          );
           if (!result) {
             console.error(`❌ ${nameArg}: not found in any registry`);
+            for (const e of contentErrors) {
+              console.error(`   ${e.registry}: ${e.error}`);
+            }
             continue;
           }
           const content = result.content;

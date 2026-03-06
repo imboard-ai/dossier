@@ -1,18 +1,19 @@
 import { DEFAULT_PER_PAGE, MAX_PER_PAGE } from '../../lib/constants';
 import { handleCors } from '../../lib/cors';
 import { fetchManifestDossiers, normalizeDossier } from '../../lib/manifest';
+import { methodNotAllowed, serverError } from '../../lib/responses';
 import type { VercelRequest, VercelResponse } from '../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
-    return res.status(405).json({
-      error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' },
-    });
+    return methodNotAllowed(res, 'GET');
   }
 
-  const { q, page: pageStr, per_page: perPageStr } = req.query as Record<string, string>;
+  const q = Array.isArray(req.query.q) ? req.query.q[0] : req.query.q;
+  const pageStr = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
+  const perPageStr = Array.isArray(req.query.per_page) ? req.query.per_page[0] : req.query.per_page;
 
   if (!q || !q.trim()) {
     return res.status(400).json({
@@ -52,12 +53,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       pagination: { page, per_page: perPage, total },
     });
   } catch (error) {
-    console.error('Error searching dossiers:', error);
-    return res.status(502).json({
-      error: {
-        code: 'UPSTREAM_ERROR',
-        message: 'Failed to search dossiers',
-      },
+    return serverError(res, {
+      operation: 'dossier.search',
+      error,
+      code: 'UPSTREAM_ERROR',
+      message: 'Failed to search dossiers',
     });
   }
 }

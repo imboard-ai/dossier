@@ -4,19 +4,19 @@ import config from '../../../lib/config';
 import { handleCors } from '../../../lib/cors';
 import { validateNamespace } from '../../../lib/dossier';
 import * as github from '../../../lib/github';
+import { methodNotAllowed, serverError } from '../../../lib/responses';
 import type { VercelRequest, VercelResponse } from '../../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE') {
-    return res.status(405).json({
-      error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET, HEAD, and DELETE are allowed' },
-    });
+    return methodNotAllowed(res, 'GET', 'HEAD', 'DELETE');
   }
 
-  const { name, version } = req.query as Record<string, string | string[]>;
-  const pathParts = Array.isArray(name) ? name : (name as string).split('/');
+  const name = req.query.name;
+  const version = Array.isArray(req.query.version) ? req.query.version[0] : req.query.version;
+  const pathParts = Array.isArray(name) ? name : typeof name === 'string' ? name.split('/') : [];
 
   const isContentRequest = pathParts[pathParts.length - 1] === 'content';
   const dossierName = isContentRequest ? pathParts.slice(0, -1).join('/') : pathParts.join('/');
@@ -29,10 +29,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'DELETE') {
-    return handleDelete(req, res, dossierName, version as string);
+    return handleDelete(req, res, dossierName, version);
   }
 
-  return handleGet(res, dossierName, version as string | undefined, isContentRequest);
+  return handleGet(res, dossierName, version, isContentRequest);
 }
 
 async function handleGet(
@@ -95,12 +95,11 @@ async function handleGet(
         error: { code: 'INVALID_PATH', message: 'Path traversal is not allowed' },
       });
     }
-    console.error(`[dossier/get] Error fetching '${dossierName}':`, error);
-    return res.status(502).json({
-      error: {
-        code: 'UPSTREAM_ERROR',
-        message: 'Failed to fetch dossier information',
-      },
+    return serverError(res, {
+      operation: `dossier.get(${dossierName})`,
+      error,
+      code: 'UPSTREAM_ERROR',
+      message: 'Failed to fetch dossier information',
     });
   }
 }
@@ -151,12 +150,11 @@ async function handleDelete(
         error: { code: 'INVALID_PATH', message: 'Path traversal is not allowed' },
       });
     }
-    console.error(`[dossier/delete] Error deleting '${dossierName}':`, err);
-    return res.status(502).json({
-      error: {
-        code: 'DELETE_ERROR',
-        message: 'Failed to delete dossier. Please try again.',
-      },
+    return serverError(res, {
+      operation: `dossier.delete(${dossierName})`,
+      error: err,
+      code: 'DELETE_ERROR',
+      message: 'Failed to delete dossier. Please try again.',
     });
   }
 }

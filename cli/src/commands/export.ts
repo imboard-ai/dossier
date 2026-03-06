@@ -7,7 +7,7 @@ import { parseNameVersion } from '../registry-client';
 export function registerExportCommand(program: Command): void {
   program
     .command('export')
-    .description('Download a dossier and save to a local file')
+    .description('Download a dossier and save to a local file. Searches all configured registries.')
     .argument('<name>', 'Dossier name (use name@version for a specific version)')
     .option('-o, --output <path>', 'Output file path')
     .option('--stdout', 'Print to stdout instead of saving to file')
@@ -17,9 +17,13 @@ export function registerExportCommand(program: Command): void {
       let content: string;
       let digest: string | null;
       try {
-        const result = await multiRegistryGetContent(dossierName, version || null);
+        const { result, errors } = await multiRegistryGetContent(dossierName, version || null);
         if (!result) {
-          console.error(`\n❌ Not found: ${name}\n`);
+          console.error(`\n❌ Not found: ${name}`);
+          for (const e of errors) {
+            console.error(`   ${e.registry}: ${e.error}`);
+          }
+          console.error('');
           process.exit(1);
           return;
         }

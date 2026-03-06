@@ -110,7 +110,6 @@ dossier pull myorg/deploy@1.0.0   # Download specific version
 **`GET /dossiers/{name}/content`**
 ```
 Content-Type: text/markdown; charset=utf-8
-X-Dossier-Version: 1.2.0
 X-Dossier-Digest: sha256:abc123...
 
 ---dossier
@@ -130,7 +129,7 @@ X-Dossier-Digest: sha256:abc123...
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/auth/github` | 🌐 | Initiate GitHub OAuth |
+| `GET` | `/auth/login` | 🌐 | Initiate GitHub OAuth |
 | `GET` | `/auth/callback` | 🌐 | OAuth callback |
 | `POST` | `/auth/token` | 🌐 | Exchange code for token |
 | `POST` | `/auth/revoke` | 🔑 | Revoke token |
@@ -304,7 +303,7 @@ GET /dossiers/myorg/deploy/content?digest=sha256:35aab...
 }
 ```
 
-**Common codes:** `INVALID_DOSSIER_FORMAT`, `SCHEMA_VALIDATION_FAILED`, `CHECKSUM_MISMATCH`, `VERSION_EXISTS`, `SIGNATURE_INVALID`, `FORBIDDEN`, `RATE_LIMITED`
+**Common codes:** `DOSSIER_NOT_FOUND`, `CONTENT_NOT_FOUND`, `UPSTREAM_ERROR`, `DELETE_ERROR`, `PUBLISH_ERROR`, `MISSING_FIELD`, `INVALID_NAMESPACE`, `INVALID_CONTENT`, `CONTENT_TOO_LARGE`, `INVALID_PATH`, `MISSING_TOKEN`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `FORBIDDEN`, `METHOD_NOT_ALLOWED`, `LOGIN_ERROR`, `VERSION_NOT_FOUND`, `VERSION_EXISTS`, `RATE_LIMITED`
 
 ---
 
@@ -441,8 +440,7 @@ dossier search "aws deploy" --category devops --signed
 {
   "access_token": "eyJ...",
   "token_type": "Bearer",
-  "expires_in": 3600,
-  "refresh_token": "...",
+  "expires_in": 604800
   "scope": ["read", "write"]
 }
 ```
@@ -541,21 +539,10 @@ Override via `CORS_ALLOWED_ORIGINS` env var (comma-separated).
 
 ---
 
-## Token Refresh Flow
-
-```http
-POST /auth/token
-Content-Type: application/json
-
-{
-  "grant_type": "refresh_token",
-  "refresh_token": "dGhpcyBpcyBhIHJlZnJlc2g..."
-}
-```
+## Token Lifetimes
 
 **Token Lifetimes:**
-- Access token: 1 hour
-- Refresh token: 30 days
+- JWT token: 7 days (no refresh token; user must re-login after expiry)
 - API key: configurable (default: 1 year)
 
 ---

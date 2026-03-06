@@ -119,10 +119,13 @@ describe('registry flow integration', () => {
     // Step 3: Info from registry
     mockedFs.existsSync.mockReturnValue(false); // Not a local file
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      name: 'org/my-workflow',
-      title: 'My Workflow',
-      version: '1.0.0',
-      _registry: 'public',
+      result: {
+        name: 'org/my-workflow',
+        title: 'My Workflow',
+        version: '1.0.0',
+        _registry: 'public',
+      },
+      errors: [],
     });
 
     const info = createTestProgram();
@@ -134,9 +137,8 @@ describe('registry flow integration', () => {
     // Step 4: Export
     mockedFs.existsSync.mockReturnValue(true); // Output dir exists
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: dossierContent,
-      digest: null,
-      _registry: 'public',
+      result: { content: dossierContent, digest: null, _registry: 'public' },
+      errors: [],
     });
 
     const exp = createTestProgram();

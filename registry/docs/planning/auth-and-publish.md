@@ -135,7 +135,8 @@ The Registry API is a server-side service hosted on Vercel.
 | `GET` | `/api/v1/health` | Health check |
 | `GET` | `/api/v1/dossiers` | List all dossiers |
 | `GET` | `/api/v1/dossiers/{name}` | Get dossier metadata |
-| `GET` | `/api/v1/dossiers/{name}/content` | Redirect to CDN |
+| `GET` | `/api/v1/dossiers/{name}/content` | Returns dossier content with `X-Dossier-Digest` header |
+| `GET` | `/auth/login` | Initiates OAuth flow - sets CSRF state cookie, redirects to GitHub |
 | `GET` | `/auth/callback` | OAuth callback - exchanges code, displays JWT for copy/paste |
 
 ### Protected Endpoints (JWT Required)
@@ -156,6 +157,8 @@ The Registry API is a server-side service hosted on Vercel.
 | `REGISTRY_BASE_URL` | Base URL for OAuth redirect (e.g., `https://registry.dossier.dev`) |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated allowed CORS origins (optional, has defaults) |
 
+> **Note:** All variables except `CORS_ALLOWED_ORIGINS` are required. The Registry uses lazy validation — a missing variable causes a clear error (`Missing required environment variable: <name>`) on the first request that needs it.
+
 ---
 
 # Part 3: CLI ↔ Registry Communication
@@ -175,22 +178,27 @@ Authorization: Bearer <JWT>
 ```
 1. User runs: dossier login
 
-2. CLI opens browser directly to GitHub OAuth URL:
+2. CLI opens browser to {REGISTRY_URL}/auth/login
+   The Registry generates a random `state` parameter (32 bytes, hex-encoded),
+   stores it in an HttpOnly cookie, and redirects the browser to GitHub:
    https://github.com/login/oauth/authorize?
      client_id={GITHUB_CLIENT_ID}
      &scope=read:user,read:org
      &redirect_uri={REGISTRY_URL}/auth/callback
+     &state={random_state}
 
 3. User sees GitHub consent screen, clicks "Authorize"
 
 4. GitHub redirects browser to:
-   {REGISTRY_URL}/auth/callback?code=abc123
+   {REGISTRY_URL}/auth/callback?code=abc123&state={random_state}
 
 5. Registry /auth/callback endpoint:
-   a. Exchanges code for GitHub access token (using client_secret)
-   b. Calls GitHub API to get user info + org memberships
-   c. Creates JWT with username + orgs, signs with JWT_SECRET
-   d. Displays webpage: "Your login code: XXXX-XXXX-XXXX"
+   a. Validates `state` parameter against the value stored in an HttpOnly cookie
+      (set during the login redirect) to prevent CSRF attacks
+   b. Exchanges code for GitHub access token (using client_secret)
+   c. Calls GitHub API to get user info + org memberships
+   d. Creates JWT with username + orgs, signs with JWT_SECRET (expires in 7 days)
+   e. Displays webpage: "Your login code: XXXX-XXXX-XXXX"
 
 6. User copies the code from browser
 
@@ -328,12 +336,20 @@ Dossier content here...
 │   │ login       │                      │                       │         │
 │   │ ──────────> │                      │                       │         │
 │   │             │                      │                       │         │
-│   │             │ Open browser directly to GitHub:             │         │
-│   │             │ github.com/login/oauth/authorize?            │         │
-│   │             │   client_id=xxx&                             │         │
-│   │             │   scope=read:user,read:org&                  │         │
-│   │             │   redirect_uri={REGISTRY}/auth/callback      │         │
-│   │ <────────── │ ─────────────────────────────────────────────>         │
+│   │             │ Open browser to                              │         │
+│   │             │ {REGISTRY}/auth/login                        │         │
+│   │             │ ───────────────────> │                       │         │
+│   │             │                      │ Generate random state │         │
+│   │             │                      │ Set state cookie      │         │
+│   │             │                      │ Redirect to GitHub:   │         │
+│   │             │                      │ github.com/login/     │         │
+│   │             │                      │   oauth/authorize?    │         │
+│   │             │                      │   client_id=xxx&      │         │
+│   │             │                      │   scope=read:user,    │         │
+│   │             │                      │   read:org&           │         │
+│   │             │                      │   state={state}       │         │
+│   │             │                      │ ────────────────────> │         │
+│   │ <────────── │ <──────────────────── ─────────────────────────────────>         │
 │   │             │                      │                       │         │
 │   │ Browser shows GitHub OAuth consent │                       │         │
 │   │ (read:user, read:org scopes)       │                       │         │
@@ -344,7 +360,12 @@ Dossier content here...
 │   │                                    │   GitHub redirects to │         │
 │   │                                    │   {REGISTRY}/auth/    │         │
 │   │                                    │   callback?code=xxx   │         │
+│   │                                    │   &state={state}      │         │
 │   │                                    │ <───────────────────── │         │
+│   │                                    │                       │         │
+│   │                                    │ Validate state param  │         │
+│   │                                    │ against state cookie  │         │
+│   │                                    │ (CSRF protection)     │         │
 │   │                                    │                       │         │
 │   │                                    │ Exchange code for     │         │
 │   │                                    │ access token          │         │
@@ -364,7 +385,7 @@ Dossier content here...
 │   │                                    │ Create JWT:           │         │
 │   │                                    │ - sub: alex-turner    │         │
 │   │                                    │ - orgs: [...]         │         │
-│   │                                    │ - exp: +1 hour        │         │
+│   │                                    │ - exp: +7 days        │         │
 │   │                                    │ Sign with JWT_SECRET  │         │
 │   │                                    │                       │         │
 │   │ Browser shows page:                │                       │         │
@@ -395,7 +416,7 @@ Dossier content here...
 ```
 
 **Key points:**
-- CLI opens browser directly to GitHub (not to Registry)
+- CLI opens browser to Registry's `/auth/login`, which sets a CSRF state cookie and redirects to GitHub
 - Registry only receives the callback after user approves
 - Registry displays code in browser for user to copy/paste back to CLI
 - CLI never needs to run a local server
@@ -505,13 +526,13 @@ Dossier content here...
   "email": "alex.turner@gmail.com",
   "orgs": ["arctic-monkeys", "the-last-shadow-puppets"],
   "iat": 1701684000,
-  "exp": 1701687600
+  "exp": 1702288800
 }
 ```
 
 - **sub**: GitHub username (used for personal namespace)
 - **orgs**: GitHub org memberships (used for org namespaces)
-- **exp**: Expiry time (1 hour from issue)
+- **exp**: Expiry time (7 days from issue)
 
 Signed by Registry using `JWT_SECRET` environment variable.
 
@@ -629,6 +650,12 @@ S3 API
 ### 6. Client Secret Protection
 
 The `GITHUB_CLIENT_SECRET` is stored only in Registry environment variables, never exposed to CLI users. This is why we need the Registry in the OAuth flow.
+
+### 7. CSRF Protection (OAuth State Parameter)
+
+**Problem:** Without CSRF protection, an attacker could trick a user into completing an OAuth flow that logs them into the attacker's account (login CSRF).
+
+**Mitigation:** The login endpoint generates a cryptographically random `state` parameter (32 bytes, hex-encoded) and stores it in an `HttpOnly; Secure; SameSite=Lax` cookie (`dossier_oauth_state`). The same value is sent to GitHub as the `state` query parameter. On callback, the Registry validates that the `state` from GitHub matches the cookie value using a timing-safe comparison. If the state is missing or mismatched, the request is rejected.
 
 ---
 

@@ -52,10 +52,13 @@ describe('info command', () => {
   it('should fetch info from registry when not a local file', async () => {
     mockedFs.existsSync.mockReturnValue(false);
     vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
-      name: 'org/dossier',
-      title: 'Registry Dossier',
-      version: '1.0.0',
-      _registry: 'public',
+      result: {
+        name: 'org/dossier',
+        title: 'Registry Dossier',
+        version: '1.0.0',
+        _registry: 'public',
+      },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -87,7 +90,10 @@ describe('info command', () => {
 
   it('should exit 1 on registry 404', async () => {
     mockedFs.existsSync.mockReturnValue(false);
-    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: null,
+      errors: [],
+    });
 
     const program = createTestProgram();
     registerInfoCommand(program);

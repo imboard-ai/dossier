@@ -29,6 +29,22 @@ export interface MultiRegistryListResult {
   errors: Array<{ registry: string; error: string }>;
 }
 
+export interface MultiRegistrySearchResult {
+  dossiers: LabeledDossierListItem[];
+  total: number;
+  errors: Array<{ registry: string; error: string }>;
+}
+
+export interface MultiRegistryGetDossierResult {
+  result: LabeledDossierInfo | null;
+  errors: Array<{ registry: string; error: string }>;
+}
+
+export interface MultiRegistryGetContentResult {
+  result: (DossierContentResult & { _registry: string }) | null;
+  errors: Array<{ registry: string; error: string }>;
+}
+
 function getTokenForRegistry(registryName: string): string | null {
   const creds = loadCredentials(registryName);
   return creds?.token || null;
@@ -85,13 +101,48 @@ async function multiRegistryListFrom(
 }
 
 /**
+ * Search dossiers across all registries.
+ * Fetches all dossiers and filters client-side (same as single-registry search).
+ */
+async function multiRegistrySearch(
+  query: string,
+  options: ListDossiersOptions = {}
+): Promise<MultiRegistrySearchResult> {
+  const listResult = await multiRegistryList({ ...options, page: 1, perPage: 100 });
+
+  const queryLower = query.toLowerCase();
+  const terms = queryLower.split(/\s+/).filter(Boolean);
+
+  const matched = listResult.dossiers.filter((d) => {
+    const fields = [
+      d.name || '',
+      d.title || '',
+      d.description || d.objective || '',
+      ...(Array.isArray(d.category) ? d.category : [d.category || '']),
+      ...(d.tags || []),
+    ]
+      .map((f) => String(f).toLowerCase())
+      .join(' ');
+
+    return terms.every((term) => fields.includes(term) || fields.indexOf(term) !== -1);
+  });
+
+  return {
+    dossiers: matched,
+    total: matched.length,
+    errors: listResult.errors,
+  };
+}
+
+/**
  * Get dossier info from the first registry that has it.
  * Tries all registries in parallel, returns the first success.
+ * Returns error details when all registries fail.
  */
 async function multiRegistryGetDossier(
   name: string,
   version: string | null = null
-): Promise<LabeledDossierInfo | null> {
+): Promise<MultiRegistryGetDossierResult> {
   const registries = resolveRegistries();
 
   const results = await Promise.allSettled(
@@ -103,22 +154,29 @@ async function multiRegistryGetDossier(
     })
   );
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      return result.value;
+  const errors: Array<{ registry: string; error: string }> = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      return { result: r.value, errors: [] };
     }
+    errors.push({
+      registry: registries[i].name,
+      error: r.reason?.message || String(r.reason),
+    });
   }
 
-  return null;
+  return { result: null, errors };
 }
 
 /**
  * Get dossier content from the first registry that has it.
+ * Returns error details when all registries fail.
  */
 async function multiRegistryGetContent(
   name: string,
   version: string | null = null
-): Promise<(DossierContentResult & { _registry: string }) | null> {
+): Promise<MultiRegistryGetContentResult> {
   const registries = resolveRegistries();
 
   const results = await Promise.allSettled(
@@ -130,18 +188,25 @@ async function multiRegistryGetContent(
     })
   );
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      return result.value;
+  const errors: Array<{ registry: string; error: string }> = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      return { result: r.value, errors: [] };
     }
+    errors.push({
+      registry: registries[i].name,
+      error: r.reason?.message || String(r.reason),
+    });
   }
 
-  return null;
+  return { result: null, errors };
 }
 
 export {
   multiRegistryList,
   multiRegistryListFrom,
+  multiRegistrySearch,
   multiRegistryGetDossier,
   multiRegistryGetContent,
 };

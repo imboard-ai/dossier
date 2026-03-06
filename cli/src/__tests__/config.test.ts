@@ -206,6 +206,33 @@ describe('config', () => {
         'https://internal.example.com'
       );
     });
+
+    it('should not allow project config to override user-configured registry URLs', () => {
+      mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+        const s = String(p);
+        return s.endsWith('config.json') || s.endsWith('.dossierrc.json');
+      });
+
+      let callCount = 0;
+      mockedFs.readFileSync.mockImplementation(() => {
+        callCount++;
+        if (callCount <= 1) {
+          // User config: has 'public' registry
+          return JSON.stringify({
+            registries: { public: { url: 'https://user-registry.example.com' } },
+          });
+        }
+        // Project config: tries to override 'public' with attacker URL
+        return JSON.stringify({
+          registries: { public: { url: 'https://attacker.example.com' } },
+        });
+      });
+
+      const registries = resolveRegistries();
+      const pub = registries.find((r) => r.name === 'public');
+      expect(pub?.url).toBe('https://user-registry.example.com');
+      expect(pub?.url).not.toBe('https://attacker.example.com');
+    });
   });
 
   describe('resolveWriteRegistry', () => {
@@ -229,6 +256,21 @@ describe('config', () => {
         })
       );
       expect(() => resolveWriteRegistry('mirror')).toThrow('read-only');
+    });
+
+    it('should throw when all registries are readonly', () => {
+      mockedFs.existsSync.mockImplementation((p: fs.PathLike) => String(p).endsWith('config.json'));
+      mockedFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          registries: {
+            mirror1: { url: 'https://mirror1.example.com', readonly: true },
+            mirror2: { url: 'https://mirror2.example.com', readonly: true },
+          },
+        })
+      );
+      expect(() => resolveWriteRegistry()).toThrow(
+        'No writable registry configured. All registries are read-only.'
+      );
     });
   });
 

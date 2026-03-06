@@ -19,9 +19,8 @@ describe('export command', () => {
 
   it('should export dossier to file', async () => {
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: '# Dossier content',
-      digest: 'sha256:abc',
-      _registry: 'public',
+      result: { content: '# Dossier content', digest: 'sha256:abc', _registry: 'public' },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -35,9 +34,8 @@ describe('export command', () => {
 
   it('should export specific version', async () => {
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: 'content',
-      digest: null,
-      _registry: 'public',
+      result: { content: 'content', digest: null, _registry: 'public' },
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -50,9 +48,8 @@ describe('export command', () => {
 
   it('should write to stdout with --stdout', async () => {
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: 'dossier content here',
-      digest: null,
-      _registry: 'public',
+      result: { content: 'dossier content here', digest: null, _registry: 'public' },
+      errors: [],
     });
     const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
@@ -67,7 +64,10 @@ describe('export command', () => {
   });
 
   it('should exit 1 when not found', async () => {
-    vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
+      result: null,
+      errors: [],
+    });
 
     const program = createTestProgram();
     registerExportCommand(program);
@@ -81,9 +81,8 @@ describe('export command', () => {
 
   it('should use custom output path with -o', async () => {
     vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
-      content: 'content',
-      digest: null,
-      _registry: 'public',
+      result: { content: 'content', digest: null, _registry: 'public' },
+      errors: [],
     });
 
     const program = createTestProgram();

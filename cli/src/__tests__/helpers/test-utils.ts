@@ -90,8 +90,3 @@ export const parseNameVersionImpl = (name: string): [string, string | null] => {
   }
   return [name, null];
 };
-
-/**
- * Standard test registry used across write-command tests.
- */
-export const TEST_REGISTRY = { name: 'public', url: 'https://test.registry.com' };

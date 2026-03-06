@@ -84,19 +84,29 @@ describe('multi-registry', () => {
     it('should return dossier from first succeeding registry', async () => {
       mockClient.getDossier.mockResolvedValue({ name: 'test', version: '1.0.0' });
 
-      const result = await multiRegistryGetDossier('test');
+      const { result } = await multiRegistryGetDossier('test');
       expect(result).toBeDefined();
       expect(result?._registry).toBe('public');
       expect(result?.version).toBe('1.0.0');
     });
 
-    it('should return null when not found in any registry', async () => {
+    it('should return null with errors when not found in any registry', async () => {
       mockClient.getDossier.mockRejectedValue(
         Object.assign(new Error('Not found'), { statusCode: 404 })
       );
 
-      const result = await multiRegistryGetDossier('missing');
+      const { result, errors } = await multiRegistryGetDossier('missing');
       expect(result).toBeNull();
+      expect(errors).toHaveLength(1);
+      expect(errors[0].registry).toBe('public');
+      expect(errors[0].error).toBe('Not found');
+    });
+
+    it('should return empty errors on success', async () => {
+      mockClient.getDossier.mockResolvedValue({ name: 'test', version: '1.0.0' });
+
+      const { errors } = await multiRegistryGetDossier('test');
+      expect(errors).toHaveLength(0);
     });
 
     it('should pass version to getDossier', async () => {
@@ -114,19 +124,21 @@ describe('multi-registry', () => {
         digest: 'sha256:abc',
       });
 
-      const result = await multiRegistryGetContent('test');
+      const { result } = await multiRegistryGetContent('test');
       expect(result).toBeDefined();
       expect(result?.content).toBe('# Test content');
       expect(result?._registry).toBe('public');
     });
 
-    it('should return null when not found', async () => {
+    it('should return null with errors when not found', async () => {
       mockClient.getDossierContent.mockRejectedValue(
         Object.assign(new Error('Not found'), { statusCode: 404 })
       );
 
-      const result = await multiRegistryGetContent('missing');
+      const { result, errors } = await multiRegistryGetContent('missing');
       expect(result).toBeNull();
+      expect(errors).toHaveLength(1);
+      expect(errors[0].registry).toBe('public');
     });
   });
 });

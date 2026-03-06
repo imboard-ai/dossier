@@ -5,6 +5,7 @@ import { handleCors } from '../../../lib/cors';
 import * as dossier from '../../../lib/dossier';
 import * as github from '../../../lib/github';
 import { fetchManifestDossiers, normalizeDossier } from '../../../lib/manifest';
+import { methodNotAllowed, serverError } from '../../../lib/responses';
 import type { ManifestDossier, VercelRequest, VercelResponse } from '../../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -18,9 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handlePublish(req, res);
   }
 
-  return res.status(405).json({
-    error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET and POST are allowed' },
-  });
+  return methodNotAllowed(res, 'GET', 'POST');
 }
 
 async function handleList(_req: VercelRequest, res: VercelResponse) {
@@ -37,28 +36,46 @@ async function handleList(_req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
-    console.error('Error fetching dossiers:', error);
-    return res.status(502).json({
-      error: {
-        code: 'UPSTREAM_ERROR',
-        message: 'Failed to fetch dossier list',
-      },
+    return serverError(res, {
+      operation: 'dossier.list',
+      error,
+      code: 'UPSTREAM_ERROR',
+      message: 'Failed to fetch dossier list',
     });
   }
 }
 
 async function handlePublish(req: VercelRequest, res: VercelResponse) {
-  const { namespace, content, changelog } = req.body || {};
-
-  if (!namespace) {
-    return res.status(400).json({
-      error: { code: 'MISSING_FIELD', message: 'Missing required field: namespace' },
+  const contentType = req.headers['content-type'];
+  if (!contentType || !contentType.includes('application/json')) {
+    return res.status(415).json({
+      error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Content-Type must be application/json' },
     });
   }
 
-  if (!content) {
+  const { namespace, content, changelog } = req.body || {};
+
+  if (!namespace || typeof namespace !== 'string') {
     return res.status(400).json({
-      error: { code: 'MISSING_FIELD', message: 'Missing required field: content' },
+      error: {
+        code: 'MISSING_FIELD',
+        message: 'Missing required field: namespace (must be a string)',
+      },
+    });
+  }
+
+  if (!content || typeof content !== 'string') {
+    return res.status(400).json({
+      error: {
+        code: 'MISSING_FIELD',
+        message: 'Missing required field: content (must be a string)',
+      },
+    });
+  }
+
+  if (changelog !== undefined && typeof changelog !== 'string') {
+    return res.status(400).json({
+      error: { code: 'INVALID_FIELD', message: 'Field changelog must be a string' },
     });
   }
 
@@ -121,12 +138,11 @@ async function handlePublish(req: VercelRequest, res: VercelResponse) {
         error: { code: 'INVALID_PATH', message: 'Path traversal is not allowed' },
       });
     }
-    console.error('Error publishing dossier:', err);
-    return res.status(502).json({
-      error: {
-        code: 'PUBLISH_ERROR',
-        message: 'Failed to publish dossier',
-      },
+    return serverError(res, {
+      operation: 'dossier.publish',
+      error: err,
+      code: 'PUBLISH_ERROR',
+      message: 'Failed to publish dossier',
     });
   }
 }

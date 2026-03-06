@@ -88,7 +88,10 @@ describe('run command', () => {
   it('should exit 1 when registry dossier not found', async () => {
     mockedFs.existsSync.mockReturnValue(false);
     mockedFs.readdirSync.mockReturnValue([]);
-    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue(null);
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: null,
+      errors: [],
+    } as any);
 
     const program = createTestProgram();
     registerRunCommand(program);
