@@ -34,9 +34,11 @@ export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
     return true;
   }
 
-  // Reject mutating requests from disallowed origins (CSRF protection)
+  // Reject mutating requests from disallowed origins (CSRF protection).
+  // GET/HEAD allowed from any origin (read-only). No Origin header allowed (non-browser clients).
   const origin = req.headers.origin;
   if (origin && MUTATING_METHODS.has(req.method ?? '') && !getAllowedOrigins().includes(origin)) {
+    console.warn(`[cors] Blocked mutating ${req.method} from origin: ${origin}`);
     res.status(403).json({
       error: { code: 'ORIGIN_NOT_ALLOWED', message: 'Origin not allowed for mutating requests' },
     });
