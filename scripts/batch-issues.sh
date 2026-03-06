@@ -4,6 +4,8 @@
 #
 # Usage:
 #   ./scripts/batch-issues.sh 102 103 104 105
+#   ./scripts/batch-issues.sh 102..110              # all open issues in range 102-110
+#   ./scripts/batch-issues.sh 50..60 102 103        # mix ranges and individual issues
 #   ./scripts/batch-issues.sh $(gh issue list --label "agent-friendly" --json number --jq '.[].number')
 #
 # Each issue gets its own Claude Code agent in a separate process.
@@ -30,15 +32,44 @@ while [[ $# -gt 0 ]]; do
     --max-parallel) MAX_PARALLEL="$2"; shift 2 ;;
     --dry-run)      DRY_RUN=true; shift ;;
     --model)        MODEL="$2"; shift 2 ;;
-    *)              ISSUES+=("$1"); shift ;;
+    *)
+      if [[ "$1" =~ ^([0-9]+)\.\.([0-9]+)$ ]]; then
+        range_start="${BASH_REMATCH[1]}"
+        range_end="${BASH_REMATCH[2]}"
+        if [[ "$range_start" -gt "$range_end" ]]; then
+          echo "Error: invalid range ${range_start}..${range_end} (start > end)" >&2
+          exit 1
+        fi
+        echo "Fetching open issues in range ${range_start}..${range_end}..."
+        # Fetch all open issues and filter to the range
+        range_issues=$(gh issue list --state open --limit 500 --json number --jq \
+          "[.[].number | select(. >= ${range_start} and . <= ${range_end})] | sort | .[]")
+        if [[ -z "$range_issues" ]]; then
+          echo "  No open issues found in range ${range_start}..${range_end}"
+        else
+          while IFS= read -r num; do
+            ISSUES+=("$num")
+            echo "  Found open issue #${num}"
+          done <<< "$range_issues"
+        fi
+      else
+        ISSUES+=("$1")
+      fi
+      shift
+      ;;
   esac
 done
 
 if [[ ${#ISSUES[@]} -eq 0 ]]; then
-  echo "Usage: $0 [--max-parallel N] [--model MODEL] [--dry-run] <issue-numbers...>"
+  echo "Usage: $0 [--max-parallel N] [--model MODEL] [--dry-run] <issue-numbers|ranges...>"
+  echo ""
+  echo "Arguments can be individual issue numbers or ranges (START..END)."
+  echo "Ranges expand to all open issues within the range."
   echo ""
   echo "Examples:"
   echo "  $0 102 103 104"
+  echo "  $0 102..110                  # all open issues from 102 to 110"
+  echo "  $0 50..60 102 103            # mix ranges and individual numbers"
   echo "  $0 --max-parallel 5 --model opus \$(gh issue list --label bug --json number --jq '.[].number')"
   exit 1
 fi
