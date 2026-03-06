@@ -1,22 +1,62 @@
 #!/usr/bin/env bash
 #
-# batch-issues.sh — Run full-cycle-issue on multiple GitHub issues in parallel
+# batch-issues.sh — Batch-process GitHub issues via Claude Code agents
 #
-# Usage:
-#   ./scripts/batch-issues.sh 102 103 104 105
-#   ./scripts/batch-issues.sh 102..110              # all open issues in range 102-110
-#   ./scripts/batch-issues.sh 50..60 102 103        # mix ranges and individual issues
-#   ./scripts/batch-issues.sh --label epic/v2        # sequential epic: all open issues with label
+# Spawns a Claude Code agent per issue, each running the full-cycle-issue skill
+# (read issue → create branch → implement → PR → merge). Supports two modes:
+#
+#   Parallel mode (default)  — up to N agents run concurrently
+#   Epic mode (--label)      — issues run one-at-a-time so each builds on the
+#                              previous one's merged changes
+#
+# ── Prerequisites ──────────────────────────────────────────────────────────
+#   - gh CLI authenticated with repo access
+#   - claude CLI on PATH
+#   - jq installed
+#
+# ── Arguments ──────────────────────────────────────────────────────────────
+#   <number>       Individual issue number (e.g. 102)
+#   <start>..<end> Range of issue numbers; expands to all OPEN issues in range
+#   Arguments can be mixed freely: ./batch-issues.sh 50..60 102 103
+#
+# ── Options ────────────────────────────────────────────────────────────────
+#   --label LABEL      Fetch all open issues with this GitHub label.
+#                      Forces sequential execution (epic mode, --max-parallel 1).
+#                      Issues are sorted by number (lowest first).
+#                      Can be combined with explicit issue numbers/ranges.
+#   --max-parallel N   Max concurrent agents (default: 3, ignored in epic mode)
+#   --model MODEL      Claude model to use (default: opus)
+#   --dry-run          Print the commands that would run without executing
+#
+# ── Output ─────────────────────────────────────────────────────────────────
+#   Logs:    /tmp/batch-issues/<issue-number>.log  (one per issue)
+#   Summary: printed at end with per-issue outcome:
+#            ✓ merged  — PR merged and/or issue closed
+#            ◐ PR open — PR created but not yet merged
+#            ✗ failed  — agent exited with error or produced no output
+#            ? unclear — agent exited 0 but no PR found
+#
+# ── Examples ───────────────────────────────────────────────────────────────
+#   # Process three specific issues in parallel (max 3)
+#   ./scripts/batch-issues.sh 102 103 104
+#
+#   # All open issues in a range
+#   ./scripts/batch-issues.sh 102..110
+#
+#   # Epic mode: work through a labeled backlog sequentially
+#   ./scripts/batch-issues.sh --label epic/v2
+#
+#   # Combine label with extra issues
+#   ./scripts/batch-issues.sh --label sprint-3 200 201
+#
+#   # High parallelism with a specific model
+#   ./scripts/batch-issues.sh --max-parallel 5 --model opus 102..120
+#
+#   # Preview what would run
+#   ./scripts/batch-issues.sh --dry-run --label epic/v2
+#
+#   # Pipe from gh CLI
 #   ./scripts/batch-issues.sh $(gh issue list --label "agent-friendly" --json number --jq '.[].number')
-#
-# Each issue gets its own Claude Code agent in a separate process.
-# Logs go to /tmp/batch-issues/<issue-number>.log
-#
-# Options:
-#   --max-parallel N   Max concurrent agents (default: 3)
-#   --label LABEL      Fetch all open issues with this label and run sequentially (epic mode)
-#   --dry-run          Print commands without executing
-#   --model MODEL      Model to use (default: opus)
 
 set -uo pipefail
 
@@ -84,18 +124,22 @@ if [[ -n "$LABEL" ]]; then
 fi
 
 if [[ ${#ISSUES[@]} -eq 0 ]]; then
-  echo "Usage: $0 [--max-parallel N] [--model MODEL] [--dry-run] [--label LABEL] <issue-numbers|ranges...>"
+  echo "Usage: $0 [options] <issue-numbers|ranges...>"
   echo ""
-  echo "Arguments can be individual issue numbers or ranges (START..END)."
-  echo "Ranges expand to all open issues within the range."
-  echo "Use --label to fetch all open issues with a GitHub label (epic mode, sequential)."
+  echo "Arguments:  102          individual issue"
+  echo "            102..110     range → all open issues between 102 and 110"
+  echo ""
+  echo "Options:"
+  echo "  --label LABEL      fetch open issues by label (epic mode, sequential)"
+  echo "  --max-parallel N   concurrent agents (default: 3, forced to 1 in epic mode)"
+  echo "  --model MODEL      Claude model (default: opus)"
+  echo "  --dry-run          print commands without executing"
   echo ""
   echo "Examples:"
-  echo "  $0 102 103 104"
-  echo "  $0 102..110                  # all open issues from 102 to 110"
-  echo "  $0 50..60 102 103            # mix ranges and individual numbers"
-  echo "  $0 --label epic/v2           # sequential epic: all issues with label"
-  echo "  $0 --max-parallel 5 --model opus \$(gh issue list --label bug --json number --jq '.[].number')"
+  echo "  $0 102 103 104                         # three issues in parallel"
+  echo "  $0 102..110                             # open issues in range"
+  echo "  $0 --label epic/v2                      # epic: label issues sequentially"
+  echo "  $0 --dry-run --label sprint-3           # preview epic run"
   exit 1
 fi
 
