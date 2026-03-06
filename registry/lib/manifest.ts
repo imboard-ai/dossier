@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@ai-dossier/core';
 import config from './config';
 import { DOSSIER_DEFAULTS } from './constants';
 import type { ManifestDossier } from './types';
@@ -9,7 +10,7 @@ export async function fetchManifestDossiers(): Promise<ManifestDossier[]> {
   try {
     response = await fetch(manifestUrl);
   } catch (error) {
-    throw new Error(`Failed to fetch manifest from ${manifestUrl}: ${(error as Error).message}`);
+    throw new Error(`Failed to fetch manifest from ${manifestUrl}: ${getErrorMessage(error)}`);
   }
 
   if (!response.ok) {
