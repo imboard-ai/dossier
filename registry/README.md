@@ -73,7 +73,7 @@ See [`lib/cors.ts`](lib/cors.ts) for the implementation and the [API design doc]
 
 ## Error Observability
 
-Every API response includes an `X-Request-Id` header for request tracing. Server errors (5xx) also include a `request_id` field in the JSON body for correlating with server logs.
+Dossier and search endpoint responses include an `X-Request-Id` header for request tracing. Server errors (5xx) also include a `request_id` field in the JSON body for correlating with server logs.
 
 **Example error response:**
 
