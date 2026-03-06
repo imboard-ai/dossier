@@ -1,5 +1,7 @@
 // Environment variables are required and set via Vercel project settings
 const config = {
+  apiVersion: 'MVP1',
+
   content: {
     org: 'imboard-ai',
     repo: 'dossier-content',
