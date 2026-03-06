@@ -29,12 +29,6 @@ export interface MultiRegistryListResult {
   errors: Array<{ registry: string; error: string }>;
 }
 
-export interface MultiRegistrySearchResult {
-  dossiers: LabeledDossierListItem[];
-  total: number;
-  errors: Array<{ registry: string; error: string }>;
-}
-
 function getTokenForRegistry(registryName: string): string | null {
   const creds = loadCredentials(registryName);
   return creds?.token || null;
@@ -88,40 +82,6 @@ async function multiRegistryListFrom(
   }
 
   return { dossiers: allDossiers, total, errors };
-}
-
-/**
- * Search dossiers across all registries.
- * Fetches all dossiers and filters client-side (same as single-registry search).
- */
-async function multiRegistrySearch(
-  query: string,
-  options: ListDossiersOptions = {}
-): Promise<MultiRegistrySearchResult> {
-  const listResult = await multiRegistryList({ ...options, page: 1, perPage: 100 });
-
-  const queryLower = query.toLowerCase();
-  const terms = queryLower.split(/\s+/).filter(Boolean);
-
-  const matched = listResult.dossiers.filter((d) => {
-    const fields = [
-      d.name || '',
-      d.title || '',
-      d.description || d.objective || '',
-      ...(Array.isArray(d.category) ? d.category : [d.category || '']),
-      ...(d.tags || []),
-    ]
-      .map((f) => String(f).toLowerCase())
-      .join(' ');
-
-    return terms.every((term) => fields.includes(term) || fields.indexOf(term) !== -1);
-  });
-
-  return {
-    dossiers: matched,
-    total: matched.length,
-    errors: listResult.errors,
-  };
 }
 
 /**
@@ -182,7 +142,6 @@ async function multiRegistryGetContent(
 export {
   multiRegistryList,
   multiRegistryListFrom,
-  multiRegistrySearch,
   multiRegistryGetDossier,
   multiRegistryGetContent,
 };
