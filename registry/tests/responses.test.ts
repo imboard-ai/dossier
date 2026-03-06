@@ -124,7 +124,7 @@ describe('serverError', () => {
 });
 
 describe('getRequestId', () => {
-  it('returns existing X-Request-Id header', () => {
+  it('returns existing X-Request-Id header when valid', () => {
     const req = { headers: { 'x-request-id': 'existing-id' } } as never;
     expect(getRequestId(req)).toBe('existing-id');
   });
@@ -138,5 +138,22 @@ describe('getRequestId', () => {
     const req = { headers: {} } as never;
     const id = getRequestId(req);
     expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  it('rejects request IDs longer than 64 characters', () => {
+    const req = { headers: { 'x-request-id': 'a'.repeat(65) } } as never;
+    const id = getRequestId(req);
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  it('rejects request IDs with invalid characters', () => {
+    const req = { headers: { 'x-request-id': '<script>alert(1)</script>' } } as never;
+    const id = getRequestId(req);
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  it('accepts alphanumeric IDs with hyphens', () => {
+    const req = { headers: { 'x-request-id': 'abc-123-DEF' } } as never;
+    expect(getRequestId(req)).toBe('abc-123-DEF');
   });
 });

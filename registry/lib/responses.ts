@@ -11,10 +11,13 @@ function formatAllowed(methods: string[]): string {
   return `${methods.slice(0, -1).join(', ')}, and ${methods[methods.length - 1]}`;
 }
 
+const VALID_REQUEST_ID = /^[a-zA-Z0-9-]{1,64}$/;
+
 export function getRequestId(req: VercelRequest): string {
   const header = req.headers['x-request-id'];
   const existing = Array.isArray(header) ? header[0] : header;
-  return existing || crypto.randomUUID();
+  if (existing && VALID_REQUEST_ID.test(existing)) return existing;
+  return crypto.randomUUID();
 }
 
 export function methodNotAllowed(res: VercelResponse, ...allowed: string[]): VercelResponse {

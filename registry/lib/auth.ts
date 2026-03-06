@@ -154,7 +154,7 @@ export async function authorizePublish(
       reason: permission.reason,
     });
     res.status(HTTP_STATUS.FORBIDDEN).json({
-      error: { code: 'FORBIDDEN', message: permission.reason },
+      error: { code: 'FORBIDDEN', message: `Cannot publish to namespace '${namespace}'` },
     });
     return false;
   }
