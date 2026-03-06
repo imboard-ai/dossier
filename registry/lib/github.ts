@@ -1,4 +1,5 @@
 import config from './config';
+import { USER_AGENT } from './constants';
 import type { DeleteResult, FileContent, Manifest, ManifestDossier } from './types';
 
 const GITHUB_API = 'https://api.github.com';
@@ -12,7 +13,7 @@ async function githubRequest(endpoint: string, options: RequestInit = {}): Promi
       Authorization: `Bearer ${config.content.botToken}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'Dossier-Registry',
+      'User-Agent': USER_AGENT,
       ...(options.headers as Record<string, string>),
     },
   });

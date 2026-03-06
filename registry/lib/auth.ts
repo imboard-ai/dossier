@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import config from './config';
-import { JWT_EXPIRY_SECONDS } from './constants';
+import { JWT_EXPIRY_SECONDS, USER_AGENT } from './constants';
 import type { JwtPayload, VercelRequest, VercelResponse } from './types';
 
 export function signJwt(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
@@ -80,6 +80,10 @@ export async function exchangeGitHubCode(code: string): Promise<string> {
     }),
   });
 
+  if (!response.ok) {
+    throw new Error(`GitHub OAuth token exchange failed: ${response.status}`);
+  }
+
   const data = (await response.json()) as {
     error?: string;
     error_description?: string;
@@ -100,7 +104,7 @@ export async function fetchGitHubUser(
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/json',
-      'User-Agent': 'Dossier-Registry',
+      'User-Agent': USER_AGENT,
     },
   });
 
@@ -116,7 +120,7 @@ export async function fetchGitHubOrgs(accessToken: string): Promise<string[]> {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/json',
-      'User-Agent': 'Dossier-Registry',
+      'User-Agent': USER_AGENT,
     },
   });
 

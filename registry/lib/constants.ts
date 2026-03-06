@@ -18,3 +18,15 @@ export const MAX_NAME_LENGTH = 64;
 
 /** JWT token expiry in seconds (30 days). */
 export const JWT_EXPIRY_SECONDS = 30 * 24 * 60 * 60;
+
+/** Valid slug pattern: lowercase alphanumeric with hyphens, no leading/trailing hyphen. */
+export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
+
+/** User-Agent header for outgoing GitHub API requests. */
+export const USER_AGENT = 'Dossier-Registry';
+
+/** Default items per page for search/list. */
+export const DEFAULT_PER_PAGE = 20;
+
+/** Maximum items per page for search/list. */
+export const MAX_PER_PAGE = 100;

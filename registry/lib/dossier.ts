@@ -1,6 +1,6 @@
 import type { DossierFrontmatter } from '@ai-dossier/core';
 import { parseDossierContent } from '@ai-dossier/core';
-import { MAX_NAME_LENGTH, MAX_NAMESPACE_DEPTH } from './constants';
+import { MAX_NAME_LENGTH, MAX_NAMESPACE_DEPTH, SLUG_PATTERN } from './constants';
 import type { DossierValidation, NamespaceValidation } from './types';
 
 /**
@@ -32,7 +32,7 @@ export function validateDossier(frontmatter: DossierFrontmatter): DossierValidat
     if (typeof frontmatter.name !== 'string') {
       errors.push(`Name must be a string, got ${typeof frontmatter.name}`);
     } else {
-      if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(frontmatter.name)) {
+      if (!SLUG_PATTERN.test(frontmatter.name)) {
         errors.push(
           `Invalid name "${frontmatter.name}": must be lowercase alphanumeric with hyphens, cannot start/end with hyphen`
         );
@@ -82,7 +82,7 @@ export function validateNamespace(namespace: string): NamespaceValidation {
   }
 
   for (const segment of segments) {
-    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(segment)) {
+    if (!SLUG_PATTERN.test(segment)) {
       return { valid: false, error: `Invalid namespace segment: ${segment}` };
     }
   }

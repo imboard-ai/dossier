@@ -1,5 +1,5 @@
 import config from '../../lib/config';
-import { DOSSIER_DEFAULTS } from '../../lib/constants';
+import { DEFAULT_PER_PAGE, DOSSIER_DEFAULTS, MAX_PER_PAGE } from '../../lib/constants';
 import { handleCors } from '../../lib/cors';
 import type { ManifestDossier, VercelRequest, VercelResponse } from '../../lib/types';
 
@@ -21,7 +21,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const page = Math.max(1, Number.parseInt(pageStr, 10) || 1);
-  const perPage = Math.min(100, Math.max(1, Number.parseInt(perPageStr, 10) || 20));
+  const perPage = Math.min(
+    MAX_PER_PAGE,
+    Math.max(1, Number.parseInt(perPageStr, 10) || DEFAULT_PER_PAGE)
+  );
 
   try {
     const manifestUrl = config.getManifestUrl();
