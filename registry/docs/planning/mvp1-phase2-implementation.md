@@ -70,7 +70,6 @@ Content-Type: application/json
 | 401 | `MISSING_TOKEN` | No Authorization header |
 | 401 | `INVALID_TOKEN` | Invalid/expired JWT |
 | 403 | `FORBIDDEN` | User cannot publish to this namespace |
-| 409 | `VERSION_EXISTS` | This version already exists |
 | 413 | `CONTENT_TOO_LARGE` | Content exceeds 1MB limit |
 
 ---
