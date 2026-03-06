@@ -14,6 +14,11 @@ export function verifyJwt(token: string): JwtPayload {
   }) as JwtPayload;
 }
 
+/**
+ * Extract and verify the Bearer JWT from the request.
+ * On failure, sends the appropriate 401 response and returns null.
+ * Callers must check for null and return early.
+ */
 export function requireAuth(req: VercelRequest, res: VercelResponse): JwtPayload | null {
   const token = extractBearerToken(req);
   if (!token) {
