@@ -47,7 +47,10 @@ function readCredentialsFile(): Record<string, unknown> | null {
       fs.chmodSync(CREDENTIALS_FILE, 0o600);
     }
     return JSON.parse(fs.readFileSync(CREDENTIALS_FILE, 'utf8'));
-  } catch {
+  } catch (error) {
+    console.error(
+      `⚠️  Warning: Could not parse credentials file ${CREDENTIALS_FILE} (${(error as Error).message})`
+    );
     return null;
   }
 }
@@ -124,7 +127,13 @@ function saveCredentialsStore(store: CredentialsStore): void {
       expires_at: creds.expiresAt || null,
     };
   }
-  fs.writeFileSync(CREDENTIALS_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
+  try {
+    fs.writeFileSync(CREDENTIALS_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
+  } catch (error) {
+    throw new Error(
+      `Failed to save credentials to ${CREDENTIALS_FILE}: ${(error as Error).message}`
+    );
+  }
 }
 
 /**
