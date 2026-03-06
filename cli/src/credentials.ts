@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_DIR } from './config';
+import { CONFIG_DIR, ensureConfigDir } from './config';
 
 export interface Credentials {
   token: string;
@@ -18,15 +18,6 @@ export interface Credentials {
 type CredentialsStore = Record<string, Credentials>;
 
 const CREDENTIALS_FILE = path.join(CONFIG_DIR, 'credentials.json');
-
-/**
- * Ensure the config directory exists.
- */
-function ensureConfigDir(): void {
-  if (!fs.existsSync(CONFIG_DIR)) {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  }
-}
 
 /**
  * Read and parse the credentials file, returning the raw JSON.
