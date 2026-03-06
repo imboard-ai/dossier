@@ -54,6 +54,7 @@ export function serverError(
     message: string;
     status?: number;
     requestId?: string;
+    context?: Record<string, unknown>;
   }
 ): VercelResponse {
   const requestId = opts.requestId || crypto.randomUUID();
@@ -64,6 +65,7 @@ export function serverError(
     errorType,
     error: errorMessage,
     stack: opts.error instanceof Error ? opts.error.stack : undefined,
+    ...opts.context,
   });
   return res.status(opts.status ?? HTTP_STATUS.BAD_GATEWAY).json({
     error: {

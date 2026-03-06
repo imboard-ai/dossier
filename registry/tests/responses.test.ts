@@ -137,6 +137,27 @@ describe('serverError', () => {
     consoleSpy.mockRestore();
   });
 
+  it('includes context fields in log output', () => {
+    const res = createViMockRes();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    serverError(res, {
+      operation: 'dossier.publish',
+      error: new Error('GitHub API error'),
+      code: 'PUBLISH_ERROR',
+      message: 'Failed to publish dossier',
+      requestId: 'req-123',
+      context: { namespace: 'my-org', path: 'my-org/my-dossier' },
+    });
+
+    const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
+    expect(loggedJson.namespace).toBe('my-org');
+    expect(loggedJson.path).toBe('my-org/my-dossier');
+    expect(loggedJson.requestId).toBe('req-123');
+
+    consoleSpy.mockRestore();
+  });
+
   it('includes errorType in log but not in response', () => {
     const res = createViMockRes();
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
