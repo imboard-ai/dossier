@@ -41,7 +41,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -75,7 +75,7 @@ jobs:
         run: npm install -g npm@latest
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Bump version (manual dispatch only)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != 'skip'

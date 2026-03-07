@@ -697,12 +697,18 @@ Exit 0 (safe) or 1 (unsafe)
 - ✅ Registry integration (publish, remove, install-skill)
 - ✅ Non-TTY stdin detection
 
-### v0.5.0 (Current)
+### v0.5.0
 - ✅ Multi-registry support with parallel resolution
 - ✅ `dossier create` command with meta-dossier templates
 - ✅ `dossier export` and `dossier pull` commands
 - ✅ Agent discovery (`--agent` flag)
 - ✅ Enhanced auth: browser OAuth and env-based tokens
+
+### v0.7.0 (Current)
+- ✅ Security hardening (execFileSync, Zod validation)
+- ✅ Node 20+ requirement
+- ✅ Coverage thresholds enforcement
+- ✅ Documentation consistency fixes
 
 ### v1.0.0 (Stable)
 - ⏳ Complete signature verification

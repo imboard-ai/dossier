@@ -376,4 +376,4 @@ Track these to measure dossier adoption success:
 - Check [examples/](../../examples/) for more dossier patterns
 - Review [FAQ.md](../explanation/faq.md) for common questions
 - See [SPECIFICATION.md](../reference/specification.md) for formal dossier structure
-- Visit the [security/](../security/) directory for security best practices
+- Visit the [security/](../../security/) directory for security best practices

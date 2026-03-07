@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -6,7 +6,7 @@ vi.mock('node:child_process');
 vi.mock('node:fs');
 
 const mockedFs = vi.mocked(fs);
-const mockedExecSync = vi.mocked(execSync);
+const mockedExecFileSync = vi.mocked(execFileSync);
 
 import {
   buildLlmCommand,
@@ -209,7 +209,7 @@ describe('detectLlm', () => {
   });
 
   it('should return null when auto-detect fails', () => {
-    mockedExecSync.mockImplementation(() => {
+    mockedExecFileSync.mockImplementation(() => {
       throw new Error('not found');
     });
 
@@ -217,7 +217,7 @@ describe('detectLlm', () => {
   });
 
   it('should detect claude when command exists', () => {
-    mockedExecSync.mockReturnValue(Buffer.from('/usr/bin/claude'));
+    mockedExecFileSync.mockReturnValue(Buffer.from('/usr/bin/claude'));
 
     expect(detectLlm('auto', true)).toBe('claude-code');
   });

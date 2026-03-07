@@ -63,6 +63,20 @@ const CancelJourneySchema = z.object({
   reason: z.string().optional(),
 });
 
+// --- Zod schemas for prompt input validation ---
+
+const ExecuteDossierPromptSchema = z.object({
+  dossier_path: z.string(),
+});
+const ExecuteJourneyPromptSchema = z.object({
+  graph_id: z.string(),
+});
+const CreateDossierPromptSchema = z.object({
+  title: z.string(),
+  category: z.string().optional(),
+  risk_level: z.string().optional(),
+});
+
 // Read version from package.json to avoid hardcoded drift
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { version } = require('../package.json') as { version: string };
@@ -476,10 +490,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 
   switch (name) {
     case 'execute-dossier': {
-      const dossierPath = args?.dossier_path as string;
-      if (!dossierPath) {
-        throw new Error('dossier_path argument is required');
-      }
+      const { dossier_path: dossierPath } = ExecuteDossierPromptSchema.parse(args);
       return {
         messages: [
           {
@@ -523,10 +534,7 @@ First, read the dossier metadata to check for relationships:
     }
 
     case 'execute-journey': {
-      const graphId = args?.graph_id as string;
-      if (!graphId) {
-        throw new Error('graph_id argument is required');
-      }
+      const { graph_id: graphId } = ExecuteJourneyPromptSchema.parse(args);
       return {
         messages: [
           {
@@ -582,12 +590,7 @@ First, read the dossier metadata to check for relationships:
     }
 
     case 'create-dossier': {
-      const title = args?.title as string;
-      if (!title) {
-        throw new Error('title argument is required');
-      }
-      const category = args?.category as string | undefined;
-      const riskLevel = args?.risk_level as string | undefined;
+      const { title, category, risk_level: riskLevel } = CreateDossierPromptSchema.parse(args);
       const filename = `${title.toLowerCase().replace(/\s+/g, '-')}.ds.md`;
 
       return {

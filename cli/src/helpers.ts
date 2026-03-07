@@ -3,7 +3,7 @@
  * Extracted from the monolithic bin/dossier entry point.
  */
 
-import { execSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
@@ -225,7 +225,7 @@ export function detectLlm(llmOption: string, silent = false): string | null {
 
   // Auto-detect LLM
   try {
-    execSync('command -v claude', { stdio: 'pipe' });
+    execFileSync('which', ['claude'], { stdio: 'pipe' });
     if (!silent) console.log('   Detected: Claude Code');
     return 'claude-code';
   } catch {
