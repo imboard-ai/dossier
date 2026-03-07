@@ -209,6 +209,27 @@ describe('list command', () => {
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No dossiers found'));
     });
+
+    it('should warn when --risk is used in registry mode', async () => {
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          { name: 'test', version: '1.0.0', title: 'Test', category: 'dev', _registry: 'public' },
+        ] as any,
+        total: 1,
+        errors: [],
+      });
+
+      const program = createTestProgram();
+      registerListCommand(program);
+
+      await expect(
+        program.parseAsync(['node', 'dossier', 'list', '--source', 'registry', '--risk', 'high'])
+      ).rejects.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('--risk filter is not supported in registry mode')
+      );
+    });
   });
 
   describe('local source', () => {

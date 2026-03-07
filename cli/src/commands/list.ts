@@ -66,6 +66,12 @@ Multi-registry note:
         }
 
         if (options.source === 'registry') {
+          if (options.risk) {
+            console.warn(
+              '⚠️  --risk filter is not supported in registry mode (risk_level is not included in registry listings)'
+            );
+          }
+
           const { page, perPage } = parsePaginationParams(options.page, options.perPage);
           const showRegistryLabel = resolveRegistries().length > 1;
 
