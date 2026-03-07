@@ -251,11 +251,7 @@ Dossier Schema metadata is embedded at the **top of the Markdown file** using JS
 
 **Linter rule**: `external-references-declared` (default severity: `error`) scans the body for URLs and cross-references them against declared `external_references`. Placeholder URLs (`example.com`, `localhost`, `${VAR}`) are automatically excluded. URLs from `tools_required[].install_url`, `homepage`, `repository`, and `authors[].url` are auto-exempt.
 
-**Recommended agent behavior** (see [PROTOCOL.md](../../PROTOCOL.md) for full details):
-- URLs declared in `external_references` → Proceed (author has acknowledged the dependency)
-- URLs with `type: "script"` and `trust_level: "unknown"` → Require explicit user approval
-- URLs NOT declared in `external_references` → Warn user (URL is not in the trust chain)
-- `content_scope` is `"self-contained"` but body has URLs → Treat as configuration error
+**Agent behavior**: See [PROTOCOL.md — External Reference Handling](../../PROTOCOL.md#external-reference-handling) for the full agent behavior table and detection rules.
 
 ---
 
