@@ -179,16 +179,16 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 
 **Permissions:**
 - `contents: write` - Commit version bumps, create tags
-- `packages: write` - Publish to GitHub Packages
+- `id-token: write` - npm provenance attestation
 
 **Node.js Setup:**
-- Version: 18
-- Registry: `https://npm.pkg.github.com`
-- Scope: `@dossier`
+- Version: 22
+- Registry: `https://registry.npmjs.org`
+- Scope: `@ai-dossier`
 
 **Authentication:**
-- Uses `GITHUB_TOKEN` (automatic, no setup needed)
-- Token automatically has package write permissions
+- Uses OIDC-based npm trusted publishing (no token secrets needed)
+- `id-token: write` permission enables provenance attestation
 
 ### Outputs
 
@@ -220,11 +220,10 @@ git push origin main
 2. Select `minor` for new feature release
 3. Workflow bumps version, publishes, and tags
 
-**Testing Before Public npm**
-1. Publish to GitHub Packages first
+**Testing Before Release**
+1. Ensure CI passes on the branch
 2. Test installation on various platforms
-3. Verify functionality
-4. Then publish to public npm (see PUBLISHING.md)
+3. Verify functionality via the publish pipeline's verify job
 
 ### Version Management
 
@@ -344,14 +343,12 @@ Actions → Publish Packages → Run workflow
 
 **Problem**: `npm install @ai-dossier/cli` fails with 404.
 
-**Solution**: Configure npm for GitHub Packages:
+**Solution**: The packages are published to the public npm registry. Verify:
 ```bash
-# Add to ~/.npmrc
-@dossier:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+npm view @ai-dossier/cli
 ```
 
-See `PUBLISHING.md` for detailed installation instructions.
+If the package was just published, it may take a few minutes to propagate.
 
 ---
 
@@ -402,9 +399,9 @@ Why does this workflow exist? What problem does it solve?
 
 ## Related Documentation
 
-- [PUBLISHING.md](../PUBLISHING.md) - Package publishing guide
+- [Publishing packages guide](../guides/publishing-packages.md) - Package publishing guide
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
-- [GitHub Packages Docs](https://docs.github.com/en/packages)
+- [npm Provenance Docs](https://docs.npmjs.com/generating-provenance-statements)
 - [AWS KMS Docs](https://docs.aws.amazon.com/kms/)
 
 ---
