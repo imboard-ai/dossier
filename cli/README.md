@@ -253,7 +253,7 @@ Multi-registry commands use the following exit codes:
 | `get` | Dossier found | Not found in any registry, or all registries failed | — |
 | `list --source registry` | Results returned, including when all registries fail (empty list + warnings) | Unexpected runtime error | — |
 | `search` | Results returned, including when all registries fail (no matches + warnings) | Unexpected runtime error | — |
-| `pull` | Always exits 0. Per-item errors are printed but do not affect the exit code. | — | — |
+| `pull` | At least one item pulled successfully (per-item errors are printed as warnings) | All requested items failed to pull | — |
 | `run` | Dossier executed successfully | Not found, fetch failed, or verification failed | No LLM detected, unknown LLM, or execution failed |
 
 **Partial failures**: When some registries fail but at least one succeeds, `list` returns exit `0` with a warning showing which registries failed:

@@ -51,15 +51,14 @@ This allows partial failures to be surfaced without blocking successful results 
 
 ### Multi-Registry Failure Modes
 
-| Scenario | Behavior | User-Facing Output |
-|----------|----------|-------------------|
-| **All registries timeout** | All `Promise.allSettled()` results are rejected. `get`/`run` exit 1 with per-registry errors. `list`/`search` exit 0 with empty results and per-registry warnings. | `❌ Not found in any registry` or per-registry error details |
-| **Network partition** | Same as timeout — unreachable registries produce rejected promises. Reachable registries return normally. | Partial results with `⚠️  Showing partial results (N/M registries responded)` |
-| **Auth failure across registries** | Registry returns 401/403. Caught as `RegistryError` and included in the `errors` array. Other registries still queried. | `⚠️  Registry 'name': unauthorized` or similar per-registry error |
-| **Invalid response format** | JSON parse failure caught in `RegistryClient`. Falls back to HTTP status text. Treated as a registry error. | `⚠️  Registry 'name': <HTTP status text>` |
-| **No registries configured** | CLI falls back to hardcoded public registry. Commands proceed normally. | No error — transparent fallback |
+All failures are captured per-registry via `Promise.allSettled()` and included in the `errors` array alongside successful results. Key behaviors:
 
-See [cli/README.md](cli/README.md#exit-codes) for per-command exit codes.
+- **Partial failure**: Unreachable or erroring registries don't block results from healthy ones. The CLI succeeds if at least one registry responds.
+- **Total failure**: When all registries fail, `get`/`run`/`pull` exit 1; `list`/`search` exit 0 with empty results and per-registry warnings.
+- **Auth errors** (401/403): Treated as per-registry errors. Other registries are still queried.
+- **No registries configured**: CLI falls back to the hardcoded public registry transparently.
+
+For per-command exit codes and user-facing error output, see [cli/README.md — Exit Codes](cli/README.md#exit-codes).
 
 ## File Format
 
