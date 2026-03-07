@@ -110,6 +110,7 @@ async function handleGet(
       code: 'UPSTREAM_ERROR',
       message: 'Failed to fetch dossier information',
       requestId,
+      context: { dossier: dossierName, isContentRequest },
     });
   }
 }
@@ -163,6 +164,7 @@ async function handleDelete(
       code: 'DELETE_ERROR',
       message: 'Failed to delete dossier. Please try again.',
       requestId,
+      context: { dossier: dossierName, version },
     });
   }
 }
