@@ -1,3 +1,7 @@
+> **Deprecated** — This file is outdated and no longer maintained.
+> See the "For AI Agents" sections in each package README instead:
+> [`README.md`](../../README.md) (root) | [`mcp-server/README.md`](../../mcp-server/README.md)
+
 # AGENTS.md
 
 > **For AI Assistants & Developers**: This file provides comprehensive context about the Dossier project to help you understand, contribute to, and work effectively with this codebase.

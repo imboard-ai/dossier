@@ -246,6 +246,29 @@ Dossiers embody this philosophy - they give AI agents clear structure and guidan
 
 ---
 
+## For AI Agents
+
+| Directory | Purpose |
+|-----------|---------|
+| `packages/core/` | Shared library — parsing, verification, linting, risk assessment |
+| `cli/` | CLI tool (`dossier verify`, `dossier search`, etc.) |
+| `mcp-server/` | MCP server — tools/resources/prompts for LLM integration |
+| `registry/` | Vercel-deployed registry API |
+
+```bash
+make build-all    # build core → mcp-server + cli (skip lint)
+make build        # lint then build
+make test         # test all workspaces
+make check        # biome format + lint with auto-fix
+```
+
+- Node 20+ required (vitest v4 + vite v7 dropped Node 18)
+- Linter/formatter: **Biome** (not ESLint/Prettier) — `npx biome check --write .`
+- Build order: core first, then mcp-server and cli (both depend on core)
+- MCP integration: see `mcp-server/README.md`
+
+---
+
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE). You are free to use, copy, modify, and distribute it, provided that any modified versions or network services using this software also make their source code available under the same license.
