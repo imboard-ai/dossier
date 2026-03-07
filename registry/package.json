@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "generate:jwt-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
     "auth:url": "./scripts/auth-url.sh",

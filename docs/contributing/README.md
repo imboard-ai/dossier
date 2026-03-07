@@ -5,7 +5,7 @@ Developer documentation for contributors to the Dossier project.
 ## Quick Start
 
 1. Read the [Contributing Guidelines](../../CONTRIBUTING.md)
-2. Set up your [development environment](development-setup.md) *(coming soon)*
+2. Set up your development environment (see CONTRIBUTING.md for setup steps)
 3. Understand our [workflows](workflows.md)
 4. Review [issue submission guide](issue-guide.md)
 5. Learn about [pull request process](pr-guide.md)
@@ -33,4 +33,4 @@ All contributors must follow our [Code of Conduct](../../CODE_OF_CONDUCT.md).
 
 ## License
 
-By contributing to Dossier, you agree that your contributions will be licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](../LICENSE).
+By contributing to Dossier, you agree that your contributions will be licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](../../LICENSE).

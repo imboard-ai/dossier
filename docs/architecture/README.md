@@ -8,9 +8,8 @@ This section contains comprehensive architectural documentation for developers a
 
 ## Contents
 
-- [Overview](overview.md) *(coming soon)* - High-level architecture overview
+- [Overview](overview.md) - High-level architecture overview
 - [Architecture Decision Records (ADRs)](adr/) - Key design decisions and rationale
-- [Diagrams](diagrams/) - Visual representations of system architecture
 
 ## System Components
 
@@ -18,6 +17,7 @@ This section contains comprehensive architectural documentation for developers a
 - **@ai-dossier/core** - Verification and parsing library
 - **@ai-dossier/cli** - Command-line verification tool
 - **@ai-dossier/mcp-server** - Model Context Protocol integration
+- **@ai-dossier/worktree-pool** - Pre-warmed git worktree management
 
 ### File Structure
 - Monorepo organization (npm workspaces)
@@ -26,7 +26,7 @@ This section contains comprehensive architectural documentation for developers a
 
 ### Security Architecture
 - Cryptographic verification flow
-- Key management (Minisign, AWS KMS)
+- Key management (Ed25519, AWS KMS)
 - Threat model and mitigations
 
 See [../../security/](../../security/) for detailed security architecture.
@@ -52,7 +52,7 @@ Browse [adr/](adr/) for all architecture decisions.
 
 - **Understanding the codebase**: Start with [Overview](overview.md)
 - **Making architectural changes**: Create an ADR in [adr/](adr/)
-- **Development setup**: See [../contributing/development-setup.md](../contributing/development-setup.md)
+- **Development setup**: See [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - **Workflows**: Check [../contributing/workflows.md](../contributing/workflows.md)
 
 ## External Resources

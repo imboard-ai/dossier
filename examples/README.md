@@ -146,20 +146,20 @@ Always review dossiers before execution, especially high and critical risk level
 
 To add a new example:
 
-1. Create your dossier following the [schema](../SCHEMA.md)
+1. Create your dossier following the [schema](../docs/reference/schema.md)
 2. Add appropriate metadata (title, description, risk level, etc.)
 3. Include a checksum for integrity verification
 4. Test your dossier in a safe environment
 5. Add entry to this registry with all required columns
 6. Submit a pull request
 
-See [SPECIFICATION.md](../SPECIFICATION.md) for dossier authoring guidelines.
+See the [specification](../docs/reference/specification.md) for dossier authoring guidelines.
 
 ## Related Documentation
 
-- [Dossier Schema](../SCHEMA.md) - Complete schema specification
-- [Protocol Documentation](../PROTOCOL.md) - Execution protocol
-- [Specification](../SPECIFICATION.md) - Authoring guidelines
+- [Dossier Schema](../docs/reference/schema.md) - Complete schema specification
+- [Protocol Documentation](../docs/reference/protocol.md) - Execution protocol
+- [Specification](../docs/reference/specification.md) - Authoring guidelines
 - [Security Architecture](../security/ARCHITECTURE.md) - Security model
 
 ## Quick Links
@@ -170,7 +170,6 @@ See [SPECIFICATION.md](../SPECIFICATION.md) for dossier authoring guidelines.
 
 ---
 
-**Last Updated**: 2025-11-16
-**Total Examples**: 15 files (12 dossiers, 2 validation tools, 1 working file demo)
+**Total Examples**: 22+ dossier files across 6 domains
 **Checksummed**: 12/12 dossiers
 **Signed**: 12/12 dossiers (AWS KMS ECDSA-SHA-256)

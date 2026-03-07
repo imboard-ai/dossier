@@ -11,13 +11,13 @@ Technical specifications and reference material for the Dossier project.
 ## API & CLI Reference
 
 - [Core API Reference](core-api.md) - `@ai-dossier/core` library API documentation
-- [CLI Reference](cli.md) *(coming soon)* - Command-line tool options and usage
+- [CLI Reference](../../cli/README.md) - Command-line tool options and usage
 
 ## File Formats
 
-- Dossier files (`.ds.md`) - Markdown with YAML frontmatter
+- Dossier files (`.ds.md`) - Markdown with JSON frontmatter
 - Working files (`.dsw.md`) - Mutable execution state
-- Signature formats - Minisign and AWS KMS signatures
+- Signature formats - Ed25519 and AWS KMS signatures
 
 ## Standards & Compliance
 

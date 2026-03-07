@@ -11,7 +11,6 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 - Best practices for dossier authoring
 
 ### Security & Verification
-- [Signing dossiers](signing-dossiers.md) *(coming soon)*
 - Verifying dossier integrity
 - Managing trusted keys
 - Security best practices
@@ -25,6 +24,7 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 
 ### Integration
 - [Adopter playbooks](adopter-playbooks.md) - How organizations can adopt Dossier
+- [Dossier Guide](dossier-guide.md) - Deep dive into concepts, schema, security, and best practices
 - Integrating with CI/CD
 - Using with Claude Code
 - Using with Cursor
@@ -34,5 +34,5 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 
 - Check [Tutorials](../tutorials/) for step-by-step learning
 - See [Reference](../reference/) for technical specifications
-- Browse [Examples](../examples/) for code samples
+- Browse [Examples](../../examples/) for code samples
 - Ask in [GitHub Discussions](https://github.com/imboard-ai/ai-dossier/discussions)

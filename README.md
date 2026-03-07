@@ -200,47 +200,15 @@ See the [CLI documentation](./cli/README.md#config-command) for full registry ma
 
 ---
 
-## Learn More
-
-- [Dossier Guide](docs/guides/dossier-guide.md) - Deep dive into concepts, schema, security, self-improvement, and best practices
-- [FAQ](docs/explanation/faq.md) - Common questions and comparisons to alternatives
-- [Protocol](docs/reference/protocol.md) - Execution protocol specification
-- [Specification](docs/reference/specification.md) - Formal dossier specification
-- [Schema](docs/reference/schema.md) - JSON schema reference
-- [MCP Server](./mcp-server/README.md) - Model Context Protocol integration for Claude Code
-- [Security](./security/ARCHITECTURE.md) - Security architecture and trust model
-
----
-
 ## Documentation
 
-### Getting Started
-- [Quick Start Guide](docs/getting-started/installation.md) - Get started in 5 minutes
-- [Tutorials](docs/tutorials/) - Step-by-step learning experiences
-- [FAQ](docs/explanation/faq.md) - Frequently asked questions
-
-### Reference
-- [Protocol Specification](docs/reference/protocol.md) - Dossier execution protocol
-- [Formal Specification](docs/reference/specification.md) - Complete formal specification
-- [Schema](docs/reference/schema.md) - Dossier schema specification (v1.0.0)
-- [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
-
-### Guides & Examples
-- [How-To Guides](docs/guides/) - Task-oriented guides
-- [Example Dossiers](./examples/) - Example implementations
-- [Adopter Playbooks](docs/guides/adopter-playbooks.md) - Adoption strategies
-
-### Architecture & Contributing
-- [Architecture Overview](ARCHITECTURE.md) - System architecture
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute
-- [Security](SECURITY.md) - Security policy and verification
-- [Changelog](CHANGELOG.md) - Version history
-
-### Integrations
-- [MCP Server](./mcp-server/) - Model Context Protocol integration
-- [CLI Tool](./cli/) - Command-line verification tool
-- [Registry](./registry/) - Dossier registry API (deployed via Vercel)
-- [MI6](https://github.com/imboard-ai/mi6) - Community implementation example
+| | |
+|---|---|
+| **Getting Started** | [Quick Start](docs/getting-started/installation.md) · [Your First Dossier](docs/tutorials/your-first-dossier.md) · [FAQ](docs/explanation/faq.md) |
+| **Reference** | [Protocol](docs/reference/protocol.md) · [Specification](docs/reference/specification.md) · [Schema](docs/reference/schema.md) · [JSON Schema](./dossier-schema.json) |
+| **Guides** | [Dossier Guide](docs/guides/dossier-guide.md) · [Adopter Playbooks](docs/guides/adopter-playbooks.md) · [Examples](./examples/) |
+| **Packages** | [CLI](./cli/) · [MCP Server](./mcp-server/) · [Core Library](./packages/core/) · [Registry](./registry/) |
+| **Project** | [Architecture](ARCHITECTURE.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) |
 
 ---
 
@@ -261,29 +229,6 @@ Dossiers embody this philosophy - they give AI agents clear structure and guidan
 
 **🎯 Dossier: Universal LLM Automation Standard**
 *Structure your agents. Not your scripts.*
-
----
-
-## For AI Agents
-
-| Directory | Purpose |
-|-----------|---------|
-| `packages/core/` | Shared library — parsing, verification, linting, risk assessment |
-| `cli/` | CLI tool (`dossier verify`, `dossier search`, etc.) |
-| `mcp-server/` | MCP server — tools/resources/prompts for LLM integration |
-| `registry/` | Vercel-deployed registry API |
-
-```bash
-make build-all    # build core → mcp-server + cli (skip lint)
-make build        # lint then build
-make test         # test all workspaces
-make check        # biome format + lint with auto-fix
-```
-
-- Node 20+ required (vitest v4 + vite v7 dropped Node 18)
-- Linter/formatter: **Biome** (not ESLint/Prettier) — `npx biome check --write .`
-- Build order: core first, then mcp-server and cli (both depend on core)
-- MCP integration: see `mcp-server/README.md`
 
 ---
 
