@@ -145,5 +145,9 @@ REFACTORING_PLAN.md
 .vercel
 .test-token
 
+# MCP Registry credentials and keys
+*.pem
+.mcpregistry_*
+
 # Worktrees
 worktrees/
