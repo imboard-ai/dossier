@@ -1,0 +1,50 @@
+{
+  "name": "@ai-dossier/worktree-pool",
+  "version": "0.1.0",
+  "description": "Pre-warmed git worktree pool for instant issue setup",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "worktree-pool": "./dist/cli.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "worktree",
+    "pool",
+    "git",
+    "dossier",
+    "pre-warm"
+  ],
+  "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imboard-ai/ai-dossier.git",
+    "directory": "packages/worktree-pool"
+  },
+  "homepage": "https://github.com/imboard-ai/ai-dossier#readme",
+  "bugs": {
+    "url": "https://github.com/imboard-ai/ai-dossier/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
+  }
+}
