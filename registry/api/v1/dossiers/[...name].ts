@@ -122,7 +122,7 @@ async function handleDelete(
   requestId: string
 ) {
   try {
-    const authorized = await authorizePublish(req, res, dossierName);
+    const authorized = await authorizePublish(req, res, dossierName, 'delete');
     if (!authorized) return;
 
     log.info('Deleting dossier', { requestId, dossier: dossierName, version });
