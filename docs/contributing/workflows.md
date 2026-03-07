@@ -142,9 +142,9 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 1. Checkout code
    - Full repository checkout
    ↓
-2. Setup Node.js (v18)
-   - Configure npm for GitHub Packages
-   - Set @dossier scope to GitHub registry
+2. Setup Node.js (v20+)
+   - Configure npm registry
+   - Set @ai-dossier scope
    ↓
 3. Install dependencies
    - npm install (all workspaces)

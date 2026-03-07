@@ -228,7 +228,7 @@ git log --oneline
 3. Commit changes
 4. Tag release: `git tag v1.0.0`
 5. Push: `git push && git push --tags`
-6. GitHub Actions will publish to GitHub Packages
+6. GitHub Actions will publish to npm
 
 For detailed publishing instructions, see [docs/guides/publishing-packages.md](docs/guides/publishing-packages.md).
 

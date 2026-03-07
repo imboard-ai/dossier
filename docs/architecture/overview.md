@@ -255,10 +255,10 @@ Execute (if verified) or BLOCK
 ## Technology Stack
 
 - **Language**: TypeScript / JavaScript
-- **Runtime**: Node.js ≥ 18
+- **Runtime**: Node.js ≥ 20
 - **Build**: TypeScript Compiler (tsc)
 - **Package Manager**: npm
-- **Distribution**: npm / GitHub Packages
+- **Distribution**: npm
 - **CI/CD**: GitHub Actions
 
 ## Design Decisions

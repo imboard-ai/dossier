@@ -182,7 +182,7 @@ Success means: A fully functional component library that can be developed locall
 **Validation**:
 
 ```bash
-# Check Node.js version (need 18+)
+# Check Node.js version (need 20+)
 node --version
 
 # Check NPM version

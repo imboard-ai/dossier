@@ -704,6 +704,11 @@ Exit 0 (safe) or 1 (unsafe)
 - ✅ Agent discovery (`--agent` flag)
 - ✅ Enhanced auth: browser OAuth and env-based tokens
 
+### v0.6.0
+- ✅ Unified dossier+skill creation template
+- ✅ Pool-aware setup-issue-workflow dossiers
+- ✅ `@ai-dossier/worktree-pool` package
+
 ### v0.7.0 (Current)
 - ✅ Security hardening (execFileSync, Zod validation)
 - ✅ Node 20+ requirement
