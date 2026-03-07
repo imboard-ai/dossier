@@ -24,6 +24,7 @@
 #                      Forces sequential execution (epic mode, --max-parallel 1).
 #                      Issues are sorted by number (lowest first).
 #                      Can be combined with explicit issue numbers/ranges.
+#   --pool             Pre-warm worktree pool before spawning agents, gc after
 #   --max-parallel N   Max concurrent agents (default: 3, ignored in epic mode)
 #   --model MODEL      Claude model to use (default: opus)
 #   --dry-run          Print the commands that would run without executing
@@ -94,6 +95,7 @@ MODEL="opus"
 LABEL=""
 JSON_OUTPUT=false
 AGENT_MODE=false
+USE_POOL=false
 ISSUES=()
 
 # ── log: prints to stderr in agent mode, stdout otherwise ──
@@ -115,6 +117,7 @@ while [[ $# -gt 0 ]]; do
     --label)        LABEL="$2"; shift 2 ;;
     --json)         JSON_OUTPUT=true; shift ;;
     --agent)        AGENT_MODE=true; JSON_OUTPUT=true; shift ;;
+    --pool)         USE_POOL=true; shift ;;
     *)
       if [[ "$1" =~ ^([0-9]+)\.\.([0-9]+)$ ]]; then
         range_start="${BASH_REMATCH[1]}"
@@ -176,6 +179,7 @@ if [[ ${#ISSUES[@]} -eq 0 ]]; then
   echo "  --dry-run          print commands without executing"
   echo "  --json             append JSON summary array to stdout"
   echo "  --agent            machine-readable: --json + progress on stderr only"
+  echo "  --pool             pre-warm worktree pool before spawning agents"
   echo ""
   echo "Examples:"
   echo "  $0 102 103 104                         # three issues in parallel"
@@ -191,6 +195,17 @@ mkdir -p "$LOG_DIR"
 log "Batch full-cycle: ${#ISSUES[@]} issues, max ${MAX_PARALLEL} parallel, model=${MODEL}"
 log "Logs: ${LOG_DIR}/"
 log ""
+
+# ── Pool pre-warming ──
+if [[ "$USE_POOL" == "true" ]]; then
+  log "Pre-warming ${#ISSUES[@]} pool worktrees..."
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log "[dry-run] npx worktree-pool replenish --count ${#ISSUES[@]}"
+  else
+    npx worktree-pool replenish --count "${#ISSUES[@]}" 2>&1 | while IFS= read -r line; do log "  [pool] $line"; done
+  fi
+  log ""
+fi
 
 # ── Determine outcome by checking GitHub state ──
 # Prints human-readable line (via log) and appends to JSON_RESULTS array.
@@ -326,12 +341,19 @@ for issue in "${ISSUES[@]}"; do
 
   LOG_FILE="${LOG_DIR}/${issue}.log"
 
+  # Build agent prompt — add pool hint if --pool is active
+  AGENT_PROMPT="full cycle issue #${issue}"
+  if [[ "$USE_POOL" == "true" ]]; then
+    POOL_STATE_PATH="$(git rev-parse --show-toplevel)/../worktrees/.pool-state.json"
+    AGENT_PROMPT="full cycle issue #${issue}. If a worktree pool exists at ${POOL_STATE_PATH}, use 'npx worktree-pool claim --issue ${issue} --branch <branch>' instead of creating a new worktree."
+  fi
+
   if [[ "$DRY_RUN" == "true" ]]; then
-    log "[dry-run] #${issue}: echo \"full cycle issue #${issue}\" | claude -p --model ${MODEL} --allowedTools Bash,Read,Edit,Write,Glob,Grep,Agent"
+    log "[dry-run] #${issue}: echo \"${AGENT_PROMPT}\" | claude -p --model ${MODEL} --allowedTools Bash,Read,Edit,Write,Glob,Grep,Agent"
   else
     log "[starting] #${issue} -> ${LOG_FILE}"
     show_start_trace "$issue"
-    nohup bash -c "echo 'full cycle issue #${issue}' | claude -p \
+    nohup bash -c "echo '${AGENT_PROMPT}' | claude -p \
       --model '${MODEL}' \
       --allowedTools 'Bash,Read,Edit,Write,Glob,Grep,Agent'" \
       > "$LOG_FILE" 2>&1 &
@@ -358,6 +380,13 @@ for issue in "${ISSUES[@]}"; do
 done
 log ""
 log "Logs: ${LOG_DIR}/"
+
+# ── Pool cleanup ──
+if [[ "$USE_POOL" == "true" && "$DRY_RUN" != "true" ]]; then
+  log ""
+  log "Cleaning up worktree pool..."
+  npx worktree-pool gc 2>&1 | while IFS= read -r line; do log "  [pool] $line"; done
+fi
 
 # ── JSON output ──
 if [[ "$JSON_OUTPUT" == "true" && ${#JSON_RESULTS[@]} -gt 0 ]]; then
