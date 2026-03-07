@@ -258,7 +258,7 @@ Project-level config:
 
 Environment variables:
   DOSSIER_REGISTRY_URL    Override/add a registry URL (creates virtual "env" registry)
-  DOSSIER_REGISTRY_TOKEN  Auth token for the default registry
+  DOSSIER_REGISTRY_TOKEN  Auth token for the "env" registry (set via DOSSIER_REGISTRY_URL)
   DOSSIER_REGISTRY_USER   Username for registry authentication
   DOSSIER_REGISTRY_ORGS   Comma-separated org scopes for registry queries
 `
