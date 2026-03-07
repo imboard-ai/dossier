@@ -57,7 +57,7 @@ Copy-paste this to your AI assistant:
 I want to use the dossier automation system. First, learn about it:
 
 1. Read README.md to understand what dossiers are
-2. Read one example: examples/devops/deploy-to-aws.md
+2. Read one example: examples/devops/deploy-to-aws.ds.md
 3. Read PROTOCOL.md to understand execution protocol
 
 Then help me list and execute dossiers in this project.
@@ -85,10 +85,10 @@ These tools can't read files, so you need to provide the dossier content.
 
 ```bash
 # View a dossier
-cat dossiers/project-init.md
+cat dossiers/project-init.ds.md
 
 # Or download an example
-curl https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.md
+curl https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/devops/deploy-to-aws.ds.md
 ```
 
 #### Step 2: Use the universal template
@@ -140,7 +140,7 @@ And it just works! The AI automatically:
 
 **Status**: MVP Complete — core security verification tools working, ready for testing.
 
-📚 See [mcp-server/README.md](./mcp-server/README.md) for details and contribute!
+📚 See [mcp-server/README.md](../../mcp-server/README.md) for details and contribute!
 
 ---
 
@@ -156,11 +156,11 @@ You have a Node.js app and want to deploy it to AWS staging environment.
 
 ```
 User: "I want to use the dossier automation system. Read README.md and
-       examples/devops/deploy-to-aws.md to understand dossiers. Then
+       examples/devops/deploy-to-aws.ds.md to understand dossiers. Then
        execute the deploy-to-aws dossier for the staging environment."
 
 AI:   *Reads README.md to understand dossiers*
-      *Reads deploy-to-aws.md dossier*
+      *Reads deploy-to-aws.ds.md dossier*
       *Reads PROTOCOL.md for execution guidelines*
 
       Executing: deploy-to-aws dossier v2.1.0
@@ -205,7 +205,7 @@ AI:   ✓ Executing terraform apply
 
 1. **Get dossier**:
 ```bash
-cat examples/devops/deploy-to-aws.md
+cat examples/devops/deploy-to-aws.ds.md
 ```
 
 2. **Copy content**
@@ -319,7 +319,7 @@ See the [CLI README](../../cli/README.md#registry-configuration) for full regist
 
 ### 1. Explore Examples
 
-See [examples/](./examples/) for real-world dossiers:
+See [examples/](../../examples/) for real-world dossiers:
 - **Data Science**: [ML Training Pipeline](../../examples/data-science/train-ml-model.ds.md)
 - **Database**: [Schema Migration](../../examples/database/migrate-schema.ds.md)
 - **Frontend**: [React Component Library](../../examples/development/setup-react-library.ds.md)
@@ -327,21 +327,9 @@ See [examples/](./examples/) for real-world dossiers:
 
 ### 2. Create Your Own Dossiers
 
-```bash
-# Copy the template
-cp templates/dossier-template.md dossiers/my-custom-dossier.md
+Follow the structure in [SPECIFICATION.md](../reference/specification.md) and use the [examples](../../examples/) as starting points.
 
-# Edit with your workflow
-vim dossiers/my-custom-dossier.md
-```
-
-Follow the structure in [SPECIFICATION.md](../reference/specification.md).
-
-### 3. Organize Multiple Dossiers
-
-See [examples/sample-implementation/dossiers-registry.md](./examples/sample-implementation/dossiers-registry.md) for how to create a registry when you have 5+ dossiers.
-
-### 4. Understand the Protocol
+### 3. Understand the Protocol
 
 Read [PROTOCOL.md](../reference/protocol.md) to learn about:
 - Self-improving dossiers
@@ -409,7 +397,7 @@ working on the authentication feature."
 ### "AI can't find the dossier file"
 
 **Solution**:
-- Give explicit path: `dossiers/project-init.md`
+- Give explicit path: `dossiers/project-init.ds.md`
 - Or have AI search: `"Find all .md files in dossiers/ directory"`
 
 ### "AI isn't following the protocol"
@@ -498,7 +486,7 @@ See the [CLI README troubleshooting](../../cli/README.md#troubleshooting) for mo
 - **FAQ**: [FAQ.md](../explanation/faq.md) - Comprehensive objection handling & comparisons
 - **Issues**: https://github.com/imboard-ai/ai-dossier/issues
 - **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
-- **Examples**: See [examples/](./examples/)
+- **Examples**: See [examples/](../../examples/)
 - **Spec**: See [SPECIFICATION.md](../reference/specification.md)
 - **Protocol**: See [PROTOCOL.md](../reference/protocol.md)
 
@@ -516,7 +504,7 @@ See the [CLI README troubleshooting](../../cli/README.md#troubleshooting) for mo
 ├─────────────────────────────────────────────────────────────┤
 │ FILE-ACCESS TOOLS (Claude Code, Cursor, etc.)              │
 │   "Read README.md to learn about dossiers, then            │
-│    execute dossiers/project-init.md"                       │
+│    execute dossiers/project-init.ds.md"                    │
 ├─────────────────────────────────────────────────────────────┤
 │ WEB LLMs (ChatGPT, Claude.ai, etc.)                        │
 │   Use copy-paste template (see above)                      │

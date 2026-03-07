@@ -4,31 +4,13 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 
 ## Available Guides
 
-### Creating Dossiers
-- Creating your first dossier
-- Adding metadata and frontmatter
-- Structuring dossier content
-- Best practices for dossier authoring
-
-### Security & Verification
-- Verifying dossier integrity
-- Managing trusted keys
-- Security best practices
-
 ### Distribution & Publishing
 - [Publishing npm packages](publishing-packages.md) - Guide for package maintainers
 - [Multi-registry setup](../getting-started/installation.md#registry-configuration) - Configuring multiple registries for teams
-- Sharing dossiers safely
-- Hosting dossiers on GitHub
-- Creating dossier registries
 
 ### Integration
 - [Adopter playbooks](adopter-playbooks.md) - How organizations can adopt Dossier
 - [Dossier Guide](dossier-guide.md) - Deep dive into concepts, schema, security, and best practices
-- Integrating with CI/CD
-- Using with Claude Code
-- Using with Cursor
-- MCP server setup
 
 ## Can't Find What You Need?
 

@@ -233,7 +233,7 @@ As your collection grows, a **dossier registry** helps document relationships, w
 - **5+ dossiers**: Add categorization and basic relationships
 - **10+ dossiers**: Full registry with journeys and matrices
 
-See [examples/sample-implementation/dossiers-registry.md](../../examples/sample-implementation/dossiers-registry.md) for a complete registry example.
+See the [examples/](../../examples/) directory for dossier examples you can use as templates.
 
 ---
 

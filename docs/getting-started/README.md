@@ -28,7 +28,7 @@ ai-dossier verify https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/e
 
 - [Create your first dossier](../tutorials/your-first-dossier.md)
 - [Learn about the protocol](../reference/protocol.md)
-- [Explore example dossiers](../examples/)
+- [Explore example dossiers](../../examples/)
 - [Understand security model](../explanation/security-model.md)
 
 ## Need Help?
