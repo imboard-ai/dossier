@@ -709,11 +709,18 @@ Exit 0 (safe) or 1 (unsafe)
 - ✅ Pool-aware setup-issue-workflow dossiers
 - ✅ `@ai-dossier/worktree-pool` package
 
-### v0.7.0 (Current)
+### v0.7.0
 - ✅ Security hardening (execFileSync, Zod validation)
 - ✅ Node 20+ requirement
 - ✅ Coverage thresholds enforcement
 - ✅ Documentation consistency fixes
+
+### v0.8.0 (Current)
+- ✅ Zod validation on MCP prompt handlers
+- ✅ Complete doc link audit and fix (30+ broken links)
+- ✅ Remove all "coming soon" stubs
+- ✅ Purge stale GitHub Packages / Node 18 references
+- ✅ Improved getting-started learning path
 
 ### v1.0.0 (Stable)
 - ⏳ Complete signature verification

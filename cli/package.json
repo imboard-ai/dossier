@@ -1,6 +1,6 @@
 {
   "name": "@ai-dossier/cli",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Command-line tool for creating, verifying, and executing dossiers",
   "main": "dist/cli.js",
   "bin": {

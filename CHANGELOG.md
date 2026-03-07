@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0 / v0.8.0] - 2026-03-07
+
+### Fixed
+- **Security**: Add Zod validation for MCP prompt handlers (was using `as string` casts)
+- **Security**: Replace `execSync` with `execFileSync` in CLI helpers
+- Fix 30+ broken relative links across documentation
+- Fix all remaining stale Node 18 references (architecture overview, workflows, validation, examples, issue template)
+- Fix stale `@dossier` scope references → `@ai-dossier`
+- Purge all "GitHub Packages" references from active docs (workflows.md, getting-started)
+- Remove all "coming soon" stubs (docs.dossier.sh, security-scan, newsletter)
+- Fix outdated GitHub Actions v3 → v4 in validation README
+- Remove phantom guide entries from docs/guides/README.md
+
+### Changed
+- Use `npm ci` in publish workflow and CI lint job (was `npm install`)
+- Add coverage thresholds to worktree-pool vitest config
+- Rewrite docs/getting-started/README.md with clear 5-step learning path
+- Clarify README status: separate protocol v1.0 from CLI version
+- Update CLI roadmap with v0.6.0, v0.7.0, and v0.8.0 sections
+- Update CHANGELOG release process: "GitHub Packages" → "npm"
+- Add `.nvmrc` for auto Node version switching
+
+### Package Versions
+- `@ai-dossier/core` 1.3.0
+- `@ai-dossier/cli` 0.8.0
+- `@ai-dossier/mcp-server` 1.3.0
+- `@ai-dossier/worktree-pool` 0.4.0
+
 ## [v1.2.0 / v0.7.0] - 2026-03-07
 
 ### Fixed
@@ -232,7 +260,8 @@ git log --oneline
 
 For detailed publishing instructions, see [docs/guides/publishing-packages.md](docs/guides/publishing-packages.md).
 
-[Unreleased]: https://github.com/imboard-ai/ai-dossier/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/imboard-ai/ai-dossier/compare/v1.3.0...HEAD
+[v1.3.0 / v0.8.0]: https://github.com/imboard-ai/ai-dossier/compare/v1.2.0...v1.3.0
 [v1.2.0 / v0.7.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.6.0...v1.2.0
 [@ai-dossier/cli@0.5.0 – 0.6.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.4.1...v0.6.0
 [@ai-dossier/cli@0.4.1]: https://github.com/imboard-ai/ai-dossier/compare/v0.4.0...v0.4.1
