@@ -566,16 +566,17 @@ First, read the dossier metadata to check for relationships:
             role: 'user',
             content: {
               type: 'text',
-              text: `Create a new dossier: "${title}"
+              text: `Create a new dossier and companion skill: "${title}"
 ${category ? `Category: ${category}` : ''}
 ${riskLevel ? `Risk level: ${riskLevel}` : ''}
 Suggested filename: ${filename}
 
-**Instructions**: Execute the meta-dossier at:
-https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/authoring/create-dossier.ds.md
+**Instructions**: Run the meta-dossier from the registry:
+\`\`\`bash
+ai-dossier run imboard-ai/meta/create-dossier-and-skill
+\`\`\`
 
-This meta-dossier contains the official template and authoring instructions.
-Follow its guidance to create "${title}" with proper structure.`,
+Follow its guidance to create both the dossier "${title}" and its companion Claude Code skill.`,
             },
           },
         ],

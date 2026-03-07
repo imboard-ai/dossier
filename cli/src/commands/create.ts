@@ -8,7 +8,7 @@ import { detectLlm, printRegistryErrors } from '../helpers';
 import { multiRegistryGetContent, multiRegistryGetDossier } from '../multi-registry';
 import { parseNameVersion } from '../registry-client';
 
-const DEFAULT_CREATE_TEMPLATE = 'imboard-ai/meta/create-dossier';
+const DEFAULT_CREATE_TEMPLATE = 'imboard-ai/meta/create-dossier-and-skill';
 
 export function registerCreateCommand(program: Command): void {
   program
@@ -123,9 +123,9 @@ ${options.objective ? `- **Objective**: ${options.objective}` : '- **Objective**
 ${options.risk ? `- **Risk level**: ${options.risk}` : '- **Risk level**: Not specified (prompt user)'}
 ${options.category ? `- **Category**: ${options.category}` : '- **Category**: Not specified (prompt user)'}
 ${options.tags ? `- **Tags**: ${options.tags}` : '- **Tags**: Not specified (optional)'}
-${options.template !== DEFAULT_CREATE_TEMPLATE ? `- **Template reference**: ${options.template}` : '- **Template**: Default (create-dossier)'}
+${options.template !== DEFAULT_CREATE_TEMPLATE ? `- **Template reference**: ${options.template}` : '- **Template**: Default (create-dossier-and-skill)'}
 
-**Instructions**: Use the values provided above. For any fields marked "Not specified", prompt the user interactively. When all required information is gathered, create the dossier file according to the meta-dossier instructions below.
+**Instructions**: Use the values provided above. For any fields marked "Not specified", prompt the user interactively. When all required information is gathered, create both the dossier file and its companion Claude Code skill according to the meta-dossier instructions below.
 
 ---
 
