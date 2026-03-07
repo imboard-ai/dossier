@@ -2,23 +2,23 @@ import crypto from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { authenticateRequest } from '../lib/auth';
 import { OAUTH_STATE_COOKIE } from '../lib/constants';
-import { createMockReq, createMockRes, findLogEntry } from './helpers/mocks';
+import {
+  authConfigFactory,
+  createMockReq,
+  createMockRes,
+  findLogEntry,
+  jwtVerifyFactory,
+} from './helpers/mocks';
 
 describe('successful mutation logging', () => {
   it('logs successful publish with structured data', async () => {
     vi.resetModules();
 
-    vi.doMock('jsonwebtoken', () => ({
-      default: {
-        verify: () => ({ sub: 'testuser', email: null, orgs: ['testorg'] }),
-      },
-    }));
-    vi.doMock('../lib/config', () => ({
-      default: {
-        auth: { jwt: { secret: 'test-secret' } },
-        getCdnUrl: (path: string) => `https://cdn.example.com/${path}`,
-      },
-    }));
+    vi.doMock('jsonwebtoken', jwtVerifyFactory());
+    vi.doMock(
+      '../lib/config',
+      authConfigFactory({ getCdnUrl: (path: string) => `https://cdn.example.com/${path}` })
+    );
     vi.doMock('../lib/github', () => ({
       publishDossier: vi.fn().mockResolvedValue(undefined),
       PathTraversalError: class extends Error {},
@@ -83,16 +83,8 @@ describe('successful mutation logging', () => {
   it('logs successful delete with structured data', async () => {
     vi.resetModules();
 
-    vi.doMock('jsonwebtoken', () => ({
-      default: {
-        verify: () => ({ sub: 'testuser', email: null, orgs: ['testorg'] }),
-      },
-    }));
-    vi.doMock('../lib/config', () => ({
-      default: {
-        auth: { jwt: { secret: 'test-secret' } },
-      },
-    }));
+    vi.doMock('jsonwebtoken', jwtVerifyFactory());
+    vi.doMock('../lib/config', authConfigFactory());
     vi.doMock('../lib/github', () => ({
       deleteDossier: vi.fn().mockResolvedValue({ found: true, versionMismatch: false }),
       getManifest: vi.fn(),
@@ -141,16 +133,8 @@ describe('auth error response includes namespace', () => {
   it('403 response body includes namespace field', async () => {
     vi.resetModules();
 
-    vi.doMock('jsonwebtoken', () => ({
-      default: {
-        verify: () => ({ sub: 'testuser', email: null, orgs: [] }),
-      },
-    }));
-    vi.doMock('../lib/config', () => ({
-      default: {
-        auth: { jwt: { secret: 'test-secret' } },
-      },
-    }));
+    vi.doMock('jsonwebtoken', jwtVerifyFactory({ orgs: [] }));
+    vi.doMock('../lib/config', authConfigFactory());
     vi.doMock('../lib/dossier', () => ({
       getRootNamespace: (ns: string) => ns.split('/')[0],
     }));
@@ -294,7 +278,10 @@ describe('search handler logging', () => {
           path: 'other',
         },
       ]),
-      normalizeDossier: (d: any) => ({ ...d, url: `https://cdn.example.com/${d.path}` }),
+      normalizeDossier: (d: Record<string, unknown>) => ({
+        ...d,
+        url: `https://cdn.example.com/${d.path}`,
+      }),
     }));
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -344,6 +331,7 @@ describe('auth failure logging', () => {
     await authenticateRequest(req, res as any);
 
     expect(getStatus()).toBe(401);
+    expect(consoleSpy).toHaveBeenCalled();
     const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
     expect(loggedJson).toMatchObject({
       level: 'warn',
@@ -364,11 +352,7 @@ describe('auth failure logging', () => {
         },
       },
     }));
-    vi.doMock('../lib/config', () => ({
-      default: {
-        auth: { jwt: { secret: 'test-secret' } },
-      },
-    }));
+    vi.doMock('../lib/config', authConfigFactory());
 
     const authModule = await import('../lib/auth');
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -384,6 +368,7 @@ describe('auth failure logging', () => {
     await authModule.authenticateRequest(req, res as any);
 
     expect(getStatus()).toBe(401);
+    expect(consoleSpy).toHaveBeenCalled();
     const loggedJson = JSON.parse(consoleSpy.mock.calls[0][0] as string);
     expect(loggedJson).toMatchObject({
       level: 'warn',
