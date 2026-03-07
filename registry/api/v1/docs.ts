@@ -153,7 +153,8 @@ const errorResponseDoc = {
     error: {
       code: 'string - Error code (e.g., UPSTREAM_ERROR)',
       message: 'string - Human-readable error description',
-      request_id: 'string (UUID) - Correlation ID for server log lookup',
+      request_id:
+        'string - Correlation ID for server log lookup (echoed from X-Request-Id header, or server-generated UUID if absent)',
     },
   },
 };

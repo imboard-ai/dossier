@@ -55,4 +55,24 @@ describe('authorizePublish - 403 response', () => {
 
     vi.restoreAllMocks();
   });
+
+  it('uses delete wording when action is delete', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const token = signJwt({
+      sub: 'alice',
+      email: 'alice@example.com',
+      orgs: ['acme-corp'],
+    });
+    const req = { headers: { authorization: `Bearer ${token}` } } as never;
+    const res = createViMockRes();
+
+    const result = await authorizePublish(req, res, 'evil-corp/bad-stuff', 'delete');
+    expect(result).toBe(false);
+
+    const jsonArg = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(jsonArg.error.message).toBe("Cannot delete from namespace 'evil-corp/bad-stuff'");
+
+    vi.restoreAllMocks();
+  });
 });

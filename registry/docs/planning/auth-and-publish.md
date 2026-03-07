@@ -348,7 +348,7 @@ Returned when the dossier name fails validation:
 {
   "error": {
     "code": "FORBIDDEN",
-    "message": "Cannot publish to namespace 'other-org/some-dossier'",
+    "message": "Cannot delete from namespace 'other-org/some-dossier'",
     "namespace": "other-org/some-dossier"
   }
 }

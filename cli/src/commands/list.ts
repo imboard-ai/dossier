@@ -242,6 +242,12 @@ Multi-registry note:
       }
 
       if (options.source === 'registry') {
+        if (options.risk) {
+          console.warn(
+            '⚠️  --risk filter is not supported in registry mode (risk_level is not included in registry listings)'
+          );
+        }
+
         await handleRegistryList(options);
         return;
       }

@@ -64,8 +64,12 @@ async function exchangeCodeAndRenderSuccess(res: VercelResponse, code: string): 
 
   log.info('Fetching user info and orgs');
   const [user, orgs] = await Promise.all([
-    auth.fetchGitHubUser(accessToken),
-    auth.fetchGitHubOrgs(accessToken),
+    auth.fetchGitHubUser(accessToken).catch((err) => {
+      throw new Error(`Failed to fetch GitHub user info: ${(err as Error).message}`);
+    }),
+    auth.fetchGitHubOrgs(accessToken).catch((err) => {
+      throw new Error(`Failed to fetch GitHub orgs: ${(err as Error).message}`);
+    }),
   ]);
   log.info('User authenticated', { user: user.login, orgs });
 
@@ -91,7 +95,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     log.warn('OAuth provider error', { error, errorDescription });
     return res
       .status(HTTP_STATUS.BAD_REQUEST)
-      .send(renderErrorPage('Authentication Failed', errorDescription || error));
+      .send(
+        renderErrorPage(
+          'Authentication Failed',
+          'GitHub authentication failed. Please try again or contact support.'
+        )
+      );
   }
 
   if (!validateOAuthState(req, res, state)) {

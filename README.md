@@ -129,6 +129,7 @@ Real-world dossiers demonstrating the protocol across different domains:
 | [ML Training Pipeline](./examples/data-science/train-ml-model.ds.md) | Train and validate ML models with reproducible experiment logs | ~10-15 min |
 | [DB Migration](./examples/database/migrate-schema.ds.md) | Execute schema changes with automatic backup and rollback capability | ~10 min |
 | [AWS Deploy](./examples/devops/deploy-to-aws.ds.md) | Deploy applications to AWS with infrastructure validation | ~15 min |
+| [External References](./examples/security/external-references-example.ds.md) | Declare and manage external URLs with trust levels | ~5 min |
 
 **Who should try these**: Project maintainers, DevOps/SRE teams, ML engineers, frontend developers
 

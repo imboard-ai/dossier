@@ -110,6 +110,7 @@ async function handleGet(
       code: 'UPSTREAM_ERROR',
       message: 'Failed to fetch dossier information',
       requestId,
+      context: { dossier: dossierName, isContentRequest },
     });
   }
 }
@@ -122,7 +123,7 @@ async function handleDelete(
   requestId: string
 ) {
   try {
-    const authorized = await authorizePublish(req, res, dossierName);
+    const authorized = await authorizePublish(req, res, dossierName, 'delete');
     if (!authorized) return;
 
     log.info('Deleting dossier', { requestId, dossier: dossierName, version });
@@ -163,6 +164,7 @@ async function handleDelete(
       code: 'DELETE_ERROR',
       message: 'Failed to delete dossier. Please try again.',
       requestId,
+      context: { dossier: dossierName, version },
     });
   }
 }

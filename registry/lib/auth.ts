@@ -140,7 +140,8 @@ export async function fetchGitHubUser(
 export async function authorizePublish(
   req: VercelRequest,
   res: VercelResponse,
-  namespace: string
+  namespace: string,
+  action: 'publish' | 'delete' = 'publish'
 ): Promise<boolean> {
   const jwtPayload = await authenticateRequest(req, res);
   if (!jwtPayload) return false;
@@ -153,10 +154,11 @@ export async function authorizePublish(
       namespace,
       reason: permission.reason,
     });
+    const verb = action === 'delete' ? 'delete from' : 'publish to';
     res.status(HTTP_STATUS.FORBIDDEN).json({
       error: {
         code: 'FORBIDDEN',
-        message: `Cannot publish to namespace '${namespace}'`,
+        message: `Cannot ${verb} namespace '${namespace}'`,
         namespace,
       },
     });
