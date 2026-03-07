@@ -4,7 +4,7 @@ This guide walks you through configuring the Dossier MCP Server to work with Cla
 
 ## Prerequisites
 
-- Node.js 18+ installed
+- Node.js 20+ installed
 - Claude Code installed
 - Git repository cloned to your local machine
 
