@@ -1176,7 +1176,7 @@ Exit code: 1
 **Infrastructure** ✅:
 - [x] Subcommand architecture (commander.js)
 - [x] Help system with all commands
-- [x] Package publishing to GitHub Packages
+- [x] Package publishing to npm
 - [x] Automated workflow with version detection
 - [x] Documentation restructure
 
@@ -1570,7 +1570,7 @@ dossier verify file.ds.md
 - [x] CLI structure with commander.js
 - [x] Help system
 - [x] Documentation updated
-- [x] Published to GitHub Packages
+- [x] Published to npm
 - [x] Smart version detection in workflow
 - [ ] 90% test coverage
 

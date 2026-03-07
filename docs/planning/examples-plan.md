@@ -129,7 +129,7 @@
 - TypeScript strict? (yes recommended)
 - Storybook addons? (a11y, docs, controls)
 - CSS solution? (styled-components default)
-- Publishing? (npm vs GitHub Packages)
+- Publishing? (npm)
 
 **Workflow** (7 steps):
 1. Create component library structure
