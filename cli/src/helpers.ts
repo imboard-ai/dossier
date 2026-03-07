@@ -45,6 +45,9 @@ export const OFFICIAL_KMS_KEYS = [
 // Re-export validation constants from core (single source of truth)
 export { RECOMMENDED_FIELDS, REQUIRED_FIELDS, VALID_RISK_LEVELS, VALID_STATUSES };
 
+/** Maximum results per page for CLI pagination commands. */
+export const MAX_PER_PAGE = 1000;
+
 // ============================================================================
 // TypeScript interfaces
 // ============================================================================
@@ -99,6 +102,46 @@ export interface GitHubFile {
 // ============================================================================
 // Security helpers
 // ============================================================================
+
+/**
+ * Validate that a path is relative and contains no ".." traversal.
+ * @throws Error if the path is absolute or contains path traversal.
+ */
+export function validateRelativePath(filePath: string): void {
+  if (path.isAbsolute(filePath)) {
+    throw new Error(`Path '${filePath}' must be relative (absolute paths are not allowed)`);
+  }
+  if (filePath.split(path.sep).includes('..') || filePath.split('/').includes('..')) {
+    throw new Error(`Path '${filePath}' must not contain ".." (path traversal is not allowed)`);
+  }
+}
+
+/**
+ * Parse and clamp pagination options from CLI string arguments.
+ * Logs a warning when values are clamped.
+ */
+export function parsePaginationParams(
+  pageStr: string | undefined,
+  perPageStr: string | undefined,
+  defaults: { page: number; perPage: number } = { page: 1, perPage: 20 }
+): { page: number; perPage: number } {
+  const parsedPage = parseInt(pageStr || String(defaults.page), 10);
+  const rawPage = Number.isNaN(parsedPage) ? defaults.page : parsedPage;
+  const parsedPerPage = parseInt(perPageStr || String(defaults.perPage), 10);
+  const rawPerPage = Number.isNaN(parsedPerPage) ? defaults.perPage : parsedPerPage;
+
+  const page = Math.max(1, rawPage);
+  const perPage = Math.min(MAX_PER_PAGE, Math.max(1, rawPerPage));
+
+  if (rawPage !== page) {
+    console.warn(`⚠️  Page ${rawPage} clamped to ${page} (minimum 1)`);
+  }
+  if (rawPerPage !== perPage) {
+    console.warn(`⚠️  Per-page ${rawPerPage} clamped to ${perPage} (range 1–${MAX_PER_PAGE})`);
+  }
+
+  return { page, perPage };
+}
 
 /**
  * Validate a dossier name to prevent path traversal attacks.
@@ -641,4 +684,40 @@ export function printRegistryNotFoundError(
   }
   printRegistryErrors(errors);
   console.error('');
+}
+
+/**
+ * Extract and format common dossier display fields from a registry list item.
+ * Used by search and list commands to normalize metadata for display.
+ */
+export function formatDossierFields(d: {
+  name?: string;
+  version?: string;
+  title?: string;
+  category?: string | string[];
+  description?: string;
+  objective?: string;
+}): { name: string; version: string; title: string; category: string; description: string } {
+  return {
+    name: d.name || '',
+    version: d.version || '',
+    title: d.title || '',
+    category: Array.isArray(d.category) ? d.category.join(', ') : d.category || '',
+    description: d.description || d.objective || '',
+  };
+}
+
+/**
+ * Log pagination info to the console.
+ * Used by search and list commands when results span multiple pages.
+ */
+export function logPaginationInfo(total: number, page: number, perPage: number): void {
+  const totalPages = Math.ceil(total / perPage);
+  if (totalPages > 1) {
+    console.log(`\nPage ${page}/${totalPages} (${perPage} per page)`);
+    if (page < totalPages) {
+      console.log(`Use --page ${page + 1} to see more results`);
+    }
+    console.log('');
+  }
 }

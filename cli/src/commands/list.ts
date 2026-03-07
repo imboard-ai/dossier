@@ -7,13 +7,17 @@ import {
   fetchDossierMetadata,
   findDossierFilesGitHub,
   findDossierFilesLocal,
+  formatDossierFields,
   formatTable,
+  logPaginationInfo,
   parseDossierMetadataLocal,
   parseListSource,
+  parsePaginationParams,
   printRegistryErrors,
 } from '../helpers';
 import { multiRegistryList } from '../multi-registry';
 
+/** Registers the `list` command — lists dossiers from registry, directory, or GitHub repo. */
 export function registerListCommand(program: Command): void {
   program
     .command('list')
@@ -62,8 +66,7 @@ Multi-registry note:
         }
 
         if (options.source === 'registry') {
-          const page = parseInt(options.page || '1', 10) || 1;
-          const perPage = parseInt(options.perPage || '20', 10) || 20;
+          const { page, perPage } = parsePaginationParams(options.page, options.perPage);
           const showRegistryLabel = resolveRegistries().length > 1;
 
           try {
@@ -107,24 +110,14 @@ Multi-registry note:
             console.log(`\n📋 Registry dossiers (${result.total} total):\n`);
 
             for (const d of dossiers) {
-              const name = d.name || '';
-              const version = d.version || '';
-              const title = d.title || '';
-              const category = Array.isArray(d.category) ? d.category.join(', ') : d.category || '';
+              const { name, version, title, category } = formatDossierFields(d);
               const label = showRegistryLabel ? ` [${d._registry}]` : '';
               console.log(
                 `  ${name.padEnd(30)} ${(`v${version}`).padEnd(10)} ${category.padEnd(12)} ${title}${label}`
               );
             }
 
-            const totalPages = Math.ceil(result.total / perPage);
-            if (totalPages > 1) {
-              console.log(`\nPage ${page}/${totalPages}`);
-              if (page < totalPages) {
-                console.log(`Use --page ${page + 1} to see more results`);
-              }
-            }
-            console.log('');
+            logPaginationInfo(result.total, page, perPage);
           } catch (err: unknown) {
             console.error(`\n❌ Registry list failed: ${(err as Error).message}\n`);
             process.exit(1);
