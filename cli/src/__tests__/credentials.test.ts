@@ -232,6 +232,7 @@ describe('credentials', () => {
       loadCredentials();
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('insecure permissions'));
       expect(mockedFs.chmodSync).toHaveBeenCalledWith(CREDENTIALS_FILE, 0o600);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Permissions fixed to 0600'));
       errorSpy.mockRestore();
     });
   });

@@ -44,6 +44,7 @@ function readCredentialsFile(): Record<string, unknown> | null {
           `Expected 0600. Credentials may have been compromised. Fixing permissions.`
       );
       fs.chmodSync(CREDENTIALS_FILE, 0o600);
+      console.error(`✅ Permissions fixed to 0600.`);
     }
     return JSON.parse(fs.readFileSync(CREDENTIALS_FILE, 'utf8'));
   } catch (error) {
