@@ -12,10 +12,12 @@ import {
   logPaginationInfo,
   parseDossierMetadataLocal,
   parseListSource,
+  parsePaginationParams,
   printRegistryErrors,
 } from '../helpers';
 import { multiRegistryList } from '../multi-registry';
 
+/** Registers the `list` command — lists dossiers from registry, directory, or GitHub repo. */
 export function registerListCommand(program: Command): void {
   program
     .command('list')
@@ -64,8 +66,7 @@ Multi-registry note:
         }
 
         if (options.source === 'registry') {
-          const page = parseInt(options.page || '1', 10) || 1;
-          const perPage = parseInt(options.perPage || '20', 10) || 20;
+          const { page, perPage } = parsePaginationParams(options.page, options.perPage);
           const showRegistryLabel = resolveRegistries().length > 1;
 
           try {

@@ -1,11 +1,17 @@
 import type { Command } from 'commander';
 import { resolveRegistries } from '../config';
 import { loadCredentials } from '../credentials';
-import { formatDossierFields, logPaginationInfo, printRegistryErrors } from '../helpers';
+import {
+  formatDossierFields,
+  logPaginationInfo,
+  parsePaginationParams,
+  printRegistryErrors,
+} from '../helpers';
 import type { LabeledDossierListItem } from '../multi-registry';
 import { multiRegistryList } from '../multi-registry';
 import { getClientForRegistry } from '../registry-client';
 
+/** Registers the `search` command — searches for dossiers across all configured registries. */
 export function registerSearchCommand(program: Command): void {
   program
     .command('search')
@@ -32,9 +38,8 @@ export function registerSearchCommand(program: Command): void {
           content?: boolean;
         }
       ) => {
-        const page = parseInt(options.page, 10) || 1;
-        const perPage = parseInt(options.perPage, 10) || 20;
-        const limit = options.limit ? parseInt(options.limit, 10) : undefined;
+        const { page, perPage } = parsePaginationParams(options.page, options.perPage);
+        const limit = options.limit ? Math.max(1, parseInt(options.limit, 10) || 1) : undefined;
 
         let allDossiers: LabeledDossierListItem[];
         try {
