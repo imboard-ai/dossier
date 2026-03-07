@@ -17,7 +17,7 @@ This document describes all GitHub Actions workflows in the Dossier project, the
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
 | Sign | `sign.yml` | Manual | Test AWS KMS signing for dossier authentication |
-| Publish Packages | `publish-packages.yml` | Push to main / Manual | Publish npm packages to GitHub Packages |
+| Publish Packages | `publish-packages.yml` | Push to main / Manual | Publish npm packages to the public npm registry |
 
 ---
 
@@ -107,12 +107,12 @@ The workflow produces three files (not uploaded as artifacts currently):
 
 ### Motivation
 
-Automate the publishing of `@ai-dossier/core` and `@ai-dossier/cli` npm packages to GitHub Packages. This enables:
+Automate the publishing of `@ai-dossier/core`, `@ai-dossier/cli`, `@ai-dossier/mcp-server`, and `@ai-dossier/worktree-pool` npm packages to the public npm registry. This enables:
 - **Continuous delivery**: Automatic publishing on code changes
 - **Version management**: Centralized version bumping
 - **Consistency**: Same build process every time
-- **Testing**: Validate packages before public npm release
 - **Distribution**: Easy installation for users via npm
+- **Provenance**: npm provenance attestation for supply chain security
 
 ### Triggers
 
@@ -127,7 +127,7 @@ Triggers when pushing to `main` branch AND changes affect:
 
 Run manually via GitHub Actions UI with options:
 ```
-Actions → Publish Packages to GitHub Packages → Run workflow
+Actions → Publish Packages to npm → Run workflow
 ```
 
 **Input: Version bump**
@@ -163,12 +163,12 @@ Actions → Publish Packages to GitHub Packages → Run workflow
    - Push to main branch
    ↓
 7. Publish @ai-dossier/core
-   - Publish to https://npm.pkg.github.com
+   - Publish to https://registry.npmjs.org with --provenance
    - Includes: dist/, package.json, README
    ↓
-8. Publish @ai-dossier/cli
-   - Publish to https://npm.pkg.github.com
-   - Includes: bin/, README, package.json
+8. Publish @ai-dossier/cli, @ai-dossier/mcp-server, @ai-dossier/worktree-pool
+   - Publish to https://registry.npmjs.org with --provenance
+   - Each package skipped if version already published
    ↓
 9. Create Git tag (if version bumped)
    - Tag format: v0.1.0, v0.2.0, etc.
@@ -193,8 +193,10 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 ### Outputs
 
 **Published Packages:**
-- `@ai-dossier/core@1.0.0` → https://github.com/imboard-ai/ai-dossier/packages
-- `@ai-dossier/cli@0.1.0` → https://github.com/imboard-ai/ai-dossier/packages
+- `@ai-dossier/core` → https://www.npmjs.com/package/@ai-dossier/core
+- `@ai-dossier/cli` → https://www.npmjs.com/package/@ai-dossier/cli
+- `@ai-dossier/mcp-server` → https://www.npmjs.com/package/@ai-dossier/mcp-server
+- `@ai-dossier/worktree-pool` → https://www.npmjs.com/package/@ai-dossier/worktree-pool
 
 **Git Artifacts:**
 - Version bump commit (if bumped)
@@ -406,5 +408,5 @@ Why does this workflow exist? What problem does it solve?
 
 ---
 
-**Last Updated**: 2025-11-15
+**Last Updated**: 2026-03-07
 **Maintained By**: Dossier Core Team

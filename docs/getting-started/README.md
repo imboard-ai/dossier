@@ -13,8 +13,8 @@ Welcome! This guide will help you get up and running with Dossier quickly.
 
 See [installation.md](installation.md) for detailed installation instructions for:
 - npm/npx installation
-- GitHub Packages installation
-- Installing from source
+- MCP server integration
+- Registry configuration
 
 ## Your First Dossier
 
