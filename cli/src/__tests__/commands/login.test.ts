@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerLoginCommand } from '../../commands/login';
 import * as credentials from '../../credentials';
 import * as oauth from '../../oauth';
@@ -10,9 +10,17 @@ vi.mock('../../credentials');
 vi.mock('../../registry-client');
 
 describe('login command', () => {
+  const originalIsTTY = process.stdin.isTTY;
+
   beforeEach(() => {
     // Mocks are reset by global afterEach (setup.ts)
     vi.mocked(registryClient.getRegistryUrl).mockReturnValue('https://test.registry.com');
+    // Login command checks process.stdin.isTTY; simulate interactive terminal
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdin, 'isTTY', { value: originalIsTTY, writable: true });
   });
 
   it('should save credentials on successful login', async () => {

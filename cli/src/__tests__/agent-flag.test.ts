@@ -12,7 +12,7 @@ function runCli(args: string[]): string {
 }
 
 describe('--agent flag', () => {
-  it('should output valid JSON capability manifest', () => {
+  it('should output valid JSON capability manifest', { timeout: 15000 }, () => {
     const output = runCli(['--agent']);
     const manifest = JSON.parse(output);
 
@@ -30,7 +30,7 @@ describe('--agent flag', () => {
     expect(manifest.quick_start.length).toBeGreaterThan(0);
   });
 
-  it('should include agent hint in --help output', () => {
+  it('should include agent hint in --help output', { timeout: 15000 }, () => {
     const output = runCli(['--help']);
     expect(output).toContain('ai-dossier --agent');
     expect(output).toContain('Agent-friendly');

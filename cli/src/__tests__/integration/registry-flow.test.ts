@@ -25,11 +25,12 @@ const mockedFs = vi.mocked(fs);
 
 const dossierContent = `---dossier
 {
+  "dossier_schema_version": "1.0",
   "title": "My Workflow",
   "version": "1.0.0",
   "name": "org/my-workflow",
   "risk_level": "medium",
-  "status": "stable",
+  "status": "Stable",
   "objective": "Automate deployment"
 }
 ---
