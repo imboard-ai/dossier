@@ -4,7 +4,7 @@ This guide walks you through configuring the Dossier MCP Server to work with Cla
 
 ## Prerequisites
 
-- Node.js 18+ installed
+- Node.js 20+ installed
 - Claude Code installed
 - Git repository cloned to your local machine
 
@@ -196,7 +196,7 @@ Once everything is working:
 
 - **Issues**: https://github.com/imboard-ai/ai-dossier/issues
 - **Discussions**: https://github.com/imboard-ai/ai-dossier/discussions
-- **Documentation**: https://docs.dossier.sh (coming soon)
+- **Documentation**: https://github.com/imboard-ai/ai-dossier/tree/main/docs
 
 ---
 

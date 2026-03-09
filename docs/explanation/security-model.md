@@ -557,7 +557,7 @@ mv ~/.claude/settings.local.json.backup ~/.claude/settings.local.json
 
 ### Setup Guides
 
-- **[examples/setup/setup-dossier-mcp.ds.md](./examples/setup/setup-dossier-mcp.ds.md)** - Interactive setup
+- **[examples/setup/setup-dossier-mcp.ds.md](../../examples/setup/setup-dossier-mcp.ds.md)** - Interactive setup
 - **[MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md](./MCP_AUTO_DETECTION_IMPLEMENTATION_STATUS.md)** - Implementation details
 
 ### Security Documentation

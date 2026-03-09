@@ -18,6 +18,7 @@ Dossier is a lightweight automation standard built on three principles:
 │  @ai-dossier/cli      │  Command-line tool │
 │  @ai-dossier/core     │  Verification lib  │
 │  @ai-dossier/mcp      │  AI agent support  │
+│  @ai-dossier/registry │  Registry API      │
 └─────────────────────────────────────────┘
 ```
 
@@ -35,6 +36,29 @@ ai-dossier verify <file-or-url>
 
 ### MCP Server (`@ai-dossier/mcp-server`)
 Model Context Protocol integration for AI agents like Claude Code.
+
+### Registry (`@ai-dossier/registry`)
+Vercel serverless API for discovering, publishing, and managing dossiers. Uses GitHub OAuth + JWT for authentication and jsDelivr CDN for content delivery.
+
+### Multi-Registry Resolution (CLI)
+The CLI supports multiple configured registries and queries them in parallel using `Promise.allSettled()`. All multi-registry functions (`multiRegistryGetDossier`, `multiRegistryGetContent`, `multiRegistryList`, `multiRegistrySearch`) return structured results that include both the data and per-registry error details:
+
+```typescript
+{ result: T | null, errors: Array<{ registry: string; error: string }> }
+```
+
+This allows partial failures to be surfaced without blocking successful results from other registries. See `docs/architecture/overview.md` for architectural details and `cli/src/multi-registry.ts` for implementation.
+
+### Multi-Registry Failure Modes
+
+All failures are captured per-registry via `Promise.allSettled()` and included in the `errors` array alongside successful results. Key behaviors:
+
+- **Partial failure**: Unreachable or erroring registries don't block results from healthy ones. The CLI succeeds if at least one registry responds.
+- **Total failure**: When all registries fail, `get`/`run`/`pull` exit 1; `list`/`search` exit 0 with empty results and per-registry warnings.
+- **Auth errors** (401/403): Treated as per-registry errors. Other registries are still queried.
+- **No registries configured**: CLI falls back to the hardcoded public registry transparently.
+
+For per-command exit codes and user-facing error output, see [cli/README.md — Exit Codes](cli/README.md#exit-codes).
 
 ## File Format
 
@@ -85,7 +109,7 @@ See [security/ARCHITECTURE.md](security/ARCHITECTURE.md) for details.
 ## Technology Stack
 
 - **Language**: TypeScript/JavaScript
-- **Runtime**: Node.js ≥ 18
+- **Runtime**: Node.js ≥ 20
 - **Cryptography**:
   - SHA-256 for checksums
   - Ed25519 (Minisign) for signatures
@@ -99,6 +123,7 @@ dossier/
 │   └── core/              # @ai-dossier/core
 ├── cli/                   # @ai-dossier/cli
 ├── mcp-server/           # @ai-dossier/mcp-server
+├── registry/             # @ai-dossier/registry (Vercel serverless API)
 ├── examples/             # Example dossiers
 ├── security/             # Security documentation
 ├── docs/                 # Detailed documentation

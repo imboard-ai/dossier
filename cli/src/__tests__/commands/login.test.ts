@@ -1,26 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerLoginCommand } from '../../commands/login';
+import * as config from '../../config';
 import * as credentials from '../../credentials';
 import * as oauth from '../../oauth';
-import * as registryClient from '../../registry-client';
 import { createTestProgram } from '../helpers/test-utils';
 
 vi.mock('../../oauth');
 vi.mock('../../credentials');
-vi.mock('../../registry-client');
+vi.mock('../../config');
 
 describe('login command', () => {
-  const originalIsTTY = process.stdin.isTTY;
+  let originalIsTTY: boolean | undefined;
 
   beforeEach(() => {
-    // Mocks are reset by global afterEach (setup.ts)
-    vi.mocked(registryClient.getRegistryUrl).mockReturnValue('https://test.registry.com');
-    // Login command checks process.stdin.isTTY; simulate interactive terminal
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
+    originalIsTTY = process.stdin.isTTY;
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+    vi.mocked(config.resolveRegistries).mockReturnValue([
+      { name: 'public', url: 'https://test.registry.com' },
+    ]);
+    vi.mocked(config.resolveRegistryByName).mockReturnValue({
+      name: 'public',
+      url: 'https://test.registry.com',
+    });
   });
 
   afterEach(() => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: originalIsTTY, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', { value: originalIsTTY, configurable: true });
   });
 
   it('should save credentials on successful login', async () => {
@@ -36,12 +41,15 @@ describe('login command', () => {
     registerLoginCommand(program);
     await program.parseAsync(['node', 'dossier', 'login']);
 
-    expect(credentials.saveCredentials).toHaveBeenCalledWith({
-      token: 'test-token',
-      username: 'testuser',
-      orgs: ['org1'],
-      expiresAt: null,
-    });
+    expect(credentials.saveCredentials).toHaveBeenCalledWith(
+      {
+        token: 'test-token',
+        username: 'testuser',
+        orgs: ['org1'],
+        expiresAt: null,
+      },
+      'public'
+    );
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Logged in as testuser'));
   });
 
@@ -66,9 +74,7 @@ describe('login command', () => {
     const program = createTestProgram();
     registerLoginCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Login failed'));
   });

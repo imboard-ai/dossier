@@ -1,15 +1,15 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import {
   type DossierFrontmatter,
   parseDossierContent,
+  sha256Hex,
   validateFrontmatter,
 } from '@ai-dossier/core';
 import type { Command } from 'commander';
-import { isExpired, loadCredentials } from '../credentials';
-import { getClient } from '../registry-client';
+import { getClientForRegistry } from '../registry-client';
+import { handleRegistryWriteError, requireWriteAuth } from '../write-auth';
 
 export function registerPublishCommand(program: Command): void {
   program
@@ -19,41 +19,24 @@ export function registerPublishCommand(program: Command): void {
     .option('--changelog <message>', 'Changelog message for this version')
     .option('-y, --yes', 'Skip confirmation prompt')
     .option('--namespace <namespace>', 'Override namespace (e.g., imboard-ai/skills)')
+    .option('--registry <name>', 'Target registry to publish to')
     .option('--json', 'Output as JSON')
     .action(
       async (
         file: string,
-        options: { changelog?: string; yes?: boolean; namespace?: string; json?: boolean }
+        options: {
+          changelog?: string;
+          yes?: boolean;
+          namespace?: string;
+          registry?: string;
+          json?: boolean;
+        }
       ) => {
-        const credentials = loadCredentials();
-        if (!credentials) {
-          if (options.json) {
-            console.log(
-              JSON.stringify(
-                { published: false, error: 'Not logged in', code: 'not_logged_in' },
-                null,
-                2
-              )
-            );
-          } else {
-            console.error('\n❌ Not logged in. Run `dossier login` first.\n');
-          }
-          process.exit(1);
-        }
-        if (isExpired(credentials)) {
-          if (options.json) {
-            console.log(
-              JSON.stringify(
-                { published: false, error: 'Credentials expired', code: 'expired' },
-                null,
-                2
-              )
-            );
-          } else {
-            console.error('\n❌ Credentials expired. Run `dossier login` to re-authenticate.\n');
-          }
-          process.exit(1);
-        }
+        const { targetRegistry, credentials } = requireWriteAuth({
+          registryFlag: options.registry,
+          json: options.json,
+          jsonResultKey: 'published',
+        });
 
         const dossierFile = path.resolve(file);
         if (!fs.existsSync(dossierFile)) {
@@ -63,11 +46,11 @@ export function registerPublishCommand(program: Command): void {
 
         const content = fs.readFileSync(dossierFile, 'utf8');
 
-        let frontmatter: Record<string, any>;
+        let frontmatter: DossierFrontmatter;
         let body: string;
         try {
           const parsed = parseDossierContent(content);
-          frontmatter = parsed.frontmatter as Record<string, any>;
+          frontmatter = parsed.frontmatter;
           body = parsed.body;
         } catch (err: unknown) {
           console.error(`\n❌ ${(err as Error).message}\n`);
@@ -86,7 +69,7 @@ export function registerPublishCommand(program: Command): void {
 
         const existingHash = frontmatter.checksum?.hash;
         if (existingHash) {
-          const actualHash = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+          const actualHash = sha256Hex(body);
           if (existingHash !== actualHash) {
             console.error(
               '\n❌ Checksum mismatch - content has been modified without updating checksum'
@@ -107,11 +90,11 @@ export function registerPublishCommand(program: Command): void {
         const registryPath = `${fullPath}@${version}`;
 
         // Pre-publish existence check — version-specific via registry API
-        const client = getClient(credentials.token);
+        const client = getClientForRegistry(targetRegistry.url, credentials.token);
         let existingVersion: string | null = null;
         let versionExists = false;
         try {
-          const existing = (await client.getDossier(fullPath, version)) as any;
+          const existing = await client.getDossier(fullPath, version);
           if (existing && existing.version === version) {
             versionExists = true;
           }
@@ -144,7 +127,7 @@ export function registerPublishCommand(program: Command): void {
 
         // Check if dossier exists at any version (for overwrite warning)
         try {
-          const existing = (await client.getDossier(fullPath)) as any;
+          const existing = await client.getDossier(fullPath);
           if (existing) {
             existingVersion = existing.version || null;
           }
@@ -161,7 +144,8 @@ export function registerPublishCommand(program: Command): void {
           }
 
           console.log('\n📦 Publishing dossier:\n');
-          console.log(`   Registry:  ${registryPath}`);
+          console.log(`   Registry:  ${targetRegistry.name} (${targetRegistry.url})`);
+          console.log(`   Path:      ${registryPath}`);
           console.log(`   File:      ${path.basename(dossierFile)}`);
           if (options.changelog) {
             console.log(`   Changelog: ${options.changelog}`);
@@ -186,11 +170,7 @@ export function registerPublishCommand(program: Command): void {
         }
 
         try {
-          const result = (await client.publishDossier(
-            namespace,
-            content,
-            options.changelog || null
-          )) as any;
+          const result = await client.publishDossier(namespace, content, options.changelog || null);
 
           const verifyCommand = `dossier info ${fullPath}@${version}`;
           const cdnDelaySeconds = 30;
@@ -202,6 +182,7 @@ export function registerPublishCommand(program: Command): void {
                   published: true,
                   name: result.name || fullPath,
                   version,
+                  registry: targetRegistry.name,
                   content_url: result.content_url || null,
                   verification: {
                     verify_command: verifyCommand,
@@ -213,7 +194,7 @@ export function registerPublishCommand(program: Command): void {
               )
             );
           } else {
-            console.log(`\n✅ Published ${registryPath}`);
+            console.log(`\n✅ Published ${registryPath} [${targetRegistry.name}]`);
             if (existingVersion) {
               console.log(`   Updated from v${existingVersion}`);
             }
@@ -224,36 +205,12 @@ export function registerPublishCommand(program: Command): void {
               `\n   ⏳ CDN propagation may take up to ${cdnDelaySeconds}s. Verify with:\n   $ ${verifyCommand}\n`
             );
           }
-        } catch (err: any) {
-          if (options.json) {
-            console.log(
-              JSON.stringify(
-                {
-                  published: false,
-                  error: err.message,
-                  code: err.code || 'publish_failed',
-                },
-                null,
-                2
-              )
-            );
-          } else if (err.statusCode === 401) {
-            console.error('\n❌ Session expired. Run `dossier login` to re-authenticate.\n');
-          } else if (err.statusCode === 403) {
-            console.error(`\n❌ Permission denied: ${err.message}\n`);
-          } else if (err.statusCode === 409) {
-            console.error(`\n❌ Version conflict: ${registryPath} — ${err.message}\n`);
-          } else {
-            console.error(`\n❌ Publish failed: ${err.message}`);
-            if (err.statusCode) {
-              console.error(`   Status: ${err.statusCode}`);
-            }
-            if (err.code) {
-              console.error(`   Code: ${err.code}`);
-            }
-            console.error('');
-          }
-          process.exit(1);
+        } catch (err: unknown) {
+          handleRegistryWriteError(err, {
+            json: options.json,
+            jsonResultKey: 'published',
+            actionLabel: 'Publish',
+          });
         }
       }
     );

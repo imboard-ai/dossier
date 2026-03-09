@@ -1,85 +1,54 @@
-# Dossier MCP Server
+# @ai-dossier/mcp-server
 
-> **Status**: ✅ MVP Complete - Core security verification tools working, ready for testing with Claude Code
+[![npm version](https://img.shields.io/npm/v/@ai-dossier/mcp-server)](https://www.npmjs.com/package/@ai-dossier/mcp-server)
+[![npm downloads](https://img.shields.io/npm/dm/@ai-dossier/mcp-server)](https://www.npmjs.com/package/@ai-dossier/mcp-server)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/imboard-ai/ai-dossier/blob/main/LICENSE)
 
-Make dossier automation truly frictionless with Model Context Protocol integration.
-
----
-
-## The Problem
-
-Currently, using dossiers requires explaining the concept and providing file contents to your LLM:
-
-```
-❌ Current Reality:
-User: "Use the project-init dossier"
-LLM:  "I don't know what a dossier is, and I can't access that file"
-
-User: *Explains dossiers, copies file content, pastes it*
-LLM:  "OK, now I understand. Let me execute this..."
-```
-
-This creates friction for new users and breaks the promise of natural language automation.
-
----
-
-## The Solution
-
-The **Dossier MCP Server** enables LLMs to discover, understand, and execute dossiers automatically:
-
-```
-✅ With MCP Server:
-User: "Use the project-init dossier"
-LLM:  *Uses MCP to read concept, find dossier, understand protocol*
-LLM:  "Found project-init dossier v1.0.0. Analyzing prerequisites..."
-```
-
----
-
-## What It Provides
-
-### 🛠️ Tools
-
-- **`list_dossiers`** - Discover available dossiers
-- **`read_dossier`** - Get dossier content and metadata
-- **`get_registry`** - Understand dossier relationships
-- **`validate_dossier`** - Check specification compliance
-- **`verify_dossier`** - 🔒 Verify integrity and authenticity (security)
-
-### 📚 Resources
-
-- **`dossier://concept`** - What are dossiers?
-- **`dossier://protocol`** - How to execute them (includes security protocol)
-- **`dossier://specification`** - How to create them
-- **`dossier://examples`** - Example dossiers
-- **`dossier://security`** - 🔒 Security architecture and trust model
-- **`dossier://keys`** - 🔒 Official and community public keys
-
-### 💡 Prompts ✅ Implemented
-
-- **`execute-dossier`** - Run a dossier following the verification → execution protocol
-- **`create-dossier`** - Author a new dossier using the official meta-dossier template
-
----
+MCP server for the dossier automation standard. Enables LLMs to discover, verify, and execute dossiers through the [Model Context Protocol](https://modelcontextprotocol.io/).
 
 ## Installation
 
-### Using with Claude Code
+### Claude Code Plugin (Recommended)
+
+```
+/plugin marketplace add imboard-ai/ai-dossier
+/plugin install dossier-mcp-server@ai-dossier
+```
+
+One-time setup — auto-updates included.
+
+### Claude Code (Manual)
 
 ```bash
-# Global installation (available across all projects)
+# Global (available across all projects)
 claude mcp add dossier --scope user -- npx @ai-dossier/mcp-server
 
-# Or project-only installation
+# Project-only
 claude mcp add dossier -- npx @ai-dossier/mcp-server
 ```
 
-Verify with:
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "dossier": {
+      "command": "npx",
+      "args": ["-y", "@ai-dossier/mcp-server"]
+    }
+  }
+}
+```
+
+### Verify
+
 ```bash
 claude mcp list
 ```
 
-Then try it:
+Then try:
 ```
 "List available dossiers in this project"
 "Execute the project-init dossier"
@@ -87,293 +56,150 @@ Then try it:
 
 ---
 
-## Example Usage
+## Tools
 
-### Discovery
+### Discovery & Reading
 
-```
-User: "What dossiers are available in this project?"
+| Tool | Description |
+|------|-------------|
+| `list_dossiers` | Discover available dossiers in a directory. Scans for `*.ds.md` files and returns metadata. |
+| `read_dossier` | Read and parse a dossier file. Returns metadata and content. Should be called after `verify_dossier` passes. |
+| `search_dossiers` | Search the dossier registry for available dossiers by keyword and optional category filter. |
 
-LLM: *Uses list_dossiers tool*
-     Found 5 dossiers:
-     - project-init (Setup) - Initialize project structure
-     - environment-setup (Setup) - Configure development environment
-     - deploy-to-aws (DevOps) - Deploy to AWS with validation
-     - run-tests (Development) - Execute test suite
-     - cleanup (Maintenance) - Remove temporary files
-```
+### Security Verification
 
-### Execution
+| Tool | Description |
+|------|-------------|
+| `verify_dossier` | Verify integrity (checksum) and authenticity (signature) of a single dossier. Returns pass/fail with stage details. |
+| `verify_graph` | Batch verify all dossiers in a resolved dependency graph. Returns aggregate security report with per-dossier breakdown. |
 
-```
-User: "Use the project-init dossier"
+### Orchestration (Multi-Dossier Journeys)
 
-LLM: *Uses read_dossier tool to get content*
-     *Uses dossier://protocol resource to understand execution*
-
-     Executing: project-init dossier v1.0.0
-
-     Prerequisites:
-     ✓ Directory is writable
-     ✓ Git is installed
-
-     Context Analysis:
-     - Detected: Node.js project (package.json found)
-     - Framework: Express.js
-     - TypeScript: Yes
-
-     Decision: Using Node.js + TypeScript template
-
-     Actions:
-     ✓ Created .gitignore
-     ✓ Created tsconfig.json
-     ✓ Created README.md
-     ✓ Initialized Git repository
-
-     Validation:
-     ✓ All files created successfully
-     ✓ Git repository initialized
-
-     Project initialization complete!
-```
-
-### Registry Understanding
-
-```
-User: "I want to set up a new project from scratch. What's the recommended workflow?"
-
-LLM: *Uses get_registry tool*
-
-     Based on your project's dossier registry, here's the recommended
-     "Greenfield Project Setup" journey:
-
-     1. project-init - Initialize basic structure
-     2. environment-setup - Configure dev environment
-     3. dependency-install - Install dependencies
-     4. test-setup - Set up testing framework
-
-     Would you like me to execute this journey?
-```
+| Tool | Description |
+|------|-------------|
+| `resolve_graph` | Resolve a dossier dependency graph into an execution plan. Produces a DAG with ordered phases, parallel groups, and conflict detection. |
+| `start_journey` | Start a journey session from a resolved and verified graph. Returns the first step's dossier content with injected context. |
+| `step_complete` | Mark the current journey step as complete or failed. Advances to the next step with context from previous outputs. |
+| `get_journey_status` | Get the current state of a journey: completed steps, current step, remaining steps, and collected outputs. |
+| `cancel_journey` | Cancel an active journey session. Returns a summary of what completed before cancellation. |
 
 ---
 
-## 🔒 Built-in Security
+## Resources
 
-The MCP server includes comprehensive security verification for all dossiers.
+| URI | Description |
+|-----|-------------|
+| `dossier://concept` | Introduction to dossiers — what they are and why to use them |
+| `dossier://protocol` | How to execute dossiers safely and effectively |
+| `dossier://security` | Security model, signing, verification, and trust management |
+| `dossier://orchestration` | Complete reference for multi-dossier journey tools |
 
-### Automatic Verification
+---
 
-Every dossier execution through the MCP server is automatically verified:
+## Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `execute-dossier` | Run a dossier with verification and protocol. Automatically chooses single or multi-dossier flow based on relationships. |
+| `execute-journey` | Guide through a multi-step dossier journey: resolve, verify, present plan, execute steps, collect outputs. |
+| `create-dossier` | Author a new dossier using the official meta-dossier template. |
+
+---
+
+## Security
+
+Every dossier execution is verified before running:
 
 ```
 User: "Execute the deploy-to-aws dossier"
 
-LLM: *Calls verify_dossier tool*
+LLM:  *Calls verify_dossier*
 
-     🔒 Security Verification:
-     ✅ Integrity: Checksum verified (content not tampered with)
-     ✅ Authenticity: Signed by imboard-ai-2024 (trusted)
-     ⚠️  Risk Level: HIGH
+      Security Verification:
+      - Integrity: Checksum verified (content not tampered with)
+      - Authenticity: Signed by imboard-ai-2024 (trusted)
+      - Risk Level: HIGH
 
-     This dossier will:
-     • Modify AWS infrastructure
-     • Require AWS credentials
-     • Execute Infrastructure as Code
-
-     Proceed? (y/N)
+      This dossier will modify AWS infrastructure.
+      Proceed? (y/N)
 ```
 
-### Security Features
+### Verification results
 
-**1. Integrity Verification**
-- SHA256 checksums ensure dossiers haven't been modified
-- Automatic verification before execution
-- BLOCKS execution if checksum fails
+- **ALLOW** — Verified signature from trusted source + low risk. Execute confidently.
+- **WARN** — Unsigned/unknown signer or high risk. Request user approval.
+- **BLOCK** — Checksum failed or signature invalid. Do not execute.
 
-**2. Cryptographic Signatures (Optional)**
-- Dossiers can be signed with minisign
-- Trust levels: VERIFIED, SIGNED_UNKNOWN, UNSIGNED, INVALID
-- User controls which keys to trust
+### Features
 
-**3. Risk Assessment**
-- Every dossier declares risk level (low/medium/high/critical)
-- Specific risk factors (modifies_files, requires_credentials, etc.)
-- Detailed destructive operations list
-- Automatic approval requests for high-risk operations
-
-**4. Trust Model**
-- Decentralized (like Docker Hub)
-- Official dossiers signed by Imboard AI
-- Community dossiers signed by their authors
-- Users choose which keys to trust in `~/.dossier/trusted-keys.txt`
-
-### Verification Responses
-
-The `verify_dossier` tool returns:
-
-- **ALLOW**: Verified signature from trusted source + low risk → Execute confidently
-- **WARN**: Unsigned/unknown signer OR high risk → Request user approval
-- **BLOCK**: Checksum failed OR signature invalid → DO NOT EXECUTE
-
-### Resources
-
-- `dossier://security` - Full security architecture documentation
-- `dossier://keys` - Official and community public keys
-- `dossier://protocol` - Includes security verification steps
-
-Learn more: [Security Architecture](../security/ARCHITECTURE.md)
+- **Integrity**: SHA256 checksums ensure dossiers haven't been modified
+- **Signatures**: Optional minisign cryptographic signatures
+- **Risk assessment**: Declared risk level and specific risk factors per dossier
+- **Trust model**: Decentralized — users choose which signing keys to trust via `~/.dossier/trusted-keys.txt`
 
 ---
 
-## For Developers
-
-### Project Structure
-
-```
-dossier-mcp-server/
-├── src/
-│   ├── index.ts              # Server entry point
-│   ├── tools/                # Tool implementations
-│   ├── resources/            # Resource providers
-│   ├── prompts/              # Prompt templates
-│   ├── parsers/              # Dossier parsing logic
-│   └── types/                # TypeScript definitions
-├── tests/                    # Test suite
-├── examples/                 # Usage examples
-└── docs/                     # Additional documentation
-```
-
-### Development Setup
+## Development
 
 ```bash
-# Clone and install
 git clone https://github.com/imboard-ai/ai-dossier.git
 cd ai-dossier/mcp-server
 npm install
-
-# Build
 npm run build
-
-# Test
 npm test
-
-# Run locally
 npm start
 ```
 
-### Contributing
+### Project structure
 
-See [SPECIFICATION.md](./SPECIFICATION.md) for detailed API design.
-
-Contributions welcome! This is a critical piece of infrastructure for making dossiers truly frictionless.
-
-**Priority areas**:
-- [ ] Core tool implementations
-- [ ] Resource providers
-- [ ] Dossier parser
-- [ ] Validation logic
-- [ ] Test coverage
-- [ ] Documentation
-
----
-
-## Roadmap
-
-### Phase 1: MVP (v1.0.0) - ✅ COMPLETED
-- [x] Basic tools (list_dossiers, read_dossier) ✅
-- [x] Core resources (concept, protocol, security) ✅
-- [x] **Security verification** (`verify_dossier` tool) ✅
-- [x] Checksum verification (SHA256) ✅
-- [x] Signature verification (minisign) ✅
-- [x] Trust management (trusted-keys.txt) ✅
-- [x] Risk assessment and recommendations ✅
-- [x] TypeScript implementation ✅
-- [x] MCP SDK integration ✅
-- [x] Structured logging ✅
-- [x] Working locally with Claude Code ✅
-
-### Phase 2: Testing & Publishing (v1.1.0) - 🚧 NEXT
-- [x] MCP Prompts (execute-dossier, create-dossier) ✅
-- [ ] Integration testing with Claude Code
-- [ ] Test with all example dossiers
-- [ ] NPM package preparation
-- [ ] CLI entry point for global install
-- [ ] Advanced validation (`validate_dossier` tool)
-- [ ] Registry relationship parsing (`get_registry` tool)
-- [ ] Comprehensive test suite
-- [ ] Documentation improvements
-
-### Phase 3: Ecosystem (v1.2.0) - Target: Future
-- [ ] NPM package published
-- [ ] Journey map support
-- [ ] suggest-dossier prompt (LLM-based discovery)
-- [ ] VS Code extension
-- [ ] Web documentation
-- [ ] Community templates
-- [ ] Video tutorials
-
----
-
-## Why This Matters
-
-The Dossier MCP Server is the key to making dossiers **truly universal and frictionless**.
-
-**Without MCP**:
-- Users must manually explain dossiers
-- Copy-pasting file contents is tedious
-- No standardized discovery
-- Limited to file-access-capable tools
-
-**With MCP**:
-- LLMs understand dossiers automatically
-- Discovery is programmatic
-- Works with any MCP-compatible tool
-- Execution follows standard protocol
-- Registry relationships are understood
-
-This transforms dossiers from "interesting idea" to "production-ready automation standard".
+```
+mcp-server/
+  src/
+    index.ts                 # Server entry point
+    tools/                   # Tool implementations
+    resources/               # Resource providers
+    orchestration/           # Graph resolution, sessions, output mapping
+    utils/                   # Logger, CLI wrapper, response helpers
+```
 
 ---
 
 ## Technical Details
 
-- **Protocol**: MCP 1.0
+- **Protocol**: MCP (Model Context Protocol)
 - **Language**: TypeScript
-- **Runtime**: Node.js 18+
-- **Dependencies**: @modelcontextprotocol/sdk
+- **Runtime**: Node.js 20+
+- **Transport**: stdio
+- **Dependencies**: `@modelcontextprotocol/sdk`, `@ai-dossier/core`
 - **License**: AGPL-3.0
+
+---
+
+## For AI Agents
+
+```bash
+npm run build -w mcp-server    # build (requires core built first)
+npm run test -w mcp-server     # test
+make build-mcp                 # build core + mcp-server together
+```
+
+- `src/index.ts` — server entry: registers all tools, resources, and prompts
+- `src/tools/` — one file per MCP tool (e.g. `verifyDossier.ts`)
+- `src/resources/` — static MCP resources (concept, protocol, security, orchestration)
+- `src/orchestration/` — graph resolution and journey session management
+- `src/utils/` — logger, CLI wrapper, response helpers
+
+**Adding a tool:** create `src/tools/myTool.ts`, export handler + input type, register in `src/index.ts` (add to ListTools + CallTool switch).
+
+**Adding a resource:** create `src/resources/myResource.ts`, register in `src/index.ts` (add to ListResources + ReadResource switch).
+
+**For dossier users (not contributors):** install via `claude mcp add dossier -- npx @ai-dossier/mcp-server` to get `dossier://` resources and tools at runtime. MCP Registry name: `ai.imboard/dossier`.
 
 ---
 
 ## Links
 
-- [Full Specification](./SPECIFICATION.md)
+- [Specification](./SPECIFICATION.md)
+- [Changelog](./CHANGELOG.md)
 - [Dossier Standard](../README.md)
 - [Examples](../examples/)
-- [Contributing Guidelines](./CONTRIBUTING.md)
-
----
-
-## Status
-
-**Current Phase**: MVP Complete ✅
-
-**What's Working**:
-- ✅ Security verification (checksum + signature)
-- ✅ Dossier listing and reading
-- ✅ MCP protocol integration
-- ✅ Resource serving (protocol, security, concept)
-- ✅ Structured logging and error handling
-- ✅ **MCP Prompts** (execute-dossier, create-dossier)
-
-**Next Steps**:
-1. NPM package preparation
-2. Advanced validation tool
-3. Registry support
-4. Publish to NPM
-
-**Contributors Welcome!** This is a community-driven effort to make LLM automation truly accessible.
-
----
-
-**Questions or ideas?** Open an issue or start a discussion!

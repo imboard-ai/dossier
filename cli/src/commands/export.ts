@@ -1,12 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
-import { getClient, parseNameVersion } from '../registry-client';
+import { printRegistryErrors, validateRelativePath } from '../helpers';
+import { multiRegistryGetContent } from '../multi-registry';
+import { parseNameVersion } from '../registry-client';
 
+/** Registers the `export` command — downloads a dossier and saves it to a local file. */
 export function registerExportCommand(program: Command): void {
   program
     .command('export')
-    .description('Download a dossier and save to a local file')
+    .description('Download a dossier and save to a local file. Searches all configured registries.')
     .argument('<name>', 'Dossier name (use name@version for a specific version)')
     .option('-o, --output <path>', 'Output file path')
     .option('--stdout', 'Print to stdout instead of saving to file')
@@ -16,15 +19,22 @@ export function registerExportCommand(program: Command): void {
       let content: string;
       let digest: string | null;
       try {
-        const client = getClient();
-        const result = await client.getDossierContent(dossierName, version || null);
+        const { result, errors } = await multiRegistryGetContent(dossierName, version || null);
+        if (!result) {
+          console.error(`\n❌ Not found: ${name}`);
+          printRegistryErrors(errors);
+          console.error('');
+          process.exit(1);
+          return;
+        }
         content = result.content;
         digest = result.digest;
-      } catch (err: any) {
-        if (err.statusCode === 404) {
+      } catch (err: unknown) {
+        const e = err as { statusCode?: number; message: string };
+        if (e.statusCode === 404) {
           console.error(`\n❌ Not found: ${name}\n`);
         } else {
-          console.error(`\n❌ Export failed: ${err.message}\n`);
+          console.error(`\n❌ Export failed: ${e.message}\n`);
         }
         process.exit(1);
         return;
@@ -36,13 +46,30 @@ export function registerExportCommand(program: Command): void {
       }
 
       const outputPath = options.output || `${dossierName.replace(/\//g, '-')}.ds.md`;
-      const outputDir = path.dirname(path.resolve(outputPath));
 
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+      try {
+        validateRelativePath(outputPath);
+      } catch (err: unknown) {
+        console.error(`\n❌ ${(err as Error).message}\n`);
+        process.exit(1);
+        return;
       }
 
-      fs.writeFileSync(path.resolve(outputPath), content, 'utf8');
+      const outputDir = path.dirname(path.resolve(outputPath));
+
+      try {
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        fs.writeFileSync(path.resolve(outputPath), content, 'utf8');
+      } catch (writeErr: unknown) {
+        console.error(
+          `\n❌ Failed to write file '${path.resolve(outputPath)}': ${(writeErr as Error).message}\n`
+        );
+        process.exit(1);
+        return;
+      }
 
       console.log(`\n✅ Exported: ${outputPath}`);
       console.log(`   Source: ${dossierName}${version ? `@${version}` : ''}`);

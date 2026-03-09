@@ -7,6 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0 / v0.8.0] - 2026-03-07
+
+### Fixed
+- **Security**: Add Zod validation for MCP prompt handlers (was using `as string` casts)
+- **Security**: Replace `execSync` with `execFileSync` in CLI helpers
+- Fix 30+ broken relative links across documentation
+- Fix all remaining stale Node 18 references (architecture overview, workflows, validation, examples, issue template)
+- Fix stale `@dossier` scope references → `@ai-dossier`
+- Purge all "GitHub Packages" references from active docs (workflows.md, getting-started)
+- Remove all "coming soon" stubs (docs.dossier.sh, security-scan, newsletter)
+- Fix outdated GitHub Actions v3 → v4 in validation README
+- Remove phantom guide entries from docs/guides/README.md
+
+### Changed
+- Use `npm ci` in publish workflow and CI lint job (was `npm install`)
+- Add coverage thresholds to worktree-pool vitest config
+- Rewrite docs/getting-started/README.md with clear 5-step learning path
+- Clarify README status: separate protocol v1.0 from CLI version
+- Update CLI roadmap with v0.6.0, v0.7.0, and v0.8.0 sections
+- Update CHANGELOG release process: "GitHub Packages" → "npm"
+- Add `.nvmrc` for auto Node version switching
+
+### Package Versions
+- `@ai-dossier/core` 1.3.0
+- `@ai-dossier/cli` 0.8.0
+- `@ai-dossier/mcp-server` 1.3.0
+- `@ai-dossier/worktree-pool` 0.4.0
+
+## [v1.2.0 / v0.7.0] - 2026-03-07
+
+### Fixed
+- **Security**: Replace `execSync` shell interpolation with `execFileSync` in worktree-pool (command injection prevention)
+- **Security**: Add Zod validation for MCP tool call arguments (replace unsafe `as unknown as` casts)
+- Fix Node engine requirement to `>=20.0.0` across all packages (aligns with vitest v4 / vite v7)
+- Fix broken doc links in CONTRIBUTING.md and installation guide (`.md` → `.ds.md`)
+- Fix "Node.js 18+" references across docs and examples to "Node.js 20+"
+- Fix "No Dependencies" claim in CLI README
+- Align vitest to v4 in mcp-server (was v3)
+- Fix Makefile `verify` target to use correct binary path
+
+### Changed
+- Use `npm ci` in CI for deterministic builds
+- Move academic references from README to REFERENCES.md
+- Remove internal PLANNING-*.md files from repo root
+- Remove deprecated `preferGlobal` from CLI package.json
+- Add CODEOWNERS file
+- Add coverage thresholds to mcp-server and registry vitest configs
+- Update `actions/checkout@v3` → `@v4` in adopter playbooks
+
+### Package Versions
+- `@ai-dossier/core` 1.2.0
+- `@ai-dossier/cli` 0.7.0
+- `@ai-dossier/mcp-server` 1.2.0
+- `@ai-dossier/worktree-pool` 0.3.0
+
+## [@ai-dossier/cli@0.5.0 – 0.6.0] - 2026-02-28
+
+### Added
+- `@ai-dossier/worktree-pool` package for pre-warmed git worktree management (#354)
+- Pool-aware setup-issue-workflow and full-cycle-issue dossiers (#361)
+- Unified dossier+skill creation template (#360)
+- Plugin marketplace install as primary path in READMEs
+- npm publish pipeline for `@ai-dossier/worktree-pool` (#362)
+
+### Changed
+- Improved package READMEs for npm publishing (#364)
+
 ## [@ai-dossier/cli@0.4.1] - 2026-02-20
 
 ### Fixed
@@ -189,11 +256,14 @@ git log --oneline
 3. Commit changes
 4. Tag release: `git tag v1.0.0`
 5. Push: `git push && git push --tags`
-6. GitHub Actions will publish to GitHub Packages
+6. GitHub Actions will publish to npm
 
 For detailed publishing instructions, see [docs/guides/publishing-packages.md](docs/guides/publishing-packages.md).
 
-[Unreleased]: https://github.com/imboard-ai/ai-dossier/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/imboard-ai/ai-dossier/compare/v1.3.0...HEAD
+[v1.3.0 / v0.8.0]: https://github.com/imboard-ai/ai-dossier/compare/v1.2.0...v1.3.0
+[v1.2.0 / v0.7.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.6.0...v1.2.0
+[@ai-dossier/cli@0.5.0 – 0.6.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.4.1...v0.6.0
 [@ai-dossier/cli@0.4.1]: https://github.com/imboard-ai/ai-dossier/compare/v0.4.0...v0.4.1
 [@ai-dossier/cli@0.4.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.3.0...v0.4.0
 [@ai-dossier/cli@0.3.0]: https://github.com/imboard-ai/ai-dossier/compare/v0.2.1...v0.3.0

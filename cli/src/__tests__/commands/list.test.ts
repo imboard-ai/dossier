@@ -1,30 +1,53 @@
 import fs from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerListCommand } from '../../commands/list';
+import * as config from '../../config';
 import * as helpers from '../../helpers';
-import * as registryClient from '../../registry-client';
+import * as multiRegistry from '../../multi-registry';
 import { createTestProgram } from '../helpers/test-utils';
 
 vi.mock('node:fs');
-vi.mock('../../registry-client');
-vi.mock('../../helpers');
+vi.mock('../../multi-registry');
+vi.mock('../../helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../helpers')>();
+  return {
+    ...actual,
+    parseListSource: vi.fn(),
+    formatTable: vi.fn(),
+    findDossierFilesLocal: vi.fn(),
+    parseDossierMetadataLocal: vi.fn(),
+    findDossierFilesGitHub: vi.fn(),
+    fetchDossierMetadata: vi.fn(),
+    printRegistryErrors: vi.fn(),
+  };
+});
+vi.mock('../../config');
 
 const mockedFs = vi.mocked(fs);
 
 describe('list command', () => {
-  const mockClient = { listDossiers: vi.fn() };
-
   beforeEach(() => {
-    vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
+    vi.mocked(config.resolveRegistries).mockReturnValue([
+      { name: 'public', url: 'https://test.registry.com' },
+    ]);
     vi.mocked(helpers.parseListSource).mockReturnValue({ type: 'local', path: '.' });
     vi.mocked(helpers.formatTable).mockReturnValue('formatted table');
   });
 
   describe('registry source', () => {
     it('should list registry dossiers', async () => {
-      mockClient.listDossiers.mockResolvedValue({
-        dossiers: [{ name: 'test-dossier', version: '1.0.0', title: 'Test', category: 'devops' }],
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          {
+            name: 'test-dossier',
+            version: '1.0.0',
+            title: 'Test',
+            category: 'devops',
+            _registry: 'public',
+          },
+        ] as any,
         total: 1,
+        errors: [],
       });
 
       const program = createTestProgram();
@@ -38,9 +61,10 @@ describe('list command', () => {
     });
 
     it('should output JSON for registry', async () => {
-      mockClient.listDossiers.mockResolvedValue({
-        dossiers: [{ name: 'test', version: '1.0.0' }],
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [{ name: 'test', version: '1.0.0', _registry: 'public' }] as any,
         total: 1,
+        errors: [],
       });
 
       const program = createTestProgram();
@@ -57,9 +81,10 @@ describe('list command', () => {
     });
 
     it('should output JSON for registry with --json flag', async () => {
-      mockClient.listDossiers.mockResolvedValue({
-        dossiers: [{ name: 'test', version: '1.0.0' }],
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [{ name: 'test', version: '1.0.0', _registry: 'public' }] as any,
         total: 1,
+        errors: [],
       });
 
       const program = createTestProgram();
@@ -75,8 +100,105 @@ describe('list command', () => {
       expect(jsonCalls.length).toBeGreaterThan(0);
     });
 
+    it('should show partial results warning when some registries fail', async () => {
+      vi.mocked(config.resolveRegistries).mockReturnValue([
+        { name: 'public', url: 'https://public.registry.com' },
+        { name: 'private', url: 'https://private.registry.com' },
+      ]);
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          { name: 'test', version: '1.0.0', title: 'Test', category: 'dev', _registry: 'public' },
+        ] as any,
+        total: 1,
+        errors: [{ registry: 'private', error: 'connection refused' }],
+      });
+
+      const program = createTestProgram();
+      registerListCommand(program);
+
+      await expect(
+        program.parseAsync(['node', 'dossier', 'list', '--source', 'registry'])
+      ).rejects.toThrow();
+
+      expect(helpers.printRegistryErrors).toHaveBeenCalledWith(
+        [{ registry: 'private', error: 'connection refused' }],
+        'warning'
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Showing partial results (1/2 registries responded)')
+      );
+    });
+
+    it('should clamp page to minimum of 1', async () => {
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          {
+            name: 'test',
+            version: '1.0.0',
+            title: 'Test',
+            category: 'devops',
+            _registry: 'public',
+          },
+        ] as any,
+        total: 1,
+        errors: [],
+      });
+
+      const program = createTestProgram();
+      registerListCommand(program);
+
+      await expect(
+        program.parseAsync(['node', 'dossier', 'list', '--source', 'registry', '--page', '-5'])
+      ).rejects.toThrow();
+
+      expect(multiRegistry.multiRegistryList).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1 })
+      );
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Page'));
+    });
+
+    it('should clamp perPage to maximum of 1000', async () => {
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          {
+            name: 'test',
+            version: '1.0.0',
+            title: 'Test',
+            category: 'devops',
+            _registry: 'public',
+          },
+        ] as any,
+        total: 1,
+        errors: [],
+      });
+
+      const program = createTestProgram();
+      registerListCommand(program);
+
+      await expect(
+        program.parseAsync([
+          'node',
+          'dossier',
+          'list',
+          '--source',
+          'registry',
+          '--per-page',
+          '99999',
+        ])
+      ).rejects.toThrow();
+
+      expect(multiRegistry.multiRegistryList).toHaveBeenCalledWith(
+        expect.objectContaining({ perPage: 1000 })
+      );
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Per-page'));
+    });
+
     it('should show empty message for registry', async () => {
-      mockClient.listDossiers.mockResolvedValue({ dossiers: [], total: 0 });
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [],
+        total: 0,
+        errors: [],
+      });
 
       const program = createTestProgram();
       registerListCommand(program);
@@ -86,6 +208,27 @@ describe('list command', () => {
       ).rejects.toThrow();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No dossiers found'));
+    });
+
+    it('should warn when --risk is used in registry mode', async () => {
+      vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+        dossiers: [
+          { name: 'test', version: '1.0.0', title: 'Test', category: 'dev', _registry: 'public' },
+        ] as any,
+        total: 1,
+        errors: [],
+      });
+
+      const program = createTestProgram();
+      registerListCommand(program);
+
+      await expect(
+        program.parseAsync(['node', 'dossier', 'list', '--source', 'registry', '--risk', 'high'])
+      ).rejects.toThrow();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('--risk filter is not supported in registry mode')
+      );
     });
   });
 

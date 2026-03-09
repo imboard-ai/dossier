@@ -4,7 +4,8 @@ import path from 'node:path';
 import { parseDossierContent } from '@ai-dossier/core';
 import type { Command } from 'commander';
 import { safeDossierPath } from '../helpers';
-import { getClient, parseNameVersion } from '../registry-client';
+import { multiRegistryGetContent, multiRegistryGetDossier } from '../multi-registry';
+import { parseNameVersion } from '../registry-client';
 
 function compareSemver(a: string, b: string): number {
   const pa = a.split('.').map(Number);
@@ -147,13 +148,21 @@ export function registerInstallSkillCommand(program: Command): void {
           }
 
           if (!content) {
-            const client = getClient();
             if (!resolvedVersion) {
-              const meta = (await client.getDossier(dossierName)) as any;
+              const { result: meta } = await multiRegistryGetDossier(dossierName);
+              if (!meta) {
+                throw { statusCode: 404, message: `Not found: ${dossierName}` };
+              }
               resolvedVersion = meta.version || 'latest';
             }
-            const result = await client.getDossierContent(dossierName, resolvedVersion);
-            content = result.content;
+            const { result: fetchedContent } = await multiRegistryGetContent(
+              dossierName,
+              resolvedVersion
+            );
+            if (!fetchedContent) {
+              throw { statusCode: 404, message: `Not found: ${dossierName}` };
+            }
+            content = fetchedContent.content;
           }
 
           fs.mkdirSync(skillDir, { recursive: true });
@@ -163,8 +172,8 @@ export function registerInstallSkillCommand(program: Command): void {
           let summary = '';
           try {
             const parsed = parseDossierContent(content);
-            const fm = parsed.frontmatter as Record<string, any>;
-            summary = fm.objective || '';
+            const fm = parsed.frontmatter as Record<string, unknown>;
+            summary = (fm.objective as string) || '';
             if (!summary) {
               const firstLine = parsed.body.split('\n').find((l) => l.trim().length > 0);
               summary = firstLine?.replace(/^#+\s*/, '').trim() || '';
@@ -203,23 +212,24 @@ export function registerInstallSkillCommand(program: Command): void {
             }
             console.log('');
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const e = err as { statusCode?: number; message: string };
           if (options.json) {
             console.log(
               JSON.stringify(
                 {
                   success: false,
-                  error: err.statusCode === 404 ? 'not_found' : 'install_failed',
-                  message: err.statusCode === 404 ? `Not found: ${name}` : err.message,
+                  error: e.statusCode === 404 ? 'not_found' : 'install_failed',
+                  message: e.statusCode === 404 ? `Not found: ${name}` : e.message,
                 },
                 null,
                 2
               )
             );
-          } else if (err.statusCode === 404) {
+          } else if (e.statusCode === 404) {
             console.error(`\n❌ Not found in registry: ${name}\n`);
           } else {
-            console.error(`\n❌ Install failed: ${err.message}\n`);
+            console.error(`\n❌ Install failed: ${e.message}\n`);
           }
           process.exit(1);
         }

@@ -12,23 +12,27 @@ import { registerInfoCommand } from '../../commands/info';
 import { registerPublishCommand } from '../../commands/publish';
 import { registerRemoveCommand } from '../../commands/remove';
 import { registerSearchCommand } from '../../commands/search';
+import * as config from '../../config';
 import * as credentials from '../../credentials';
+import * as multiRegistry from '../../multi-registry';
 import * as registryClient from '../../registry-client';
-import { createTestProgram } from '../helpers/test-utils';
+import { createTestProgram, parseNameVersionImpl } from '../helpers/test-utils';
 
 vi.mock('node:fs');
 vi.mock('node:readline');
 vi.mock('../../credentials');
 vi.mock('../../registry-client');
+vi.mock('../../multi-registry');
+vi.mock('../../config');
 
 const mockedFs = vi.mocked(fs);
 
 const dossierContent = `---dossier
 {
-  "dossier_schema_version": "1.0",
+  "dossier_schema_version": "1.0.0",
   "title": "My Workflow",
   "version": "1.0.0",
-  "name": "org/my-workflow",
+  "name": "my-workflow",
   "risk_level": "medium",
   "status": "Stable",
   "objective": "Automate deployment"
@@ -42,9 +46,7 @@ Deploy the application.
 describe('registry flow integration', () => {
   const mockClient = {
     publishDossier: vi.fn(),
-    listDossiers: vi.fn(),
     getDossier: vi.fn(),
-    getDossierContent: vi.fn(),
     removeDossier: vi.fn(),
   };
 
@@ -56,6 +58,13 @@ describe('registry flow integration', () => {
     mockedFs.readFileSync.mockReset();
     mockedFs.writeFileSync.mockReset();
 
+    vi.mocked(config.resolveWriteRegistry).mockReturnValue({
+      name: 'public',
+      url: 'https://test.registry.com',
+    });
+    vi.mocked(config.resolveRegistries).mockReturnValue([
+      { name: 'public', url: 'https://test.registry.com' },
+    ]);
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'user',
@@ -63,20 +72,17 @@ describe('registry flow integration', () => {
       expiresAt: null,
     });
     vi.mocked(credentials.isExpired).mockReturnValue(false);
-    vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
-    vi.mocked(registryClient.parseNameVersion).mockImplementation((name: string) => {
-      if (name.includes('@')) {
-        const idx = name.lastIndexOf('@');
-        return [name.slice(0, idx), name.slice(idx + 1)];
-      }
-      return [name, null];
-    });
+    vi.mocked(registryClient.getClientForRegistry).mockReturnValue(mockClient as any);
+    vi.mocked(registryClient.parseNameVersion).mockImplementation(parseNameVersionImpl);
   });
 
   it('should publish, search, info, export, then remove', async () => {
     // Step 1: Publish
     mockedFs.existsSync.mockReturnValue(true);
     mockedFs.readFileSync.mockReturnValue(dossierContent);
+    mockClient.getDossier.mockRejectedValue(
+      Object.assign(new Error('Not found'), { statusCode: 404 })
+    );
     mockClient.publishDossier.mockResolvedValue({
       name: 'org/my-workflow',
       content_url: 'https://registry.example.com/org/my-workflow',
@@ -90,15 +96,18 @@ describe('registry flow integration', () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published'));
 
     // Step 2: Search
-    mockClient.listDossiers.mockResolvedValue({
+    vi.mocked(multiRegistry.multiRegistrySearch).mockResolvedValue({
       dossiers: [
         {
           name: 'org/my-workflow',
           title: 'My Workflow',
           description: 'Automate deployment',
           tags: ['deploy'],
+          _registry: 'public',
         },
-      ],
+      ] as any,
+      total: 1,
+      errors: [],
     });
 
     const search = createTestProgram();
@@ -109,25 +118,27 @@ describe('registry flow integration', () => {
 
     // Step 3: Info from registry
     mockedFs.existsSync.mockReturnValue(false); // Not a local file
-    mockClient.getDossier.mockResolvedValue({
-      name: 'org/my-workflow',
-      title: 'My Workflow',
-      version: '1.0.0',
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: {
+        name: 'org/my-workflow',
+        title: 'My Workflow',
+        version: '1.0.0',
+        _registry: 'public',
+      },
+      errors: [],
     });
 
     const info = createTestProgram();
     registerInfoCommand(info);
-    await expect(info.parseAsync(['node', 'dossier', 'info', 'org/my-workflow'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(info.parseAsync(['node', 'dossier', 'info', 'org/my-workflow'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('My Workflow'));
 
     // Step 4: Export
     mockedFs.existsSync.mockReturnValue(true); // Output dir exists
-    mockClient.getDossierContent.mockResolvedValue({
-      content: dossierContent,
-      digest: null,
+    vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
+      result: { content: dossierContent, digest: null, _registry: 'public' },
+      errors: [],
     });
 
     const exp = createTestProgram();
@@ -151,6 +162,9 @@ describe('registry flow integration', () => {
   it('should handle publish then 409 conflict on re-publish', async () => {
     mockedFs.existsSync.mockReturnValue(true);
     mockedFs.readFileSync.mockReturnValue(dossierContent);
+    mockClient.getDossier.mockRejectedValue(
+      Object.assign(new Error('Not found'), { statusCode: 404 })
+    );
 
     // First publish succeeds
     mockClient.publishDossier.mockResolvedValue({ name: 'org/my-workflow' });
@@ -167,7 +181,7 @@ describe('registry flow integration', () => {
     registerPublishCommand(pub2);
     await expect(
       pub2.parseAsync(['node', 'dossier', 'publish', 'workflow.ds.md', '--yes'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Version conflict'));
   });

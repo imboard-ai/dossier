@@ -6,8 +6,30 @@ This is the main worktree. Switching branches here breaks all parallel agents.
 
 **Always create a worktree:**
 ```bash
-git worktree add "$(git rev-parse --show-toplevel)/worktrees/<branch-name>" -b <branch-name>
-cd "$(git rev-parse --show-toplevel)/worktrees/<branch-name>"
+git worktree add "$(git rev-parse --show-toplevel)/../worktrees/<branch-name>" -b <branch-name>
+cd "$(git rev-parse --show-toplevel)/../worktrees/<branch-name>"
 ```
 
 **Before any work, verify:** `pwd | grep -q "worktree" || echo "STOP: create a worktree first"`
+
+## Project Quick Reference
+
+| Directory | Purpose |
+|-----------|---------|
+| `packages/core/` | Shared library — parsing, verification, linting, risk assessment |
+| `cli/` | CLI tool (`dossier verify`, `dossier search`, etc.) |
+| `mcp-server/` | MCP server — tools/resources/prompts for LLM integration |
+| `registry/` | Vercel-deployed registry API |
+| `packages/worktree-pool/` | Pre-warmed git worktree management |
+
+```bash
+make build-all    # build core → mcp-server + cli (skip lint)
+make build        # lint then build
+make test         # test all workspaces
+make check        # biome format + lint with auto-fix
+```
+
+- Node 20+ required (vitest v4 + vite v7 dropped Node 18)
+- Linter/formatter: **Biome** (not ESLint/Prettier) — `npx biome check --write .`
+- Build order: core first, then mcp-server and cli (both depend on core)
+- MCP integration: see `mcp-server/README.md`

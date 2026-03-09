@@ -1,7 +1,6 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseDossierContent } from '@ai-dossier/core';
+import { type DossierFrontmatter, parseDossierContent, sha256Hex } from '@ai-dossier/core';
 import type { Command } from 'commander';
 
 export function registerChecksumCommand(program: Command): void {
@@ -22,17 +21,17 @@ export function registerChecksumCommand(program: Command): void {
 
       const content = fs.readFileSync(dossierFile, 'utf8');
 
-      let frontmatter: Record<string, any>;
+      let frontmatter: DossierFrontmatter;
       let body: string;
       try {
         const parsed = parseDossierContent(content);
-        frontmatter = parsed.frontmatter as Record<string, any>;
+        frontmatter = parsed.frontmatter;
         body = parsed.body;
       } catch (err: unknown) {
         console.log(`❌ ${(err as Error).message}`);
         process.exit(1);
       }
-      const calculatedHash = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+      const calculatedHash = sha256Hex(body);
       const existingHash = frontmatter.checksum?.hash;
 
       if (options.quiet && !options.verify && !options.update) {

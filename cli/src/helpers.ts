@@ -3,13 +3,14 @@
  * Extracted from the monolithic bin/dossier entry point.
  */
 
-import { execSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  type DossierFrontmatter,
   parseDossierContent,
   RECOMMENDED_FIELDS,
   REQUIRED_FIELDS,
@@ -18,6 +19,7 @@ import {
 } from '@ai-dossier/core';
 
 import { convertGitHubBlobToRaw } from './github-url';
+import { verifyDossier as verifyDossierModule } from './verify-dossier';
 
 // ============================================================================
 // Path constants
@@ -28,9 +30,6 @@ export const CLI_ROOT = path.resolve(__dirname, '..');
 
 /** The bin/ directory */
 export const BIN_DIR = path.join(CLI_ROOT, 'bin');
-
-/** Repository root (parent of cli/) */
-export const REPO_ROOT = path.resolve(CLI_ROOT, '..');
 
 // ============================================================================
 // Shared constants
@@ -46,6 +45,9 @@ export const OFFICIAL_KMS_KEYS = [
 // Re-export validation constants from core (single source of truth)
 export { RECOMMENDED_FIELDS, REQUIRED_FIELDS, VALID_RISK_LEVELS, VALID_STATUSES };
 
+/** Maximum results per page for CLI pagination commands. */
+export const MAX_PER_PAGE = 1000;
+
 // ============================================================================
 // TypeScript interfaces
 // ============================================================================
@@ -53,13 +55,8 @@ export { RECOMMENDED_FIELDS, REQUIRED_FIELDS, VALID_RISK_LEVELS, VALID_STATUSES 
 export interface VerificationOptions {
   skipChecksum?: boolean;
   skipAllChecks?: boolean;
-  skipAuthorCheck?: boolean;
-  skipDossierCheck?: boolean;
-  skipRiskAssessment?: boolean;
-  skipReview?: boolean;
   force?: boolean;
   noPrompt?: boolean;
-  reviewDossier?: string;
 }
 
 export interface VerificationStage {
@@ -67,7 +64,6 @@ export interface VerificationStage {
   name: string;
   passed?: boolean;
   skipped?: boolean;
-  demo?: boolean;
 }
 
 export interface VerificationResult {
@@ -106,6 +102,46 @@ export interface GitHubFile {
 // ============================================================================
 // Security helpers
 // ============================================================================
+
+/**
+ * Validate that a path is relative and contains no ".." traversal.
+ * @throws Error if the path is absolute or contains path traversal.
+ */
+export function validateRelativePath(filePath: string): void {
+  if (path.isAbsolute(filePath)) {
+    throw new Error(`Path '${filePath}' must be relative (absolute paths are not allowed)`);
+  }
+  if (filePath.split(path.sep).includes('..') || filePath.split('/').includes('..')) {
+    throw new Error(`Path '${filePath}' must not contain ".." (path traversal is not allowed)`);
+  }
+}
+
+/**
+ * Parse and clamp pagination options from CLI string arguments.
+ * Logs a warning when values are clamped.
+ */
+export function parsePaginationParams(
+  pageStr: string | undefined,
+  perPageStr: string | undefined,
+  defaults: { page: number; perPage: number } = { page: 1, perPage: 20 }
+): { page: number; perPage: number } {
+  const parsedPage = parseInt(pageStr || String(defaults.page), 10);
+  const rawPage = Number.isNaN(parsedPage) ? defaults.page : parsedPage;
+  const parsedPerPage = parseInt(perPageStr || String(defaults.perPage), 10);
+  const rawPerPage = Number.isNaN(parsedPerPage) ? defaults.perPage : parsedPerPage;
+
+  const page = Math.max(1, rawPage);
+  const perPage = Math.min(MAX_PER_PAGE, Math.max(1, rawPerPage));
+
+  if (rawPage !== page) {
+    console.warn(`⚠️  Page ${rawPage} clamped to ${page} (minimum 1)`);
+  }
+  if (rawPerPage !== perPage) {
+    console.warn(`⚠️  Per-page ${rawPerPage} clamped to ${perPage} (range 1–${MAX_PER_PAGE})`);
+  }
+
+  return { page, perPage };
+}
 
 /**
  * Validate a dossier name to prevent path traversal attacks.
@@ -169,8 +205,9 @@ export function readStdin(timeoutMs = 5000): Promise<string | null> {
       clearTimeout(timer);
       resolve(data || null);
     });
-    process.stdin.on('error', () => {
+    process.stdin.on('error', (err) => {
       clearTimeout(timer);
+      process.stderr.write(`Warning: stdin read error: ${err.message}\n`);
       resolve(null);
     });
     process.stdin.resume();
@@ -188,7 +225,7 @@ export function detectLlm(llmOption: string, silent = false): string | null {
 
   // Auto-detect LLM
   try {
-    execSync('command -v claude', { stdio: 'pipe' });
+    execFileSync('which', ['claude'], { stdio: 'pipe' });
     if (!silent) console.log('   Detected: Claude Code');
     return 'claude-code';
   } catch {
@@ -279,7 +316,6 @@ export async function runVerification(
   file: string,
   options: VerificationOptions
 ): Promise<VerificationResult> {
-  const verifyScript = path.join(BIN_DIR, 'dossier-verify');
   const results: VerificationResult = { passed: true, stages: [] };
 
   console.log('🔐 Running Multi-Stage Verification Pipeline...\n');
@@ -287,11 +323,11 @@ export async function runVerification(
   // Stage 1: Integrity Check (checksum + signature)
   if (!options.skipChecksum && !options.skipAllChecks) {
     console.log('📊 Stage 1: Integrity Check (checksum + signature)');
-    try {
-      execSync(`node "${verifyScript}" "${file}" --exit-code-only 2>/dev/null`, { stdio: 'pipe' });
+    const passed = await verifyDossierModule(file, { verbose: false });
+    if (passed) {
       console.log('   ✅ PASSED: Checksum and signature valid\n');
       results.stages.push({ stage: 1, name: 'Integrity', passed: true });
-    } catch {
+    } else {
       console.log('   ❌ FAILED: Verification failed');
       console.log(`   Run "dossier verify ${file}" for details\n`);
       results.passed = false;
@@ -302,13 +338,6 @@ export async function runVerification(
     console.log('⚠️  Stage 1: SKIPPED - Integrity check\n');
     results.stages.push({ stage: 1, name: 'Integrity', skipped: true });
   }
-
-  // Stages 2-5 are planned but not yet available.
-  // Skip them silently to avoid misleading output.
-  results.stages.push({ stage: 2, name: 'Author Check', skipped: true });
-  results.stages.push({ stage: 3, name: 'Dossier Check', skipped: true });
-  results.stages.push({ stage: 4, name: 'Risk Assessment', skipped: true });
-  results.stages.push({ stage: 5, name: 'Review Dossier', skipped: true });
 
   return results;
 }
@@ -518,16 +547,15 @@ export function parseDossierMetadataFromContent(
 ): DossierMetadata {
   try {
     const parsed = parseDossierContent(content);
-    const frontmatter = parsed.frontmatter as Record<string, any>;
+    const frontmatter: DossierFrontmatter = parsed.frontmatter;
+    const category = frontmatter.category as string | string[] | undefined;
     return {
       path: filePath,
       filename: path.basename(filePath),
       title: frontmatter.title || path.basename(filePath, '.ds.md'),
       version: frontmatter.version || '-',
       risk_level: frontmatter.risk_level || 'unknown',
-      category: Array.isArray(frontmatter.category)
-        ? frontmatter.category.join(', ')
-        : frontmatter.category || '-',
+      category: Array.isArray(category) ? category.join(', ') : (category as string) || '-',
       status: frontmatter.status || '-',
       signed: !!frontmatter.signature,
       checksum: !!frontmatter.checksum,
@@ -562,18 +590,10 @@ export function parseDossierMetadataLocal(filePath: string): DossierMetadata {
 }
 
 /**
- * Verify a dossier file using the verify script (quick check).
+ * Verify a dossier file (quick check using the TS module directly).
  */
-export function verifyDossierQuick(filePath: string): boolean {
-  const verifyScript = path.join(BIN_DIR, 'dossier-verify');
-  try {
-    execSync(`node "${verifyScript}" "${filePath}" --exit-code-only 2>/dev/null`, {
-      stdio: 'pipe',
-    });
-    return true;
-  } catch {
-    return false;
-  }
+export async function verifyDossierQuick(filePath: string): Promise<boolean> {
+  return verifyDossierModule(filePath, { verbose: false });
 }
 
 /**
@@ -610,4 +630,94 @@ export function formatTable(dossiers: DossierMetadata[], showPath = false): stri
   }
 
   return output;
+}
+
+/**
+ * Print registry errors to stderr in a consistent format.
+ * Used across commands when multi-registry lookups partially or fully fail.
+ */
+export function printRegistryErrors(
+  errors: ReadonlyArray<{ registry: string; error: string }>,
+  style: 'indent' | 'warning' = 'indent'
+): void {
+  for (const e of errors) {
+    if (style === 'warning') {
+      console.error(`⚠️  Registry '${e.registry}': ${e.error}`);
+    } else {
+      console.error(`   ${e.registry}: ${e.error}`);
+    }
+  }
+}
+
+const NOT_FOUND_PATTERNS = ['404', 'not found'] as const;
+const TIMEOUT_PATTERNS = ['timeout', 'etimedout', 'econnaborted'] as const;
+
+/**
+ * Classify and print a user-facing error when all registries fail to resolve a dossier.
+ * Distinguishes between 404s, timeouts, mixed failures, and other errors.
+ */
+export function printRegistryNotFoundError(
+  label: string,
+  errors: ReadonlyArray<{ registry: string; error: string }>
+): void {
+  const has404 = errors.some((e) => {
+    const lower = e.error.toLowerCase();
+    return NOT_FOUND_PATTERNS.some((p) => lower.includes(p));
+  });
+  const hasTimeout = errors.some((e) => {
+    const lower = e.error.toLowerCase();
+    return TIMEOUT_PATTERNS.some((p) => lower.includes(p));
+  });
+
+  if (hasTimeout && !has404) {
+    console.error(`\n❌ Could not reach any registry for: ${label}`);
+    console.error('   All registries timed out — check network connectivity');
+  } else if (has404 && hasTimeout) {
+    console.error(`\n❌ Not found: ${label}`);
+    console.error('   Some registries returned 404, others timed out — results may be incomplete');
+  } else if (!has404 && !hasTimeout) {
+    console.error(`\n❌ All registries failed for: ${label}`);
+    console.error('   See individual errors below');
+  } else {
+    console.error(`\n❌ Not found: ${label}`);
+    console.error('   Not a local file and not found in any registry');
+  }
+  printRegistryErrors(errors);
+  console.error('');
+}
+
+/**
+ * Extract and format common dossier display fields from a registry list item.
+ * Used by search and list commands to normalize metadata for display.
+ */
+export function formatDossierFields(d: {
+  name?: string;
+  version?: string;
+  title?: string;
+  category?: string | string[];
+  description?: string;
+  objective?: string;
+}): { name: string; version: string; title: string; category: string; description: string } {
+  return {
+    name: d.name || '',
+    version: d.version || '',
+    title: d.title || '',
+    category: Array.isArray(d.category) ? d.category.join(', ') : d.category || '',
+    description: d.description || d.objective || '',
+  };
+}
+
+/**
+ * Log pagination info to the console.
+ * Used by search and list commands when results span multiple pages.
+ */
+export function logPaginationInfo(total: number, page: number, perPage: number): void {
+  const totalPages = Math.ceil(total / perPage);
+  if (totalPages > 1) {
+    console.log(`\nPage ${page}/${totalPages} (${perPage} per page)`);
+    if (page < totalPages) {
+      console.log(`Use --page ${page + 1} to see more results`);
+    }
+    console.log('');
+  }
 }

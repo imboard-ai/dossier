@@ -1,18 +1,21 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseDossierContent } from '@ai-dossier/core';
+import { parseDossierContent, sha256Hex } from '@ai-dossier/core';
 import type { Command } from 'commander';
-import { getClient, parseNameVersion } from '../registry-client';
+import { resolveRegistries } from '../config';
+import { printRegistryErrors } from '../helpers';
+import { multiRegistryGetDossier } from '../multi-registry';
+import type { DossierInfo } from '../registry-client';
+import { parseNameVersion } from '../registry-client';
 
 export function registerInfoCommand(program: Command): void {
   program
     .command('info')
-    .description('Show dossier metadata')
+    .description('Show dossier metadata. For registry names, searches all configured registries.')
     .argument('<file-or-name>', 'Local dossier file path or registry dossier name')
     .option('--json', 'Output as JSON')
     .action(async (fileOrName: string, options: { json?: boolean }) => {
-      let frontmatter: Record<string, any>;
+      let frontmatter: DossierInfo;
       let body: string | null;
       let source: string;
 
@@ -25,40 +28,53 @@ export function registerInfoCommand(program: Command): void {
 
         try {
           const parsed = parseDossierContent(content);
-          frontmatter = parsed.frontmatter as Record<string, any>;
+          frontmatter = parsed.frontmatter as unknown as DossierInfo;
           body = parsed.body;
         } catch {
           console.error('\n❌ Invalid dossier format: no frontmatter found\n');
           process.exit(1);
         }
       } else {
-        source = `registry: ${fileOrName}`;
         try {
           const [dossierName, version] = parseNameVersion(fileOrName);
-          const client = getClient();
-          const meta = (await client.getDossier(dossierName, version || null)) as any;
+          const { result: meta, errors: metaErrors } = await multiRegistryGetDossier(
+            dossierName,
+            version || null
+          );
+          if (!meta) {
+            console.error(`\n❌ Not found: ${fileOrName}`);
+            console.error('   Not a local file and not found in any registry');
+            printRegistryErrors(metaErrors);
+            console.error('');
+            process.exit(1);
+          }
           frontmatter = meta;
           body = null;
-        } catch (err: any) {
-          if (err.statusCode === 404) {
+          const showLabel = resolveRegistries().length > 1;
+          source = showLabel
+            ? `registry: ${fileOrName} [${meta._registry}]`
+            : `registry: ${fileOrName}`;
+        } catch (err: unknown) {
+          const e = err as { statusCode?: number; message: string };
+          if (e.statusCode === 404) {
             console.error(`\n❌ Not found: ${fileOrName}`);
             console.error('   Not a local file and not found in registry\n');
           } else {
-            console.error(`\n❌ Error: ${err.message}\n`);
+            console.error(`\n❌ Error: ${e.message}\n`);
           }
           process.exit(1);
         }
       }
 
       if (options.json) {
-        console.log(JSON.stringify(frontmatter!, null, 2));
+        console.log(JSON.stringify(frontmatter, null, 2));
         process.exit(0);
       }
 
       console.log(`\n📄 Dossier Info\n`);
       console.log(`   Source:    ${source}`);
 
-      const fm = frontmatter!;
+      const fm = frontmatter;
       const fields: [string, string][] = [
         ['Name', fm.name || fm.title || ''],
         ['Title', fm.title || ''],
@@ -78,7 +94,7 @@ export function registerInfoCommand(program: Command): void {
       const authors = fm.authors;
       if (Array.isArray(authors) && authors.length > 0) {
         const authorStr = authors
-          .map((a: any) => {
+          .map((a: string | { name: string }) => {
             if (typeof a === 'string') {
               const nameMatch = a.match(/^name:\s*(.+)$/);
               return nameMatch ? nameMatch[1] : a;
@@ -97,7 +113,7 @@ export function registerInfoCommand(program: Command): void {
       if (body !== null) {
         const checksumInfo = fm.checksum;
         if (checksumInfo?.hash) {
-          const actual = crypto.createHash('sha256').update(body, 'utf8').digest('hex');
+          const actual = sha256Hex(body);
           const valid = actual === checksumInfo.hash;
           console.log(
             `   Checksum:  ${checksumInfo.hash.slice(0, 16)}... ${valid ? '✅ valid' : '❌ mismatch'}`

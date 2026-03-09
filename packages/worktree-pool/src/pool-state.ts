@@ -1,0 +1,173 @@
+import {
+  DEFAULT_CONFIG,
+  type PoolConfig,
+  type PoolState,
+  type PoolWorktree,
+  SCHEMA_VERSION,
+} from './types';
+
+export function createEmptyState(configOverrides?: Partial<PoolConfig>): PoolState {
+  return {
+    schema_version: SCHEMA_VERSION,
+    config: { ...DEFAULT_CONFIG, ...configOverrides },
+    worktrees: [],
+  };
+}
+
+export function validateState(data: unknown): PoolState {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Pool state must be an object');
+  }
+  const obj = data as Record<string, unknown>;
+  if (obj.schema_version !== SCHEMA_VERSION) {
+    throw new Error(
+      `Unsupported schema version: ${obj.schema_version} (expected ${SCHEMA_VERSION})`
+    );
+  }
+  if (!obj.config || typeof obj.config !== 'object') {
+    throw new Error('Pool state must have a config object');
+  }
+  const config = obj.config as Record<string, unknown>;
+  if (
+    typeof config.target_spares !== 'number' ||
+    config.target_spares < 1 ||
+    config.target_spares > 50
+  ) {
+    throw new Error('config.target_spares must be a number between 1 and 50');
+  }
+  if (
+    typeof config.max_pool_size !== 'number' ||
+    config.max_pool_size < 1 ||
+    config.max_pool_size > 100
+  ) {
+    throw new Error('config.max_pool_size must be a number between 1 and 100');
+  }
+  if (typeof config.stale_after_hours !== 'number' || config.stale_after_hours < 1) {
+    throw new Error('config.stale_after_hours must be a positive number');
+  }
+  if (!Array.isArray(obj.worktrees)) {
+    throw new Error('Pool state must have a worktrees array');
+  }
+  return data as PoolState;
+}
+
+export function addWorktree(state: PoolState, worktree: PoolWorktree): PoolState {
+  if (state.worktrees.length >= state.config.max_pool_size) {
+    throw new Error(`Pool is at max capacity (${state.config.max_pool_size})`);
+  }
+  return {
+    ...state,
+    worktrees: [...state.worktrees, worktree],
+  };
+}
+
+export function updateWorktree(
+  state: PoolState,
+  id: string,
+  updates: Partial<PoolWorktree>
+): PoolState {
+  const idx = state.worktrees.findIndex((w) => w.id === id);
+  if (idx === -1) {
+    throw new Error(`Worktree not found: ${id}`);
+  }
+  const worktrees = [...state.worktrees];
+  worktrees[idx] = { ...worktrees[idx], ...updates };
+  return { ...state, worktrees };
+}
+
+export function removeWorktree(state: PoolState, id: string): PoolState {
+  return {
+    ...state,
+    worktrees: state.worktrees.filter((w) => w.id !== id),
+  };
+}
+
+export function claimWorktree(
+  state: PoolState,
+  issue: number,
+  branch: string
+): { state: PoolState; worktree: PoolWorktree } | null {
+  const warm = state.worktrees.find((w) => w.status === 'warm');
+  if (!warm) return null;
+
+  const updated: PoolWorktree = {
+    ...warm,
+    status: 'assigned',
+    assigned_to_issue: issue,
+    assigned_branch: branch,
+  };
+
+  return {
+    state: updateWorktree(state, warm.id, updated),
+    worktree: updated,
+  };
+}
+
+export function getWarmCount(state: PoolState): number {
+  return state.worktrees.filter((w) => w.status === 'warm').length;
+}
+
+export function getAssignedCount(state: PoolState): number {
+  return state.worktrees.filter((w) => w.status === 'assigned').length;
+}
+
+export function getSparesNeeded(state: PoolState): number {
+  const warmCount = getWarmCount(state);
+  const totalCount = state.worktrees.length;
+  const capacityLeft = state.config.max_pool_size - totalCount;
+  const sparesNeeded = state.config.target_spares - warmCount;
+  return Math.max(0, Math.min(sparesNeeded, capacityLeft));
+}
+
+export function findStaleWorktrees(state: PoolState, now: Date = new Date()): PoolWorktree[] {
+  const cutoff = now.getTime() - state.config.stale_after_hours * 60 * 60 * 1000;
+  return state.worktrees.filter((w) => {
+    if (w.status === 'assigned') return false;
+    const warmedAt = new Date(w.warmed_at).getTime();
+    return warmedAt < cutoff;
+  });
+}
+
+export function findOrphans(
+  state: PoolState,
+  existingPaths: Set<string>
+): {
+  inStateNotOnDisk: PoolWorktree[];
+  onDiskNotInState: string[];
+} {
+  const inStateNotOnDisk = state.worktrees.filter((w) => !existingPaths.has(w.path));
+  const statePaths = new Set(state.worktrees.map((w) => w.path));
+  const onDiskNotInState = [...existingPaths].filter((p) => !statePaths.has(p));
+  return { inStateNotOnDisk, onDiskNotInState };
+}
+
+export interface PoolStatus {
+  warm: number;
+  assigned: number;
+  creating: number;
+  other: number;
+  total: number;
+  spares_needed: number;
+  config: PoolConfig;
+  worktrees: PoolWorktree[];
+}
+
+export function getPoolStatus(state: PoolState): PoolStatus {
+  const warm = getWarmCount(state);
+  const assigned = getAssignedCount(state);
+  const creating = state.worktrees.filter(
+    (w) => w.status === 'creating' || w.status === 'warming'
+  ).length;
+  const other = state.worktrees.length - warm - assigned - creating;
+
+  return {
+    warm,
+    assigned,
+    creating,
+    other,
+    total: state.worktrees.length,
+    spares_needed: getSparesNeeded(state),
+    config: state.config,
+    worktrees: state.worktrees,
+  };
+}

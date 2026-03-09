@@ -41,13 +41,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Build
-        run: make build
+        run: make build-all
 
       - name: Test
         run: make test
@@ -71,8 +71,11 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install npm with trusted publishing support
+        run: npm install -g npm@latest
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Bump version (manual dispatch only)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != 'skip'
@@ -105,7 +108,7 @@ jobs:
           git push origin "v$VERSION"
 
       - name: Build all packages
-        run: make build
+        run: make build-all
 
       - name: Check if @ai-dossier/core needs publishing
         id: check-core
@@ -164,6 +167,25 @@ jobs:
           cd mcp-server
           npm publish --provenance --access public
 
+      - name: Check if @ai-dossier/worktree-pool needs publishing
+        id: check-pool
+        run: |
+          CURRENT=$(node -p "require('./packages/worktree-pool/package.json').version")
+          PUBLISHED=$(npm view @ai-dossier/worktree-pool version 2>/dev/null || echo "0.0.0")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Worktree-pool $CURRENT already published, skipping"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Publishing worktree-pool $CURRENT (current published: $PUBLISHED)"
+          fi
+
+      - name: Publish @ai-dossier/worktree-pool
+        if: steps.check-pool.outputs.skip != 'true'
+        run: |
+          cd packages/worktree-pool
+          npm publish --provenance --access public
+
   verify:
     needs: publish
     runs-on: ubuntu-latest
@@ -180,6 +202,7 @@ jobs:
           npm view @ai-dossier/core version
           npm view @ai-dossier/cli version
           npm view @ai-dossier/mcp-server version
+          npm view @ai-dossier/worktree-pool version
 
       - name: Smoke test CLI
         run: npx @ai-dossier/cli --help

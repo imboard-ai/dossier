@@ -1,24 +1,37 @@
 import type { Command } from 'commander';
-import { getClient, parseNameVersion } from '../registry-client';
+import { resolveRegistries } from '../config';
+import { formatDossierFields, printRegistryErrors } from '../helpers';
+import { multiRegistryGetDossier } from '../multi-registry';
+import type { DossierInfo } from '../registry-client';
+import { parseNameVersion } from '../registry-client';
 
 export function registerGetCommand(program: Command): void {
   program
     .command('get')
-    .description('Get dossier metadata from the registry')
+    .description(
+      'Get dossier metadata from the registry. Searches all configured registries and returns the first match.'
+    )
     .argument('<name>', 'Dossier name (optionally with @version, e.g., my-dossier@1.0.0)')
     .option('--json', 'Output as JSON')
     .action(async (nameArg: string, options: { json?: boolean }) => {
       const [dossierName, version] = parseNameVersion(nameArg);
 
-      let meta: any;
+      let meta: DossierInfo & { _registry?: string };
       try {
-        const client = getClient();
-        meta = await client.getDossier(dossierName, version || null);
-      } catch (err: any) {
-        if (err.statusCode === 404) {
+        const { result, errors } = await multiRegistryGetDossier(dossierName, version || null);
+        if (!result) {
+          console.error(`\n❌ Not found in any registry: ${nameArg}`);
+          printRegistryErrors(errors);
+          console.error('');
+          process.exit(1);
+        }
+        meta = result;
+      } catch (err: unknown) {
+        const e = err as { statusCode?: number; message: string };
+        if (e.statusCode === 404) {
           console.error(`\n❌ Not found in registry: ${nameArg}\n`);
         } else {
-          console.error(`\n❌ Registry error: ${err.message}\n`);
+          console.error(`\n❌ Registry error: ${e.message}\n`);
         }
         process.exit(1);
       }
@@ -28,16 +41,19 @@ export function registerGetCommand(program: Command): void {
         process.exit(0);
       }
 
-      console.log(`\n📄 Dossier: ${meta.name || dossierName}\n`);
+      const showLabel = resolveRegistries().length > 1;
+      const label = showLabel && meta._registry ? ` [${meta._registry}]` : '';
+      console.log(`\n📄 Dossier: ${meta.name || dossierName}${label}\n`);
 
+      const formatted = formatDossierFields(meta);
       const fields: [string, string][] = [
-        ['Name', meta.name || ''],
-        ['Title', meta.title || ''],
-        ['Version', meta.version || ''],
+        ['Name', formatted.name],
+        ['Title', formatted.title],
+        ['Version', formatted.version],
         ['Status', meta.status || ''],
-        ['Category', Array.isArray(meta.category) ? meta.category.join(', ') : meta.category || ''],
+        ['Category', formatted.category],
         ['Risk Level', meta.risk_level || ''],
-        ['Objective', meta.objective || meta.description || ''],
+        ['Objective', formatted.description],
       ];
 
       for (const [label, value] of fields) {
@@ -49,7 +65,7 @@ export function registerGetCommand(program: Command): void {
       const authors = meta.authors;
       if (Array.isArray(authors) && authors.length > 0) {
         const authorStr = authors
-          .map((a: any) => (typeof a === 'string' ? a : a.name || ''))
+          .map((a) => (typeof a === 'string' ? a : a.name || ''))
           .filter(Boolean)
           .join(', ');
         if (authorStr) console.log(`   Authors      ${authorStr}`);

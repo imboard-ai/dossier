@@ -23,6 +23,9 @@ describe('credentials', () => {
   describe('saveCredentials', () => {
     it('should write credentials to file with secure permissions', () => {
       const creds = { token: 'tok', username: 'user', orgs: ['org1'], expiresAt: null };
+      // loadCredentialsStore reads the file first; mock it to return empty
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      mockedFs.readFileSync.mockReturnValue('{}');
 
       saveCredentials(creds);
 
@@ -47,12 +50,27 @@ describe('credentials', () => {
 
     it('should store expiresAt as expires_at in JSON', () => {
       const creds = { token: 'tok', username: 'user', orgs: [], expiresAt: '2030-01-01' };
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      mockedFs.readFileSync.mockReturnValue('{}');
 
       saveCredentials(creds);
 
       const written = mockedFs.writeFileSync.mock.calls[0][1] as string;
       const parsed = JSON.parse(written);
-      expect(parsed.expires_at).toBe('2030-01-01');
+      expect(parsed.public.expires_at).toBe('2030-01-01');
+    });
+
+    it('should throw with context when write fails', () => {
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      mockedFs.readFileSync.mockReturnValue('{}');
+      mockedFs.writeFileSync.mockImplementation(() => {
+        throw new Error('EACCES: permission denied');
+      });
+
+      const creds = { token: 'tok', username: 'user', orgs: [], expiresAt: null };
+      expect(() => saveCredentials(creds)).toThrow('Failed to save credentials');
+      expect(() => saveCredentials(creds)).toThrow('EACCES: permission denied');
+      mockedFs.writeFileSync.mockReset();
     });
 
     it('should default orgs to empty array', () => {
@@ -62,12 +80,14 @@ describe('credentials', () => {
         orgs: undefined as unknown as string[],
         expiresAt: null,
       };
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      mockedFs.readFileSync.mockReturnValue('{}');
 
       saveCredentials(creds);
 
       const written = mockedFs.writeFileSync.mock.calls[0][1] as string;
       const parsed = JSON.parse(written);
-      expect(parsed.orgs).toEqual([]);
+      expect(parsed.public.orgs).toEqual([]);
     });
   });
 
@@ -80,7 +100,9 @@ describe('credentials', () => {
     it('should return parsed credentials from file', () => {
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
       mockedFs.readFileSync.mockReturnValue(
-        JSON.stringify({ token: 'tok', username: 'user', orgs: ['o'], expires_at: null })
+        JSON.stringify({
+          public: { token: 'tok', username: 'user', orgs: ['o'], expires_at: null },
+        })
       );
 
       const creds = loadCredentials();
@@ -94,31 +116,38 @@ describe('credentials', () => {
 
     it('should return null if token is missing', () => {
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
-      mockedFs.readFileSync.mockReturnValue(JSON.stringify({ username: 'user' }));
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify({ public: { username: 'user' } }));
       expect(loadCredentials()).toBeNull();
     });
 
     it('should return null if username is missing', () => {
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
-      mockedFs.readFileSync.mockReturnValue(JSON.stringify({ token: 'tok' }));
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify({ public: { token: 'tok' } }));
       expect(loadCredentials()).toBeNull();
     });
 
-    it('should return null on invalid JSON', () => {
+    it('should return null on invalid JSON and log warning', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
       mockedFs.readFileSync.mockReturnValue('not json');
       expect(loadCredentials()).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not parse credentials file')
+      );
+      errorSpy.mockRestore();
     });
 
     it('should default orgs to empty array when missing', () => {
       mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
-      mockedFs.readFileSync.mockReturnValue(JSON.stringify({ token: 'tok', username: 'user' }));
+      mockedFs.readFileSync.mockReturnValue(
+        JSON.stringify({ public: { token: 'tok', username: 'user' } })
+      );
 
       const creds = loadCredentials();
       expect(creds?.orgs).toEqual([]);
     });
 
-    it('should return credentials from DOSSIER_REGISTRY_TOKEN env var', () => {
+    it('should return credentials from DOSSIER_REGISTRY_TOKEN env var via env registry', () => {
       const saved = {
         token: process.env.DOSSIER_REGISTRY_TOKEN,
         user: process.env.DOSSIER_REGISTRY_USER,
@@ -130,15 +159,14 @@ describe('credentials', () => {
       process.env.DOSSIER_REGISTRY_ORGS = 'org1,org2';
 
       try {
-        const creds = loadCredentials();
+        // Env var credentials are on the "env" registry
+        const creds = loadCredentials('env');
         expect(creds).toEqual({
           token: 'env-token',
           username: 'env-user',
           orgs: ['org1', 'org2'],
           expiresAt: null,
         });
-        // Env var should take precedence — file should not be read
-        expect(mockedFs.readFileSync).not.toHaveBeenCalled();
       } finally {
         if (saved.token === undefined) delete process.env.DOSSIER_REGISTRY_TOKEN;
         else process.env.DOSSIER_REGISTRY_TOKEN = saved.token;
@@ -161,7 +189,7 @@ describe('credentials', () => {
       delete process.env.DOSSIER_REGISTRY_ORGS;
 
       try {
-        const creds = loadCredentials();
+        const creds = loadCredentials('env');
         expect(creds?.username).toBe('token-auth');
         expect(creds?.orgs).toEqual([]);
       } finally {
@@ -174,15 +202,38 @@ describe('credentials', () => {
       }
     });
 
+    it('should auto-migrate old flat format to keyed format', () => {
+      mockedFs.statSync.mockReturnValue({ mode: 0o100600 } as any);
+      // Old format: flat object with token/username at top level
+      mockedFs.readFileSync.mockReturnValue(
+        JSON.stringify({ token: 'tok', username: 'user', orgs: ['o'], expires_at: null })
+      );
+
+      const creds = loadCredentials();
+      expect(creds).toEqual({
+        token: 'tok',
+        username: 'user',
+        orgs: ['o'],
+        expiresAt: null,
+      });
+      // Should write back the migrated format
+      expect(mockedFs.writeFileSync).toHaveBeenCalled();
+    });
+
     it('should warn and fix insecure permissions', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockedFs.statSync.mockReturnValue({ mode: 0o100644 } as any);
       mockedFs.readFileSync.mockReturnValue(
-        JSON.stringify({ token: 'tok', username: 'user', orgs: [], expires_at: null })
+        JSON.stringify({
+          public: { token: 'tok', username: 'user', orgs: [], expires_at: null },
+        })
       );
 
       loadCredentials();
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('insecure permissions'));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('insecure permissions'));
       expect(mockedFs.chmodSync).toHaveBeenCalledWith(CREDENTIALS_FILE, 0o600);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Permissions fixed to 0600'));
+      errorSpy.mockRestore();
     });
   });
 
@@ -215,8 +266,12 @@ describe('credentials', () => {
       expect(isExpired({ expiresAt: past })).toBe(true);
     });
 
-    it('should return false on invalid date string', () => {
-      expect(isExpired({ expiresAt: 'not-a-date' })).toBe(false);
+    it('should return true on invalid date string (fail-closed)', () => {
+      expect(isExpired({ expiresAt: 'not-a-date' })).toBe(true);
+    });
+
+    it('should return false on empty string expiresAt (treated as no expiration)', () => {
+      expect(isExpired({ expiresAt: '' })).toBe(false);
     });
   });
 });

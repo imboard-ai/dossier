@@ -97,6 +97,55 @@ Exit 0 (safe) or 1 (unsafe)
 - Exit codes for scripting
 - Human-readable output
 
+### Multi-Registry Resolution
+
+The CLI supports querying multiple registries in parallel when resolving dossiers. This is handled by the `multi-registry` module (`cli/src/multi-registry.ts`).
+
+**Resolution strategy**: All configured registries are queried simultaneously using `Promise.allSettled()`. For **get** operations (`multiRegistryGetDossier`, `multiRegistryGetContent`), the first successful result is returned. For **list/search** operations (`multiRegistryList`, `multiRegistrySearch`), results from all successful registries are merged. In both cases, per-registry errors are collected and returned alongside the result.
+
+```
+User: dossier get org/my-dossier
+    ↓
+Resolve configured registries (config.ts)
+    ↓
+Query ALL registries in parallel (Promise.allSettled)
+    ┌────────┼────────┐
+    ↓        ↓        ↓
+Registry A  Registry B  Registry C
+    ↓        ↓        ↓
+    └────────┼────────┘
+    ↓
+Return { result, errors }
+```
+
+**Structured error returns**: All multi-registry functions return a structured object instead of a bare value:
+
+```typescript
+// multiRegistryGetDossier returns:
+{
+  result: LabeledDossierInfo | null,  // First successful result, or null
+  errors: Array<{ registry: string; error: string }>  // Per-registry errors
+}
+
+// multiRegistryGetContent returns:
+{
+  result: (DossierContentResult & { _registry: string }) | null,
+  errors: Array<{ registry: string; error: string }>
+}
+
+// multiRegistryList / multiRegistrySearch return:
+{
+  dossiers: LabeledDossierListItem[],  // Merged results from all registries
+  total: number,
+  errors: Array<{ registry: string; error: string }>
+}
+```
+
+This pattern ensures that:
+- **Partial failures are surfaced**: If one registry is down but another succeeds, the caller gets both the result and the error details.
+- **Callers can distinguish "not found" from "all registries failed"**: When `result` is `null` and `errors` is non-empty, at least one registry encountered an error. When `result` is `null` and `errors` is empty, no registries are configured.
+- **Registry source is always labeled**: Each result includes a `_registry` field identifying which registry provided it.
+
 ## MCP Server (@ai-dossier/mcp-server)
 
 **Purpose**: Integration with AI agents via Model Context Protocol
@@ -206,10 +255,10 @@ Execute (if verified) or BLOCK
 ## Technology Stack
 
 - **Language**: TypeScript / JavaScript
-- **Runtime**: Node.js ≥ 18
+- **Runtime**: Node.js ≥ 20
 - **Build**: TypeScript Compiler (tsc)
 - **Package Manager**: npm
-- **Distribution**: npm / GitHub Packages
+- **Distribution**: npm
 - **CI/CD**: GitHub Actions
 
 ## Design Decisions

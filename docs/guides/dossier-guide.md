@@ -109,6 +109,13 @@ Dossiers support **structured JSON metadata** via frontmatter, providing determi
 - `outputs.files`: Files created/modified
 - `outputs.artifacts`: Generated scripts, logs, reports
 
+### External References
+
+- `content_scope`: Whether the body is `"self-contained"` or `"references-external"`
+- `external_references`: Manifest of external URLs with `type`, `trust_level`, and `required` status
+  - Linter rule `external-references-declared` enforces that all body URLs are declared
+  - Scripts with `trust_level: "unknown"` require explicit user approval
+
 ### Validation & Safety
 
 - `risk_level`: Risk assessment (`low`, `medium`, `high`, `critical`)
@@ -226,7 +233,7 @@ As your collection grows, a **dossier registry** helps document relationships, w
 - **5+ dossiers**: Add categorization and basic relationships
 - **10+ dossiers**: Full registry with journeys and matrices
 
-See [examples/sample-implementation/dossiers-registry.md](../../examples/sample-implementation/dossiers-registry.md) for a complete registry example.
+See the [examples/](../../examples/) directory for dossier examples you can use as templates.
 
 ---
 

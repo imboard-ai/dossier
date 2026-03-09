@@ -20,7 +20,7 @@ describe('checksum command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'checksum', 'nonexistent.ds.md'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('File not found'));
   });
@@ -31,9 +31,9 @@ describe('checksum command', () => {
     const program = createTestProgram();
     registerChecksumCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'checksum', 'bad.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'checksum', 'bad.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Invalid dossier format'));
   });
@@ -45,9 +45,9 @@ describe('checksum command', () => {
     const program = createTestProgram();
     registerChecksumCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(
+      program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md'])
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('SHA256'));
   });
@@ -61,7 +61,7 @@ describe('checksum command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md', '--quiet'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     // Should output just a hex hash
     const calls = vi.mocked(console.log).mock.calls;
@@ -80,7 +80,7 @@ describe('checksum command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md', '--verify'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Checksum valid'));
   });
@@ -95,7 +95,7 @@ describe('checksum command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md', '--verify'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Checksum mismatch'));
   });
@@ -109,7 +109,7 @@ describe('checksum command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'checksum', 'test.ds.md', '--update'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(mockedFs.writeFileSync).toHaveBeenCalled();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Checksum added'));

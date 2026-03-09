@@ -1,7 +1,7 @@
 import readline from 'node:readline';
 import type { Command } from 'commander';
-import { isExpired, loadCredentials } from '../credentials';
-import { getClient, parseNameVersion } from '../registry-client';
+import { getClientForRegistry, parseNameVersion } from '../registry-client';
+import { handleRegistryWriteError, requireWriteAuth } from '../write-auth';
 
 export function registerRemoveCommand(program: Command): void {
   program
@@ -9,37 +9,14 @@ export function registerRemoveCommand(program: Command): void {
     .description('Remove a dossier from the registry')
     .argument('<name>', 'Dossier name (use name@version to remove a specific version)')
     .option('-y, --yes', 'Skip confirmation prompt')
+    .option('--registry <name>', 'Target registry to remove from')
     .option('--json', 'Output as JSON')
-    .action(async (name: string, options: { yes?: boolean; json?: boolean }) => {
-      const credentials = loadCredentials();
-      if (!credentials) {
-        if (options.json) {
-          console.log(
-            JSON.stringify(
-              { removed: false, error: 'Not logged in', code: 'not_logged_in' },
-              null,
-              2
-            )
-          );
-        } else {
-          console.error('\n❌ Not logged in. Run `dossier login` first.\n');
-        }
-        process.exit(1);
-      }
-      if (isExpired(credentials)) {
-        if (options.json) {
-          console.log(
-            JSON.stringify(
-              { removed: false, error: 'Credentials expired', code: 'expired' },
-              null,
-              2
-            )
-          );
-        } else {
-          console.error('\n❌ Credentials expired. Run `dossier login` to re-authenticate.\n');
-        }
-        process.exit(1);
-      }
+    .action(async (name: string, options: { yes?: boolean; registry?: string; json?: boolean }) => {
+      const { targetRegistry, credentials } = requireWriteAuth({
+        registryFlag: options.registry,
+        json: options.json,
+        jsonResultKey: 'removed',
+      });
 
       const [dossierName, version] = parseNameVersion(name);
       const target = version ? `${dossierName}@${version}` : dossierName;
@@ -56,7 +33,8 @@ export function registerRemoveCommand(program: Command): void {
           ? `Are you sure you want to remove version '${version}' of '${dossierName}'?`
           : `Are you sure you want to remove '${dossierName}' and ALL its versions?`;
 
-        console.log(`\n⚠️  ${msg}\n`);
+        console.log(`\n⚠️  ${msg}`);
+        console.log(`   Registry: ${targetRegistry.name}\n`);
 
         const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
         const answer = await new Promise<string>((resolve) => {
@@ -71,7 +49,7 @@ export function registerRemoveCommand(program: Command): void {
       }
 
       try {
-        const client = getClient(credentials.token);
+        const client = getClientForRegistry(targetRegistry.url, credentials.token);
         await client.removeDossier(dossierName, version || null);
 
         const verifyCommand = `dossier info ${target}`;
@@ -83,6 +61,7 @@ export function registerRemoveCommand(program: Command): void {
               {
                 removed: true,
                 name: target,
+                registry: targetRegistry.name,
                 verification: {
                   verify_command: verifyCommand,
                   cdn_delay_seconds: cdnDelaySeconds,
@@ -93,34 +72,17 @@ export function registerRemoveCommand(program: Command): void {
             )
           );
         } else {
-          console.log(`\n✅ Removed: ${target}`);
+          console.log(`\n✅ Removed: ${target} [${targetRegistry.name}]`);
           console.log(
             `\n   ⏳ CDN propagation may take up to ${cdnDelaySeconds}s. Verify with:\n   $ ${verifyCommand}\n`
           );
         }
-      } catch (err: any) {
-        if (options.json) {
-          console.log(
-            JSON.stringify(
-              {
-                removed: false,
-                error: err.message,
-                code: err.code || 'remove_failed',
-              },
-              null,
-              2
-            )
-          );
-        } else if (err.statusCode === 401) {
-          console.error('\n❌ Session expired. Run `dossier login` to re-authenticate.\n');
-        } else if (err.statusCode === 403) {
-          console.error(`\n❌ Permission denied: ${err.message}\n`);
-        } else if (err.statusCode === 404) {
-          console.error(`\n❌ Not found: ${target}\n`);
-        } else {
-          console.error(`\n❌ Remove failed: ${err.message}\n`);
-        }
-        process.exit(1);
+      } catch (err: unknown) {
+        handleRegistryWriteError(err, {
+          json: options.json,
+          jsonResultKey: 'removed',
+          actionLabel: 'Remove',
+        });
       }
     });
 }

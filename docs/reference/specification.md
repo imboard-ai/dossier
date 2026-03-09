@@ -725,7 +725,7 @@ test -f hello.txt && cat hello.txt | grep "Hello World"
 
 ### 10.2 Comprehensive Dossier Example
 
-See [examples/devops/deploy-to-aws.md](./examples/devops/deploy-to-aws.md) for a complete, production-ready dossier.
+See [examples/devops/deploy-to-aws.ds.md](../../examples/devops/deploy-to-aws.ds.md) for a complete, production-ready dossier.
 
 ---
 
@@ -816,8 +816,8 @@ Projects **MAY** extend protocol locally (see [PROTOCOL.md](./protocol.md) § Cu
 - [PROTOCOL.md](./protocol.md) - Dossier Execution Protocol
 - [SCHEMA.md](./schema.md) - Dossier Schema Specification (JSON frontmatter)
 - [README.md](../../README.md) - Introduction to dossiers
-- [examples/](./examples/) - Example implementations
-- [dossier-schema.json](./dossier-schema.json) - JSON Schema definition
+- [examples/](../../examples/) - Example implementations
+- [dossier-schema.json](../../dossier-schema.json) - JSON Schema definition
 
 ---
 

@@ -4,14 +4,7 @@ Step-by-step learning experiences designed to help you master Dossier.
 
 ## Available Tutorials
 
-### For Users
 - **[Your First Dossier](./your-first-dossier.md)** - Create, verify, and execute your first dossier
-- **Adding Signatures** *(coming soon)* - Learn how to cryptographically sign dossiers
-- **Building a Dossier Workflow** *(coming soon)* - Automate tasks with dossier chains
-
-### For Developers
-- **Contributing to Dossier** *(coming soon)* - Set up your development environment
-- **Creating Custom Verifiers** *(coming soon)* - Build your own verification tools
 
 ## Tutorial Format
 

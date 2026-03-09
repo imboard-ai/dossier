@@ -17,7 +17,7 @@ This document describes all GitHub Actions workflows in the Dossier project, the
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
 | Sign | `sign.yml` | Manual | Test AWS KMS signing for dossier authentication |
-| Publish Packages | `publish-packages.yml` | Push to main / Manual | Publish npm packages to GitHub Packages |
+| Publish Packages | `publish-packages.yml` | Push to main / Manual | Publish npm packages to the public npm registry |
 
 ---
 
@@ -107,12 +107,12 @@ The workflow produces three files (not uploaded as artifacts currently):
 
 ### Motivation
 
-Automate the publishing of `@ai-dossier/core` and `@ai-dossier/cli` npm packages to GitHub Packages. This enables:
+Automate the publishing of `@ai-dossier/core`, `@ai-dossier/cli`, `@ai-dossier/mcp-server`, and `@ai-dossier/worktree-pool` npm packages to the public npm registry. This enables:
 - **Continuous delivery**: Automatic publishing on code changes
 - **Version management**: Centralized version bumping
 - **Consistency**: Same build process every time
-- **Testing**: Validate packages before public npm release
 - **Distribution**: Easy installation for users via npm
+- **Provenance**: npm provenance attestation for supply chain security
 
 ### Triggers
 
@@ -127,7 +127,7 @@ Triggers when pushing to `main` branch AND changes affect:
 
 Run manually via GitHub Actions UI with options:
 ```
-Actions → Publish Packages to GitHub Packages → Run workflow
+Actions → Publish Packages to npm → Run workflow
 ```
 
 **Input: Version bump**
@@ -142,9 +142,9 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 1. Checkout code
    - Full repository checkout
    ↓
-2. Setup Node.js (v18)
-   - Configure npm for GitHub Packages
-   - Set @dossier scope to GitHub registry
+2. Setup Node.js (v20+)
+   - Configure npm registry
+   - Set @ai-dossier scope
    ↓
 3. Install dependencies
    - npm install (all workspaces)
@@ -163,12 +163,12 @@ Actions → Publish Packages to GitHub Packages → Run workflow
    - Push to main branch
    ↓
 7. Publish @ai-dossier/core
-   - Publish to https://npm.pkg.github.com
+   - Publish to https://registry.npmjs.org with --provenance
    - Includes: dist/, package.json, README
    ↓
-8. Publish @ai-dossier/cli
-   - Publish to https://npm.pkg.github.com
-   - Includes: bin/, README, package.json
+8. Publish @ai-dossier/cli, @ai-dossier/mcp-server, @ai-dossier/worktree-pool
+   - Publish to https://registry.npmjs.org with --provenance
+   - Each package skipped if version already published
    ↓
 9. Create Git tag (if version bumped)
    - Tag format: v0.1.0, v0.2.0, etc.
@@ -179,22 +179,24 @@ Actions → Publish Packages to GitHub Packages → Run workflow
 
 **Permissions:**
 - `contents: write` - Commit version bumps, create tags
-- `packages: write` - Publish to GitHub Packages
+- `id-token: write` - npm provenance attestation
 
 **Node.js Setup:**
-- Version: 18
-- Registry: `https://npm.pkg.github.com`
-- Scope: `@dossier`
+- Version: 22
+- Registry: `https://registry.npmjs.org`
+- Scope: `@ai-dossier`
 
 **Authentication:**
-- Uses `GITHUB_TOKEN` (automatic, no setup needed)
-- Token automatically has package write permissions
+- Uses OIDC-based npm trusted publishing (no token secrets needed)
+- `id-token: write` permission enables provenance attestation
 
 ### Outputs
 
 **Published Packages:**
-- `@ai-dossier/core@1.0.0` → https://github.com/imboard-ai/ai-dossier/packages
-- `@ai-dossier/cli@0.1.0` → https://github.com/imboard-ai/ai-dossier/packages
+- `@ai-dossier/core` → https://www.npmjs.com/package/@ai-dossier/core
+- `@ai-dossier/cli` → https://www.npmjs.com/package/@ai-dossier/cli
+- `@ai-dossier/mcp-server` → https://www.npmjs.com/package/@ai-dossier/mcp-server
+- `@ai-dossier/worktree-pool` → https://www.npmjs.com/package/@ai-dossier/worktree-pool
 
 **Git Artifacts:**
 - Version bump commit (if bumped)
@@ -220,11 +222,10 @@ git push origin main
 2. Select `minor` for new feature release
 3. Workflow bumps version, publishes, and tags
 
-**Testing Before Public npm**
-1. Publish to GitHub Packages first
+**Testing Before Release**
+1. Ensure CI passes on the branch
 2. Test installation on various platforms
-3. Verify functionality
-4. Then publish to public npm (see PUBLISHING.md)
+3. Verify functionality via the publish pipeline's verify job
 
 ### Version Management
 
@@ -344,14 +345,12 @@ Actions → Publish Packages → Run workflow
 
 **Problem**: `npm install @ai-dossier/cli` fails with 404.
 
-**Solution**: Configure npm for GitHub Packages:
+**Solution**: The packages are published to the public npm registry. Verify:
 ```bash
-# Add to ~/.npmrc
-@dossier:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+npm view @ai-dossier/cli
 ```
 
-See `PUBLISHING.md` for detailed installation instructions.
+If the package was just published, it may take a few minutes to propagate.
 
 ---
 
@@ -402,12 +401,12 @@ Why does this workflow exist? What problem does it solve?
 
 ## Related Documentation
 
-- [PUBLISHING.md](../PUBLISHING.md) - Package publishing guide
+- [Publishing packages guide](../guides/publishing-packages.md) - Package publishing guide
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
-- [GitHub Packages Docs](https://docs.github.com/en/packages)
+- [npm Provenance Docs](https://docs.npmjs.com/generating-provenance-statements)
 - [AWS KMS Docs](https://docs.aws.amazon.com/kms/)
 
 ---
 
-**Last Updated**: 2025-11-15
+**Last Updated**: 2026-03-07
 **Maintained By**: Dossier Core Team

@@ -1,29 +1,19 @@
 import fs from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerInstallSkillCommand } from '../../commands/install-skill';
+import * as multiRegistry from '../../multi-registry';
 import * as registryClient from '../../registry-client';
-import { createTestProgram } from '../helpers/test-utils';
+import { createTestProgram, parseNameVersionImpl } from '../helpers/test-utils';
 
 vi.mock('node:fs');
+vi.mock('../../multi-registry');
 vi.mock('../../registry-client');
 
 const mockedFs = vi.mocked(fs);
 
 describe('install-skill command', () => {
-  const mockClient = {
-    getDossier: vi.fn(),
-    getDossierContent: vi.fn(),
-  };
-
   beforeEach(() => {
-    vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
-    vi.mocked(registryClient.parseNameVersion).mockImplementation((name: string) => {
-      if (name.includes('@')) {
-        const idx = name.lastIndexOf('@');
-        return [name.slice(0, idx), name.slice(idx + 1)];
-      }
-      return [name, null];
-    });
+    vi.mocked(registryClient.parseNameVersion).mockImplementation(parseNameVersionImpl);
   });
 
   it('should list installed skills with --list', async () => {
@@ -38,7 +28,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--list'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed skills'));
   });
@@ -51,7 +41,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--list'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No installed skills'));
   });
@@ -64,7 +54,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--remove', 'old-skill'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(mockedFs.rmSync).toHaveBeenCalled();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Removed skill'));
@@ -78,7 +68,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', '--remove', 'missing'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Skill not found'));
   });
@@ -87,20 +77,21 @@ describe('install-skill command', () => {
     const program = createTestProgram();
     registerInstallSkillCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'install-skill'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'install-skill'])).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('provide a dossier name'));
   });
 
   it('should install from registry', async () => {
-    // existsSync: first call for skillFile check (false), then for cache checks (false)
     mockedFs.existsSync.mockReturnValue(false);
-    mockClient.getDossier.mockResolvedValue({ version: '1.0.0' });
-    mockClient.getDossierContent.mockResolvedValue({
-      content: '# Skill content',
-    });
+    vi.mocked(multiRegistry.multiRegistryGetDossier).mockResolvedValue({
+      result: { version: '1.0.0', _registry: 'public' },
+      errors: [],
+    } as any);
+    vi.mocked(multiRegistry.multiRegistryGetContent).mockResolvedValue({
+      result: { content: '# Skill content', _registry: 'public' },
+      errors: [],
+    } as any);
 
     const program = createTestProgram();
     registerInstallSkillCommand(program);
@@ -120,7 +111,7 @@ describe('install-skill command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'install-skill', 'org/my-skill'])
-    ).rejects.toThrow('process.exit(1)');
+    ).rejects.toThrow();
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('already installed'));
   });

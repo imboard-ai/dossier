@@ -64,6 +64,8 @@ Functions implemented:
 - `signJwt(payload)` - Create signed JWT with claims
 - `verifyJwt(token)` - Verify and decode JWT
 - `extractBearerToken(req)` - Extract token from Authorization header
+- `authenticateRequest(req, res)` - Verify JWT from request, send 401 with specific error codes (MISSING_TOKEN, TOKEN_EXPIRED, INVALID_TOKEN)
+- `authorizePublish(req, res, namespace)` - Authenticate and check namespace publish permission
 - `encodeAsDisplayCode(token)` - Base64url encode JWT for display
 - `decodeDisplayCode(code)` - Decode display code back to JWT
 - `exchangeGitHubCode(code)` - Exchange OAuth code for access token
@@ -74,12 +76,13 @@ Functions implemented:
 - [x] Create OAuth callback handler
 
 Flow:
-1. Receive `?code=xxx` from GitHub redirect
-2. Handle errors from GitHub (`?error=...`)
-3. Exchange code for GitHub access token (POST to GitHub)
-4. Fetch user info + org memberships (parallel requests)
-5. Create JWT: `{ sub: username, email, orgs, iat, exp }`
-6. Display HTML page with:
+1. Receive `?code=xxx&state=xxx` from GitHub redirect
+2. Validate `state` parameter against the value stored in an HttpOnly cookie (CSRF protection)
+3. Handle errors from GitHub (`?error=...`)
+4. Exchange code for GitHub access token (POST to GitHub)
+5. Fetch user info + org memberships (parallel requests)
+6. Create JWT: `{ sub: username, email, orgs, iat, exp }`
+7. Display HTML page with:
    - Organizations list (with badges)
    - "Missing an org?" link to grant access
    - Base64-encoded JWT for copy/paste
@@ -161,7 +164,7 @@ Authorization: Bearer <JWT>
 ## Testing
 
 ### OAuth Flow
-1. Open: `https://github.com/login/oauth/authorize?client_id=<CLIENT_ID>&scope=read:user%20read:org&redirect_uri=https://dossier-registry.vercel.app/auth/callback`
+1. Open: `https://dossier-registry.vercel.app/auth/login`
 2. Authorize the app
 3. Copy the displayed code
 4. Decode: `echo "<CODE>" | base64 -d` to get JWT
@@ -177,18 +180,6 @@ Authorization: Bearer <JWT>
 
 ## JWT Claims Structure
 
-```json
-{
-  "sub": "yuvaldim",
-  "email": null,
-  "orgs": ["imboard-ai"],
-  "iat": 1764847354,
-  "exp": 1764850954
-}
-```
+See [Auth & Publish — JWT Structure](auth-and-publish.md#jwt-structure) for the canonical JWT claims definition.
 
-- `sub` - GitHub username (personal namespace)
-- `email` - From GitHub profile (may be null)
-- `orgs` - Array of org logins user belongs to
-- `iat` - Issued at timestamp
-- `exp` - Expiry (1 hour from issue)
+Fields: `sub` (GitHub username), `email`, `orgs` (org memberships), `iat`, `exp` (7-day expiry).

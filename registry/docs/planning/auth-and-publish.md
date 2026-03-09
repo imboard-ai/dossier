@@ -1,6 +1,8 @@
 # Authentication and Publishing Architecture
 
-This document describes how users authenticate with the Dossier Registry CLI and how dossiers are published to the content repository.
+This document describes how users authenticate with the Dossier Registry CLI and how dossiers are published to the content repository. It focuses on the *narrative flow* — the "why" and "how" of auth and publishing.
+
+> **Canonical API reference:** For endpoint specifications, CLI command listings, error codes, and phased rollout details, see [`registry-api-design.md`](./registry-api-design.md).
 
 ---
 
@@ -64,29 +66,9 @@ The CLI is a client-side tool that runs on the user's machine.
 
 ## CLI Commands
 
-### No Authentication Required
+For the full CLI command reference and endpoint mappings, see the [MVP0](./registry-api-design.md#mvp0-read-only-public-access) and [MVP1](./registry-api-design.md#mvp1-publishing) sections in the API design doc.
 
-These commands hit public Registry API endpoints:
-
-```bash
-dossier list                           # GET /api/v1/dossiers
-dossier list --category devops         # GET /api/v1/dossiers?category=devops
-dossier info org/name                  # GET /api/v1/dossiers/{name}
-dossier pull org/name                  # GET /api/v1/dossiers/{name}/content
-dossier run ./local.ds.md              # Local only, no API call
-dossier create                         # Local only, no API call
-```
-
-### Authentication Required
-
-These commands require a stored JWT:
-
-```bash
-dossier login                          # Opens browser → GitHub OAuth → copy/paste code
-dossier logout                         # Deletes ~/.dossier/credentials
-dossier whoami                         # GET /api/v1/me (with JWT)
-dossier publish ./my.ds.md             # POST /api/v1/dossiers/{name} (with JWT)
-```
+Key auth-related commands: `dossier login`, `dossier logout`, `dossier whoami`, `dossier publish`.
 
 ## CLI Credential Storage
 
@@ -128,22 +110,9 @@ The Registry API is a server-side service hosted on Vercel.
 
 ## Registry API Endpoints
 
-### Public Endpoints (No Auth)
+For the complete endpoint specification (public, protected, and phased rollout), see the [API Specification](./registry-api-design.md#api-specification) in the API design doc.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/health` | Health check |
-| `GET` | `/api/v1/dossiers` | List all dossiers |
-| `GET` | `/api/v1/dossiers/{name}` | Get dossier metadata |
-| `GET` | `/api/v1/dossiers/{name}/content` | Redirect to CDN |
-| `GET` | `/auth/callback` | OAuth callback - exchanges code, displays JWT for copy/paste |
-
-### Protected Endpoints (JWT Required)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/me` | Get current user info from JWT |
-| `POST` | `/api/v1/dossiers/{name}` | Publish a dossier |
+The auth-specific endpoints are `/auth/login`, `/auth/callback`, `/api/v1/me`, `POST /api/v1/dossiers`, and `DELETE /api/v1/dossiers/{name}`. Their detailed flows are documented below in [Part 3](#part-3-cli--registry-communication) and [Part 4](#part-4-flows).
 
 ## Registry Environment Variables
 
@@ -153,6 +122,12 @@ The Registry API is a server-side service hosted on Vercel.
 | `GITHUB_CLIENT_SECRET` | OAuth App client secret (private, only in Registry) |
 | `JWT_SECRET` | Secret key to sign/verify JWTs |
 | `GITHUB_BOT_TOKEN` | Token to write to content repo |
+| `REGISTRY_BASE_URL` | Base URL for OAuth redirect (e.g., `https://registry.dossier.dev`) |
+| `CONTENT_ORG` | GitHub org owning the content repo (optional, defaults to `imboard-ai`) |
+| `CONTENT_REPO` | GitHub repo name for dossier content (optional, defaults to `dossier-content`) |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed CORS origins (optional, has defaults) |
+
+> **Note:** All variables except `CONTENT_ORG`, `CONTENT_REPO`, and `CORS_ALLOWED_ORIGINS` are required. The Registry uses lazy validation — a missing variable causes a clear error (`Missing required environment variable: <name>`) on the first request that needs it.
 
 ---
 
@@ -173,22 +148,27 @@ Authorization: Bearer <JWT>
 ```
 1. User runs: dossier login
 
-2. CLI opens browser directly to GitHub OAuth URL:
+2. CLI opens browser to {REGISTRY_URL}/auth/login
+   The Registry generates a random `state` parameter (32 bytes, hex-encoded),
+   stores it in an HttpOnly cookie, and redirects the browser to GitHub:
    https://github.com/login/oauth/authorize?
      client_id={GITHUB_CLIENT_ID}
      &scope=read:user,read:org
      &redirect_uri={REGISTRY_URL}/auth/callback
+     &state={random_state}
 
 3. User sees GitHub consent screen, clicks "Authorize"
 
 4. GitHub redirects browser to:
-   {REGISTRY_URL}/auth/callback?code=abc123
+   {REGISTRY_URL}/auth/callback?code=abc123&state={random_state}
 
 5. Registry /auth/callback endpoint:
-   a. Exchanges code for GitHub access token (using client_secret)
-   b. Calls GitHub API to get user info + org memberships
-   c. Creates JWT with username + orgs, signs with JWT_SECRET
-   d. Displays webpage: "Your login code: XXXX-XXXX-XXXX"
+   a. Validates `state` parameter against the value stored in an HttpOnly cookie
+      (set during the login redirect) to prevent CSRF attacks
+   b. Exchanges code for GitHub access token (using client_secret)
+   c. Calls GitHub API to get user info + org memberships
+   d. Creates JWT with username + orgs, signs with JWT_SECRET (expires in 7 days)
+   e. Displays webpage: "Your login code: XXXX-XXXX-XXXX"
 
 6. User copies the code from browser
 
@@ -228,34 +208,38 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Response (401 Unauthorized):**
+
+Three distinct error codes are returned depending on the failure:
+
+| Code | Message | When |
+|------|---------|------|
+| `MISSING_TOKEN` | `Authorization header required. Use: Bearer <token>` | No Authorization header |
+| `TOKEN_EXPIRED` | `Token has expired. Please login again.` | JWT has expired |
+| `INVALID_TOKEN` | `Invalid token. Please login again.` | JWT signature invalid |
+
 ```json
 {
   "error": {
-    "code": "INVALID_TOKEN",
-    "message": "Invalid or expired token"
+    "code": "MISSING_TOKEN",
+    "message": "Authorization header required. Use: Bearer <token>"
   }
 }
 ```
 
-### POST /api/v1/dossiers/{name}
+### POST /api/v1/dossiers
+
+All responses include the `X-Request-Id` header for request tracing (see [Request Tracing](#request-tracing)).
 
 **Request:**
 ```http
-POST /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+POST /api/v1/dossiers
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-Content-Type: text/markdown
+Content-Type: application/json
 
----dossier
 {
-  "title": "Do I Wanna Know",
-  "version": "1.0.0",
-  ...
+  "namespace": "arctic-monkeys/songs",
+  "content": "---dossier\n{\n  \"name\": \"do-i-wanna-know\",\n  \"title\": \"Do I Wanna Know\",\n  \"version\": \"1.0.0\"\n}\n---\n\n# Do I Wanna Know\n\nDossier content here..."
 }
----
-
-# Do I Wanna Know
-
-Dossier content here...
 ```
 
 **Response (201 Created):**
@@ -263,51 +247,156 @@ Dossier content here...
 {
   "name": "arctic-monkeys/songs/do-i-wanna-know",
   "version": "1.0.0",
+  "title": "Do I Wanna Know",
   "content_url": "https://cdn.jsdelivr.net/gh/imboard-ai/dossier-content/arctic-monkeys/songs/do-i-wanna-know.ds.md",
-  "published_at": "2025-12-04T10:00:00Z",
-  "published_by": "alex-turner"
+  "published_at": "2025-12-04T10:00:00Z"
 }
 ```
 
 **Response (401 Unauthorized):**
-```json
-{
-  "error": {
-    "code": "INVALID_TOKEN",
-    "message": "Invalid or expired token"
-  }
-}
-```
+
+Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`).
 
 **Response (403 Forbidden):**
 ```json
 {
   "error": {
-    "code": "NAMESPACE_FORBIDDEN",
-    "message": "You don't have permission to publish to 'other-org/*'"
+    "code": "FORBIDDEN",
+    "message": "Cannot publish to namespace 'other-org/some-dossier'",
+    "namespace": "other-org/some-dossier"
   }
 }
 ```
+
+**Validation Errors:**
+
+| Status | Code | When | Example message |
+|--------|------|------|-----------------|
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | `Content-Type` is not `application/json` | `Content-Type must be application/json, received: text/plain` |
+| 400 | `MISSING_FIELD` | Required field `namespace` or `content` is missing or not a string | `Missing required field: namespace (must be a string)` |
+| 400 | `INVALID_FIELD` | Optional field `changelog` is present but not a string | `Field changelog must be a string` |
+| 400 | `CHANGELOG_TOO_LONG` | `changelog` exceeds maximum length | `Changelog exceeds maximum length of 500 characters` |
+| 413 | `CONTENT_TOO_LARGE` | `content` exceeds 1 MB | `Content exceeds maximum size of 1024KB` |
+| 400 | `INVALID_NAMESPACE` | Namespace fails format validation | *(varies by validation rule)* |
+| 400 | `INVALID_PATH` | Path traversal detected in namespace | `Path traversal is not allowed` |
+| 400 | `INVALID_CONTENT` | Frontmatter is missing, malformed, or fails schema validation | `Missing required field: name; Missing required field: title` |
+
+All error responses from the publish endpoint (validation, server, and path errors) include `request_id` in the body:
+```json
+{
+  "error": {
+    "code": "<ERROR_CODE>",
+    "message": "<human-readable detail>",
+    "request_id": "<X-Request-Id value>"
+  }
+}
+```
+
+> **Note:** Authentication errors (401) do not include `request_id`. For the full error code reference, see [Publish Validation Errors](./registry-api-design.md#publish-validation-errors).
+
+**Response (502 Bad Gateway):**
+
+Returned when the content store write fails. Includes `request_id` for log correlation:
+```json
+{
+  "error": {
+    "code": "PUBLISH_ERROR",
+    "message": "Failed to publish dossier",
+    "request_id": "a1b2c3d4-..."
+  }
+}
+```
+
+### DELETE /api/v1/dossiers/{name}
+
+All responses include the `X-Request-Id` header for request tracing (see [Request Tracing](#request-tracing)).
+
+**Request:**
+```http
+DELETE /api/v1/dossiers/arctic-monkeys/songs/do-i-wanna-know
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Optional query parameter: `?version=1.0.0` to delete a specific version.
+
+**Response (200 OK):**
+```json
+{
+  "message": "Dossier deleted",
+  "name": "arctic-monkeys/songs/do-i-wanna-know",
+  "version": "1.0.0"
+}
+```
+
+Note: `version` is only included when a specific version was requested via `?version=X.Y.Z`.
+
+**Response (401 Unauthorized):**
+
+Same three distinct error codes as `GET /api/v1/me` above (`MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`).
 
 **Response (400 Bad Request):**
+
+Returned when the dossier name fails validation:
+
+| Code | When |
+|------|------|
+| `INVALID_NAMESPACE` | Name fails namespace format validation |
+| `INVALID_PATH` | Path traversal detected |
+
+**Response (403 Forbidden):**
 ```json
 {
   "error": {
-    "code": "INVALID_DOSSIER_FORMAT",
-    "message": "Invalid frontmatter: missing required field 'title'"
+    "code": "FORBIDDEN",
+    "message": "Cannot delete from namespace 'other-org/some-dossier'",
+    "namespace": "other-org/some-dossier"
   }
 }
 ```
 
-**Response (409 Conflict):**
+**Response (404 Not Found):**
 ```json
 {
   "error": {
-    "code": "VERSION_EXISTS",
-    "message": "Version 1.0.0 already exists for this dossier"
+    "code": "DOSSIER_NOT_FOUND",
+    "message": "Dossier 'arctic-monkeys/songs/do-i-wanna-know' not found"
   }
 }
 ```
+
+Also returned when the requested version doesn't match:
+```json
+{
+  "error": {
+    "code": "VERSION_NOT_FOUND",
+    "message": "Version '1.0.0' not found. Current version is '2.0.0'"
+  }
+}
+```
+
+**Response (502 Bad Gateway):**
+
+Returned when the content store delete fails. Includes `request_id` for log correlation:
+```json
+{
+  "error": {
+    "code": "DELETE_ERROR",
+    "message": "Failed to delete dossier. Please try again.",
+    "request_id": "a1b2c3d4-..."
+  }
+}
+```
+
+### Request Tracing
+
+The dossier endpoints (`/api/v1/dossiers`, `/api/v1/dossiers/{name}`) and the search endpoint (`/api/v1/search`) return an `X-Request-Id` response header for request tracing and log correlation. Authentication endpoints (`/api/v1/me`, `/auth/*`) do not.
+
+**How it works:**
+- If the client sends an `X-Request-Id` request header with a valid value (alphanumeric/hyphens, 1–64 chars), the server echoes it back.
+- If the header is missing or invalid, the server generates a new UUID and uses that instead. Invalid values are logged as warnings.
+- All error responses from these endpoints (validation, not-found, and server errors) include the request ID in the JSON body as `request_id`, enabling users to reference it when reporting issues.
+
+For additional details, see [Error Format](./registry-api-design.md#error-format) in the API design doc.
 
 ---
 
@@ -326,12 +415,20 @@ Dossier content here...
 │   │ login       │                      │                       │         │
 │   │ ──────────> │                      │                       │         │
 │   │             │                      │                       │         │
-│   │             │ Open browser directly to GitHub:             │         │
-│   │             │ github.com/login/oauth/authorize?            │         │
-│   │             │   client_id=xxx&                             │         │
-│   │             │   scope=read:user,read:org&                  │         │
-│   │             │   redirect_uri={REGISTRY}/auth/callback      │         │
-│   │ <────────── │ ─────────────────────────────────────────────>         │
+│   │             │ Open browser to                              │         │
+│   │             │ {REGISTRY}/auth/login                        │         │
+│   │             │ ───────────────────> │                       │         │
+│   │             │                      │ Generate random state │         │
+│   │             │                      │ Set state cookie      │         │
+│   │             │                      │ Redirect to GitHub:   │         │
+│   │             │                      │ github.com/login/     │         │
+│   │             │                      │   oauth/authorize?    │         │
+│   │             │                      │   client_id=xxx&      │         │
+│   │             │                      │   scope=read:user,    │         │
+│   │             │                      │   read:org&           │         │
+│   │             │                      │   state={state}       │         │
+│   │             │                      │ ────────────────────> │         │
+│   │ <────────── │ <──────────────────── ─────────────────────────────────>         │
 │   │             │                      │                       │         │
 │   │ Browser shows GitHub OAuth consent │                       │         │
 │   │ (read:user, read:org scopes)       │                       │         │
@@ -342,7 +439,12 @@ Dossier content here...
 │   │                                    │   GitHub redirects to │         │
 │   │                                    │   {REGISTRY}/auth/    │         │
 │   │                                    │   callback?code=xxx   │         │
+│   │                                    │   &state={state}      │         │
 │   │                                    │ <───────────────────── │         │
+│   │                                    │                       │         │
+│   │                                    │ Validate state param  │         │
+│   │                                    │ against state cookie  │         │
+│   │                                    │ (CSRF protection)     │         │
 │   │                                    │                       │         │
 │   │                                    │ Exchange code for     │         │
 │   │                                    │ access token          │         │
@@ -362,7 +464,7 @@ Dossier content here...
 │   │                                    │ Create JWT:           │         │
 │   │                                    │ - sub: alex-turner    │         │
 │   │                                    │ - orgs: [...]         │         │
-│   │                                    │ - exp: +1 hour        │         │
+│   │                                    │ - exp: +7 days        │         │
 │   │                                    │ Sign with JWT_SECRET  │         │
 │   │                                    │                       │         │
 │   │ Browser shows page:                │                       │         │
@@ -393,7 +495,7 @@ Dossier content here...
 ```
 
 **Key points:**
-- CLI opens browser directly to GitHub (not to Registry)
+- CLI opens browser to Registry's `/auth/login`, which sets a CSRF state cookie and redirects to GitHub
 - Registry only receives the callback after user approves
 - Registry displays code in browser for user to copy/paste back to CLI
 - CLI never needs to run a local server
@@ -424,8 +526,7 @@ Dossier content here...
 │   │             │ ./song.ds.md         │                     │           │
 │   │             │                      │                     │           │
 │   │             │ POST /api/v1/        │                     │           │
-│   │             │   dossiers/arctic-   │                     │           │
-│   │             │   monkeys/songs/diwk │                     │           │
+│   │             │   dossiers           │                     │           │
 │   │             │ Headers:             │                     │           │
 │   │             │   Authorization:     │                     │           │
 │   │             │   Bearer <JWT>       │                     │           │
@@ -488,6 +589,8 @@ Dossier content here...
 
 # Part 5: Two Token System
 
+> For token lifetimes and API key scopes, see [Token Lifetimes](./registry-api-design.md#token-lifetimes) and [API Key Scopes](./registry-api-design.md#api-key-scopes) in the API design doc.
+
 | Token | Where Used | Purpose | Scope | Owner |
 |-------|------------|---------|-------|-------|
 | **User JWT** | CLI → Registry API | Prove user identity | Contains username + orgs | Issued by Registry, stored by CLI |
@@ -503,19 +606,21 @@ Dossier content here...
   "email": "alex.turner@gmail.com",
   "orgs": ["arctic-monkeys", "the-last-shadow-puppets"],
   "iat": 1701684000,
-  "exp": 1701687600
+  "exp": 1702288800
 }
 ```
 
 - **sub**: GitHub username (used for personal namespace)
 - **orgs**: GitHub org memberships (used for org namespaces)
-- **exp**: Expiry time (1 hour from issue)
+- **exp**: Expiry time (7 days from issue)
 
 Signed by Registry using `JWT_SECRET` environment variable.
 
 ---
 
 # Part 6: Namespace Permissions
+
+> See also [Namespace Ownership](./registry-api-design.md#namespace-ownership) in the API design doc for naming rules and reserved names.
 
 A user can publish to a namespace if:
 
@@ -588,11 +693,13 @@ S3 API
 
 # Part 8: Security Considerations
 
+This section covers auth-specific security concerns. For CORS configuration and request-level CSRF protection, see [CORS Configuration](./registry-api-design.md#cors-configuration) in the API design doc.
+
 ### 1. Stale Org Permissions ⚠️
 
 **Problem:** If a user is removed from an org after login, their JWT still contains that org until expiry.
 
-**Mitigation:** Short JWT expiry (1 hour). User must re-login to refresh org list.
+**Mitigation:** JWT expiry of 7 days. User must re-login to refresh org list.
 
 ### 2. JWT Storage on Client
 
@@ -618,6 +725,8 @@ S3 API
 - Valid `.ds.md` format (YAML/JSON frontmatter)
 - Schema validation on frontmatter
 
+For publish validation error codes, see [Publish Validation Errors](./registry-api-design.md#publish-validation-errors) in the API design doc.
+
 ### 5. Bot Token Scope
 
 **MVP1:** Personal Access Token with `repo` scope.
@@ -628,32 +737,16 @@ S3 API
 
 The `GITHUB_CLIENT_SECRET` is stored only in Registry environment variables, never exposed to CLI users. This is why we need the Registry in the OAuth flow.
 
+### 7. CSRF Protection (OAuth State Parameter)
+
+**Problem:** Without CSRF protection, an attacker could trick a user into completing an OAuth flow that logs them into the attacker's account (login CSRF).
+
+**Mitigation:** The login endpoint generates a cryptographically random `state` parameter (32 bytes, hex-encoded) and stores it in an `HttpOnly; Secure; SameSite=Lax` cookie (`dossier_oauth_state`). The same value is sent to GitHub as the `state` query parameter. On callback, the Registry validates that the `state` from GitHub matches the cookie value using a timing-safe comparison. If the state is missing or mismatched, the request is rejected.
+
+For CORS-level CSRF protection on mutating API requests, see [CSRF Protection](./registry-api-design.md#csrf-protection) in the API design doc.
+
 ---
 
 # Part 9: Implementation Phases
 
-### Phase 1: Auth Foundation
-- [ ] Create GitHub OAuth App
-- [ ] Implement `GET /auth/callback` - exchange code, display JWT code for copy/paste
-- [ ] Implement `GET /api/v1/me` - return user info from JWT
-- [ ] JWT signing and verification
-
-### Phase 2: Publish Endpoint
-- [ ] Implement `POST /api/v1/dossiers/{name}`
-- [ ] JWT verification middleware
-- [ ] Namespace permission checking
-- [ ] Path validation (security)
-- [ ] Content validation (format, size)
-
-### Phase 3: Content Store Integration
-- [ ] Set up bot token with repo access
-- [ ] Implement GitHub commit via API
-- [ ] Update index.json on publish
-- [ ] Handle conflicts (version exists)
-
-### Phase 4: CLI Integration (separate repo)
-- [ ] `dossier login` command (open browser, prompt for code)
-- [ ] `dossier logout` command
-- [ ] `dossier whoami` command
-- [ ] `dossier publish` command
-- [ ] Credential storage in `~/.dossier/credentials`
+For the phased rollout plan (MVP0 → MVP1 → Prod0 → Prod1) and the full endpoint roadmap, see the [Phase Overview](./registry-api-design.md#phase-overview) and [Phase Summary](./registry-api-design.md#phase-summary) in the API design doc.

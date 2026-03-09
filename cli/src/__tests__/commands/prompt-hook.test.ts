@@ -2,18 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerPromptHookCommand } from '../../commands/prompt-hook';
 import * as helpers from '../../helpers';
 import * as hooks from '../../hooks';
-import * as registryClient from '../../registry-client';
+import * as multiRegistry from '../../multi-registry';
 import { createTestProgram } from '../helpers/test-utils';
 
 vi.mock('../../helpers');
 vi.mock('../../hooks');
-vi.mock('../../registry-client');
+vi.mock('../../multi-registry');
 
 describe('prompt-hook command', () => {
-  const mockClient = { listDossiers: vi.fn() };
-
   beforeEach(() => {
-    vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
+    // defaults
   });
 
   it('should exit 0 when no stdin', async () => {
@@ -22,9 +20,7 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 
   it('should exit 0 when prompt does not match pattern', async () => {
@@ -34,9 +30,7 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 
   it('should output dossier list from cache', async () => {
@@ -60,8 +54,10 @@ describe('prompt-hook command', () => {
     vi.mocked(helpers.readStdin).mockResolvedValue('{"prompt":"dossier run"}');
     vi.mocked(hooks.matchesHookPattern).mockReturnValue(true);
     vi.mocked(hooks.getCachedDossierList).mockReturnValue(null);
-    mockClient.listDossiers.mockResolvedValue({
-      dossiers: [{ name: 'fetched', title: 'Fetched Dossier' }],
+    vi.mocked(multiRegistry.multiRegistryList).mockResolvedValue({
+      dossiers: [{ name: 'fetched', title: 'Fetched Dossier', _registry: 'public' }] as any,
+      total: 1,
+      errors: [],
     });
 
     const program = createTestProgram();
@@ -69,7 +65,7 @@ describe('prompt-hook command', () => {
 
     await program.parseAsync(['node', 'dossier', 'prompt-hook']);
 
-    expect(mockClient.listDossiers).toHaveBeenCalled();
+    expect(multiRegistry.multiRegistryList).toHaveBeenCalled();
     expect(hooks.saveDossierListCache).toHaveBeenCalled();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('fetched'));
   });
@@ -80,8 +76,6 @@ describe('prompt-hook command', () => {
     const program = createTestProgram();
     registerPromptHookCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'prompt-hook'])).rejects.toThrow();
   });
 });

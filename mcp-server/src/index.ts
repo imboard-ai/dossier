@@ -16,28 +16,76 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 import { getConceptResource } from './resources/concept.js';
 import { getOrchestrationResource } from './resources/orchestration.js';
 import { getProtocolResource } from './resources/protocol.js';
 import { getSecurityResource } from './resources/security.js';
-import { type CancelJourneyInput, cancelJourney } from './tools/cancelJourney.js';
-import { type GetJourneyStatusInput, getJourneyStatus } from './tools/getJourneyStatus.js';
-import { type ListDossiersInput, listDossiers } from './tools/listDossiers.js';
-import { type ReadDossierInput, readDossier } from './tools/readDossier.js';
-import { type ResolveGraphInput, resolveGraph } from './tools/resolveGraph.js';
-import { type SearchDossiersInput, searchDossiers } from './tools/searchDossiers.js';
-import { type StartJourneyInput, startJourney } from './tools/startJourney.js';
-import { type StepCompleteInput, stepComplete } from './tools/stepComplete.js';
-import { type VerifyDossierInput, verifyDossier } from './tools/verifyDossier.js';
-import { type VerifyGraphInput, verifyGraph } from './tools/verifyGraph.js';
+import { cancelJourney } from './tools/cancelJourney.js';
+import { getJourneyStatus } from './tools/getJourneyStatus.js';
+import { listDossiers } from './tools/listDossiers.js';
+import { readDossier } from './tools/readDossier.js';
+import { resolveGraph } from './tools/resolveGraph.js';
+import { searchDossiers } from './tools/searchDossiers.js';
+import { startJourney } from './tools/startJourney.js';
+import { stepComplete } from './tools/stepComplete.js';
+import { verifyDossier } from './tools/verifyDossier.js';
+import { verifyGraph } from './tools/verifyGraph.js';
 import { logger } from './utils/logger.js';
 import { createToolResponse } from './utils/response.js';
+
+// --- Zod schemas for tool input validation ---
+
+const VerifyDossierSchema = z.object({ path: z.string() });
+const ReadDossierSchema = z.object({ path: z.string() });
+const ListDossiersSchema = z.object({
+  path: z.string().optional(),
+  recursive: z.boolean().optional(),
+});
+const SearchDossiersSchema = z.object({
+  query: z.string(),
+  category: z.string().optional(),
+});
+const ResolveGraphSchema = z.object({ dossier: z.string() });
+const VerifyGraphSchema = z.object({
+  graph_id: z.string().optional(),
+  dossier: z.string().optional(),
+});
+const StartJourneySchema = z.object({ graph_id: z.string() });
+const StepCompleteSchema = z.object({
+  journey_id: z.string(),
+  outputs: z.record(z.unknown()).optional(),
+  status: z.enum(['completed', 'failed']),
+});
+const GetJourneyStatusSchema = z.object({ journey_id: z.string() });
+const CancelJourneySchema = z.object({
+  journey_id: z.string(),
+  reason: z.string().optional(),
+});
+
+// --- Zod schemas for prompt input validation ---
+
+const ExecuteDossierPromptSchema = z.object({
+  dossier_path: z.string(),
+});
+const ExecuteJourneyPromptSchema = z.object({
+  graph_id: z.string(),
+});
+const CreateDossierPromptSchema = z.object({
+  title: z.string(),
+  category: z.string().optional(),
+  risk_level: z.string().optional(),
+});
+
+// Read version from package.json to avoid hardcoded drift
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { version } = require('../package.json') as { version: string };
 
 // Create MCP server instance
 const server = new Server(
   {
     name: '@ai-dossier/mcp-server',
-    version: '1.0.0',
+    version,
   },
   {
     capabilities: {
@@ -241,52 +289,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'verify_dossier': {
-        const result = await verifyDossier(args as unknown as VerifyDossierInput);
+        const result = await verifyDossier(VerifyDossierSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'read_dossier': {
-        const result = await readDossier(args as unknown as ReadDossierInput);
+        const result = await readDossier(ReadDossierSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'list_dossiers': {
-        const result = await listDossiers(args as unknown as ListDossiersInput);
+        const result = await listDossiers(ListDossiersSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'search_dossiers': {
-        const result = await searchDossiers(args as unknown as SearchDossiersInput);
+        const result = await searchDossiers(SearchDossiersSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'resolve_graph': {
-        const result = await resolveGraph(args as unknown as ResolveGraphInput);
+        const result = await resolveGraph(ResolveGraphSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'verify_graph': {
-        const result = await verifyGraph(args as unknown as VerifyGraphInput);
+        const result = await verifyGraph(VerifyGraphSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'start_journey': {
-        const result = await startJourney(args as unknown as StartJourneyInput);
+        const result = await startJourney(StartJourneySchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'step_complete': {
-        const result = await stepComplete(args as unknown as StepCompleteInput);
+        const result = await stepComplete(StepCompleteSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'get_journey_status': {
-        const result = getJourneyStatus(args as unknown as GetJourneyStatusInput);
+        const result = getJourneyStatus(GetJourneyStatusSchema.parse(args));
         return createToolResponse(result);
       }
 
       case 'cancel_journey': {
-        const result = cancelJourney(args as unknown as CancelJourneyInput);
+        const result = cancelJourney(CancelJourneySchema.parse(args));
         return createToolResponse(result);
       }
 
@@ -442,10 +490,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 
   switch (name) {
     case 'execute-dossier': {
-      const dossierPath = args?.dossier_path as string;
-      if (!dossierPath) {
-        throw new Error('dossier_path argument is required');
-      }
+      const { dossier_path: dossierPath } = ExecuteDossierPromptSchema.parse(args);
       return {
         messages: [
           {
@@ -489,10 +534,7 @@ First, read the dossier metadata to check for relationships:
     }
 
     case 'execute-journey': {
-      const graphId = args?.graph_id as string;
-      if (!graphId) {
-        throw new Error('graph_id argument is required');
-      }
+      const { graph_id: graphId } = ExecuteJourneyPromptSchema.parse(args);
       return {
         messages: [
           {
@@ -548,12 +590,7 @@ First, read the dossier metadata to check for relationships:
     }
 
     case 'create-dossier': {
-      const title = args?.title as string;
-      if (!title) {
-        throw new Error('title argument is required');
-      }
-      const category = args?.category as string | undefined;
-      const riskLevel = args?.risk_level as string | undefined;
+      const { title, category, risk_level: riskLevel } = CreateDossierPromptSchema.parse(args);
       const filename = `${title.toLowerCase().replace(/\s+/g, '-')}.ds.md`;
 
       return {
@@ -562,16 +599,17 @@ First, read the dossier metadata to check for relationships:
             role: 'user',
             content: {
               type: 'text',
-              text: `Create a new dossier: "${title}"
+              text: `Create a new dossier and companion skill: "${title}"
 ${category ? `Category: ${category}` : ''}
 ${riskLevel ? `Risk level: ${riskLevel}` : ''}
 Suggested filename: ${filename}
 
-**Instructions**: Execute the meta-dossier at:
-https://raw.githubusercontent.com/imboard-ai/ai-dossier/main/examples/authoring/create-dossier.ds.md
+**Instructions**: Run the meta-dossier from the registry:
+\`\`\`bash
+ai-dossier run imboard-ai/meta/create-dossier-and-skill
+\`\`\`
 
-This meta-dossier contains the official template and authoring instructions.
-Follow its guidance to create "${title}" with proper structure.`,
+Follow its guidance to create both the dossier "${title}" and its companion Claude Code skill.`,
             },
           },
         ],
@@ -591,7 +629,7 @@ async function main() {
 
     logger.info('Dossier MCP Server started', {
       name: '@ai-dossier/mcp-server',
-      version: '1.0.0',
+      version,
       transport: 'stdio',
     });
 

@@ -25,7 +25,7 @@ What actually happened?
 
 ## Environment
 - **OS**: [e.g., macOS 14.1, Ubuntu 22.04, Windows 11]
-- **Node/Runtime version**: [e.g., Node 18.17.0]
+- **Node/Runtime version**: [e.g., Node 20.11.0]
 - **LLM/Client**: [e.g., Claude Code, ChatGPT, Cursor]
 - **Dossier CLI version** (if applicable): [e.g., @ai-dossier/cli@0.1.0]
 - **MCP Server version** (if applicable): [e.g., @ai-dossier/mcp-server@0.1.0]

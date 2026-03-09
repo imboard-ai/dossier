@@ -73,7 +73,7 @@ imboard-ai/development/setup-react-library
 │  └────┬────┘      └────────┬─────────┘                         │
 │       │                    │                                    │
 │       │                    │ fetch index.json                   │
-│       │                    │ or 302 redirect                    │
+│       │                    │ or return content                  │
 │       │                    ▼                                    │
 │       │           ┌──────────────────┐                         │
 │       └──────────▶│  jsDelivr CDN    │                         │
@@ -100,7 +100,7 @@ imboard-ai/development/setup-react-library
 | Serverless Functions | Vercel / Node.js | Hosting the API endpoints |
 | Content & Metadata | GitHub Public Repo | Source of truth for `.ds.md` files and `index.json` |
 | Content Delivery | jsDelivr CDN | Global delivery of all content |
-| Dependencies | None | API is dependency-free |
+| Dependencies | None (MVP0); `@ai-dossier/core`, `jsonwebtoken` added in MVP1 | Auth and shared verification added post-MVP0 |
 
 ### Content Repo Structure
 
@@ -143,7 +143,7 @@ dossier-content/
 - [x] Created `lib/config.js` with content repo details
 - [x] Implemented `GET /api/v1/dossiers` (List)
 - [x] Implemented `GET /api/v1/dossiers/[...name]` (Metadata)
-- [x] Implemented `GET /api/v1/dossiers/[...name]/content` (302 redirect)
+- [x] Implemented `GET /api/v1/dossiers/[...name]/content` (returns content with digest header)
 - [x] Added `vercel.json` for route rewrites
 - [x] Deployed to production
 
@@ -156,9 +156,50 @@ dossier-content/
 | `GET /api/v1/health` | Health check | ✅ Done |
 | `GET /api/v1/dossiers` | List all dossiers (7 total) | ✅ Done |
 | `GET /api/v1/dossiers/{name}` | Get dossier metadata | ✅ Done |
-| `GET /api/v1/dossiers/{name}/content` | 302 redirect to CDN | ✅ Done |
+| `GET /api/v1/dossiers/{name}/content` | Returns content with `X-Dossier-Digest` header | ✅ Done |
 
 **Production API:** https://dossier-registry.vercel.app
+
+### Error Responses
+
+All error responses return JSON with a consistent structure:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable description"
+  }
+}
+```
+
+Server errors (5xx) also include a `request_id` field for log correlation.
+
+#### `GET /api/v1/dossiers` (List)
+
+| Status | Code | Cause |
+|--------|------|-------|
+| 502 | `UPSTREAM_ERROR` | Manifest fetch failed — CDN unreachable, network timeout, HTTP error from jsDelivr, or malformed JSON (missing `dossiers` array) |
+| 405 | `METHOD_NOT_ALLOWED` | Unsupported HTTP method |
+
+#### `GET /api/v1/dossiers/{name}` (Metadata)
+
+| Status | Code | Cause |
+|--------|------|-------|
+| 400 | `INVALID_NAMESPACE` | Dossier name fails validation (invalid characters, exceeds depth/length limits) |
+| 400 | `INVALID_PATH` | Path traversal detected (e.g., `../` segments) |
+| 404 | `DOSSIER_NOT_FOUND` | No dossier with that name exists in the manifest |
+| 404 | `VERSION_NOT_FOUND` | Requested `?version=` does not match the current version |
+| 502 | `UPSTREAM_ERROR` | GitHub API error when fetching manifest |
+| 405 | `METHOD_NOT_ALLOWED` | Unsupported HTTP method |
+
+#### `GET /api/v1/dossiers/{name}/content`
+
+Same errors as the metadata endpoint above, plus:
+
+| Status | Code | Cause |
+|--------|------|-------|
+| 404 | `CONTENT_NOT_FOUND` | Dossier exists in manifest but content file is missing from the content repo |
 
 ---
 
@@ -200,6 +241,7 @@ See [auth-and-publish.md](./auth-and-publish.md) for full auth architecture.
 
 | Endpoint | Description | Status |
 |----------|-------------|--------|
+| `GET /auth/login` | Initiate GitHub OAuth (redirects to GitHub) | ✅ Done |
 | `GET /auth/callback` | GitHub OAuth callback, returns JWT | ✅ Done |
 | `GET /api/v1/me` | Current user info (protected) | ✅ Done |
 
@@ -224,4 +266,4 @@ See [mvp1-phase2-implementation.md](./mvp1-phase2-implementation.md) for Phase 2
 | **Update mechanism** | API writes | Git commits |
 | **Failure modes** | DB outage, sync drift | CDN outage only |
 
-For MVP0 (read-only), static manifest is sufficient. MVP1 will require a database for auth/user data.
+For MVP0 (read-only), static manifest is sufficient. MVP1 uses stateless JWT auth (no database required).

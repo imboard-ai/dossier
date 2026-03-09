@@ -69,7 +69,7 @@ Add dossiers to your open-source project to help contributors and maintainers.
    - Add to your GitHub Actions workflow:
      ```yaml
      - name: Checkout dossier repo
-       uses: actions/checkout@v3
+       uses: actions/checkout@v4
        with:
          repository: imboard-ai/ai-dossier
          path: dossier-tools
@@ -200,7 +200,7 @@ Create a **failure response guide** for when validations fail:
 1. **Gate production deploys on dossier verification**:
    ```yaml
    - name: Checkout dossier tools
-     uses: actions/checkout@v3
+     uses: actions/checkout@v4
      with:
        repository: imboard-ai/ai-dossier
        path: dossier-tools
@@ -376,4 +376,4 @@ Track these to measure dossier adoption success:
 - Check [examples/](../../examples/) for more dossier patterns
 - Review [FAQ.md](../explanation/faq.md) for common questions
 - See [SPECIFICATION.md](../reference/specification.md) for formal dossier structure
-- Visit the [security/](../security/) directory for security best practices
+- Visit the [security/](../../security/) directory for security best practices

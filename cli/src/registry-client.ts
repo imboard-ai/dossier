@@ -1,9 +1,7 @@
 /**
  * HTTP client for the Dossier Registry API.
- * Uses Node.js built-in fetch (Node 18+).
+ * Uses Node.js built-in fetch (Node 20+).
  */
-
-const DEFAULT_REGISTRY_URL = 'https://dossier-registry.vercel.app';
 
 class RegistryError extends Error {
   statusCode: number | null;
@@ -33,6 +31,50 @@ interface DossierContentResult {
   digest: string | null;
 }
 
+interface DossierInfo {
+  name: string;
+  title?: string;
+  version?: string;
+  status?: string;
+  category?: string | string[];
+  risk_level?: string;
+  objective?: string;
+  description?: string;
+  authors?: Array<string | { name: string }>;
+  tags?: string[];
+  checksum?: { algorithm?: string; hash?: string };
+  signature?: { signed_by?: string; key_id?: string };
+  content_url?: string;
+}
+
+interface DossierListItem {
+  name: string;
+  title?: string;
+  description?: string;
+  objective?: string;
+  version?: string;
+  category?: string | string[];
+  tags?: string[];
+}
+
+interface ListDossiersResult {
+  dossiers?: DossierListItem[];
+  data?: DossierListItem[];
+  total?: number;
+  totalPages?: number;
+}
+
+interface PublishResult {
+  name?: string;
+  content_url?: string;
+}
+
+interface SearchResult {
+  dossiers?: DossierListItem[];
+  total?: number;
+  totalPages?: number;
+}
+
 class RegistryClient {
   private baseUrl: string;
   private token: string | null;
@@ -40,6 +82,13 @@ class RegistryClient {
   constructor(baseUrl: string, token: string | null = null) {
     this.baseUrl = `${baseUrl.replace(/\/+$/, '')}/api/v1`;
     this.token = token;
+  }
+
+  /**
+   * Get the registry base URL (without /api/v1 suffix).
+   */
+  getRegistryBaseUrl(): string {
+    return this.baseUrl.replace(/\/api\/v1$/, '');
   }
 
   /**
@@ -59,7 +108,7 @@ class RegistryClient {
   /**
    * Handle API response, throwing on errors.
    */
-  private async _handleResponse(response: Response): Promise<unknown> {
+  private async _handleResponse<T = unknown>(response: Response): Promise<T> {
     if (!response.ok) {
       let message = `Registry request failed: ${response.status} ${response.statusText}`;
       let code: string | null = null;
@@ -78,7 +127,7 @@ class RegistryClient {
       throw new RegistryError(message, response.status, code);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   }
 
   /**
@@ -97,7 +146,7 @@ class RegistryClient {
   /**
    * List dossiers from the registry.
    */
-  async listDossiers(options: ListDossiersOptions = {}): Promise<unknown> {
+  async listDossiers(options: ListDossiersOptions = {}): Promise<ListDossiersResult> {
     const params: Record<string, unknown> = {
       page: options.page || 1,
       per_page: options.perPage || 20,
@@ -109,13 +158,13 @@ class RegistryClient {
     const response = await fetch(this._buildUrl('/dossiers', params), {
       headers: this._buildHeaders(),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<ListDossiersResult>(response);
   }
 
   /**
    * Get metadata for a dossier.
    */
-  async getDossier(name: string, version: string | null = null): Promise<unknown> {
+  async getDossier(name: string, version: string | null = null): Promise<DossierInfo> {
     const params: Record<string, unknown> = {};
     if (version) {
       params.version = version;
@@ -124,7 +173,7 @@ class RegistryClient {
     const response = await fetch(this._buildUrl(`/dossiers/${name}`, params), {
       headers: this._buildHeaders(),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<DossierInfo>(response);
   }
 
   /**
@@ -170,7 +219,7 @@ class RegistryClient {
   /**
    * Search dossiers.
    */
-  async searchDossiers(query: string, options: SearchOptions = {}): Promise<unknown> {
+  async searchDossiers(query: string, options: SearchOptions = {}): Promise<SearchResult> {
     const params: Record<string, unknown> = {
       q: query,
       page: options.page || 1,
@@ -180,7 +229,7 @@ class RegistryClient {
     const response = await fetch(this._buildUrl('/search', params), {
       headers: this._buildHeaders(),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<SearchResult>(response);
   }
 
   /**
@@ -190,7 +239,7 @@ class RegistryClient {
     namespace: string,
     content: string,
     changelog: string | null = null
-  ): Promise<unknown> {
+  ): Promise<PublishResult> {
     const data: Record<string, string> = { namespace, content };
     if (changelog) {
       data.changelog = changelog;
@@ -201,13 +250,16 @@ class RegistryClient {
       headers: this._buildHeaders('application/json'),
       body: JSON.stringify(data),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<PublishResult>(response);
   }
 
   /**
    * Delete a dossier from the registry.
    */
-  async removeDossier(name: string, version: string | null = null): Promise<unknown> {
+  async removeDossier(
+    name: string,
+    version: string | null = null
+  ): Promise<Record<string, unknown>> {
     const params: Record<string, unknown> = {};
     if (version) {
       params.version = version;
@@ -217,44 +269,37 @@ class RegistryClient {
       method: 'DELETE',
       headers: this._buildHeaders(),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<Record<string, unknown>>(response);
   }
 
   /**
    * Get current user info.
    */
-  async getMe(): Promise<unknown> {
+  async getMe(): Promise<Record<string, unknown>> {
     const response = await fetch(this._buildUrl('/me'), {
       headers: this._buildHeaders(),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<Record<string, unknown>>(response);
   }
 
   /**
    * Exchange OAuth code for access token.
    */
-  async exchangeCode(code: string, redirectUri: string): Promise<unknown> {
+  async exchangeCode(code: string, redirectUri: string): Promise<Record<string, unknown>> {
     const response = await fetch(this._buildUrl('/auth/token'), {
       method: 'POST',
       headers: this._buildHeaders('application/json'),
       body: JSON.stringify({ code, redirect_uri: redirectUri }),
     });
-    return this._handleResponse(response);
+    return this._handleResponse<Record<string, unknown>>(response);
   }
 }
 
 /**
- * Get registry URL from environment or use default.
+ * Create a registry client for a specific resolved registry.
  */
-function getRegistryUrl(): string {
-  return process.env.DOSSIER_REGISTRY_URL || DEFAULT_REGISTRY_URL;
-}
-
-/**
- * Create a registry client from environment configuration.
- */
-function getClient(token: string | null = null): RegistryClient {
-  return new RegistryClient(getRegistryUrl(), token);
+function getClientForRegistry(registryUrl: string, token: string | null = null): RegistryClient {
+  return new RegistryClient(registryUrl, token);
 }
 
 /**
@@ -268,11 +313,15 @@ function parseNameVersion(name: string): [string, string | null] {
   return [name, null];
 }
 
-export {
-  RegistryClient,
-  RegistryError,
-  getRegistryUrl,
-  getClient,
-  parseNameVersion,
-  DEFAULT_REGISTRY_URL,
+export { RegistryClient, RegistryError, getClientForRegistry, parseNameVersion };
+
+export type {
+  DossierInfo,
+  DossierListItem,
+  ListDossiersResult,
+  DossierContentResult,
+  PublishResult,
+  SearchResult,
+  ListDossiersOptions,
+  SearchOptions,
 };

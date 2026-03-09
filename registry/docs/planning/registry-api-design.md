@@ -32,6 +32,8 @@ Design a registry API for dossiers (similar to npm/Docker registries) supporting
 
 ## Authentication Overview
 
+> **Detailed auth narrative:** For OAuth flow diagrams, the two-token system explanation, credential storage, and auth security considerations, see [`auth-and-publish.md`](./auth-and-publish.md).
+
 **Auth Legend:**
 - 🌐 **Public** - No authentication required
 - 🔑 **Auth Required** - Bearer token or API key required
@@ -110,7 +112,6 @@ dossier pull myorg/deploy@1.0.0   # Download specific version
 **`GET /dossiers/{name}/content`**
 ```
 Content-Type: text/markdown; charset=utf-8
-X-Dossier-Version: 1.2.0
 X-Dossier-Digest: sha256:abc123...
 
 ---dossier
@@ -130,7 +131,7 @@ X-Dossier-Digest: sha256:abc123...
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/auth/github` | 🌐 | Initiate GitHub OAuth |
+| `GET` | `/auth/login` | 🌐 | Initiate GitHub OAuth |
 | `GET` | `/auth/callback` | 🌐 | OAuth callback |
 | `POST` | `/auth/token` | 🌐 | Exchange code for token |
 | `POST` | `/auth/revoke` | 🔑 | Revoke token |
@@ -298,13 +299,19 @@ GET /dossiers/myorg/deploy/content?digest=sha256:35aab...
   "error": {
     "code": "DOSSIER_NOT_FOUND",
     "message": "Dossier 'myorg/unknown' not found",
-    "request_id": "req_abc123",
-    "documentation_url": "https://docs.dossier.ai/errors/..."
+    "request_id": "550e8400-e29b-41d4-a716-446655440000"
   }
 }
 ```
 
-**Common codes:** `INVALID_DOSSIER_FORMAT`, `SCHEMA_VALIDATION_FAILED`, `CHECKSUM_MISMATCH`, `VERSION_EXISTS`, `SIGNATURE_INVALID`, `FORBIDDEN`, `RATE_LIMITED`
+All responses include the `X-Request-Id` header for request correlation. Server errors (5xx) always include `request_id` in the response body.
+
+**X-Request-Id validation:** Clients may send their own `X-Request-Id` header. The server validates it against these rules:
+- Must be 1-64 characters long
+- Only alphanumeric characters (`a-z`, `A-Z`, `0-9`) and hyphens (`-`) are allowed
+- Invalid values are replaced without returning an error to the client; the server logs a warning and generates a UUID instead
+
+**Common codes:** `DOSSIER_NOT_FOUND`, `CONTENT_NOT_FOUND`, `UPSTREAM_ERROR`, `DELETE_ERROR`, `PUBLISH_ERROR`, `MISSING_FIELD`, `INVALID_FIELD`, `INVALID_NAMESPACE`, `INVALID_CONTENT`, `CONTENT_TOO_LARGE`, `CHANGELOG_TOO_LONG`, `QUERY_TOO_LONG`, `INVALID_PATH`, `MISSING_TOKEN`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `FORBIDDEN`, `ORIGIN_NOT_ALLOWED`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE`, `LOGIN_ERROR`, `VERSION_NOT_FOUND`, `VERSION_EXISTS`, `RATE_LIMITED`
 
 ---
 
@@ -441,11 +448,11 @@ dossier search "aws deploy" --category devops --signed
 {
   "access_token": "eyJ...",
   "token_type": "Bearer",
-  "expires_in": 3600,
-  "refresh_token": "...",
-  "scope": ["read", "write"]
+  "expires_in": 604800
 }
 ```
+
+> **Note:** The current implementation issues a single JWT with a 7-day expiry. There is no separate refresh token. The `scope` field is not used.
 
 ---
 
@@ -463,7 +470,7 @@ dossier search "aws deploy" --category devops --signed
 
 ### Required Response Headers
 ```
-X-Request-Id: req_abc123          # For debugging/support
+X-Request-Id: req-abc123           # For debugging/support
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 999
 X-RateLimit-Reset: 1701612000
@@ -494,13 +501,38 @@ Content-Range: bytes 0-1023/15420
 
 ## CORS Configuration
 
-For browser-based clients:
+CORS is restricted to an allowlist of known origins. CORS response headers (`Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, `Vary`) are **only sent when the request origin is on the allowlist**. Requests from unknown origins receive no CORS headers at all.
+
+**Allowed origin response:**
 ```
-Access-Control-Allow-Origin: *                    # Public endpoints
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-Access-Control-Allow-Headers: Authorization, Content-Type
-Access-Control-Max-Age: 86400
+Access-Control-Allow-Origin: <allowed origin>
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+Access-Control-Allow-Headers: Authorization, Content-Type, Accept
+Vary: Origin
 ```
+
+**Unknown origin response:** No CORS headers are set. The browser enforces the same-origin policy.
+
+Default allowed origins: `https://dossier.imboard.ai`, `https://registry.dossier.dev`.
+Override via `CORS_ALLOWED_ORIGINS` env var (comma-separated).
+
+**Origin normalization:** Both request origins and allowlist entries are normalized before comparison using the URL API. This lowercases the protocol and hostname, strips default ports (80 for HTTP, 443 for HTTPS), and removes trailing slashes. For example, `https://DOSSIER.IMBOARD.AI:443/` is normalized to `https://dossier.imboard.ai`.
+
+### CSRF Protection
+
+Mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`) from browser origins not on the allowlist are rejected with:
+
+```json
+{
+  "error": {
+    "code": "ORIGIN_NOT_ALLOWED",
+    "message": "Origin not allowed for mutating requests"
+  }
+}
+```
+**HTTP status:** `403 Forbidden`
+
+Read-only methods (`GET`, `HEAD`) are allowed from any origin. Requests without an `Origin` header (non-browser clients such as `curl` or the CLI) are also allowed, since CSRF is a browser-only attack vector.
 
 ---
 
@@ -531,28 +563,19 @@ Access-Control-Max-Age: 86400
 | `SCHEMA_VALIDATION_FAILED` | 400 | Frontmatter doesn't match schema |
 | `CHECKSUM_MISMATCH` | 400 | Declared checksum != computed |
 | `SIGNATURE_INVALID` | 400 | Signature verification failed |
-| `VERSION_EXISTS` | 409 | Version already published |
+| `VERSION_EXISTS` | 409 | Version already published *(planned — not yet implemented)* |
 | `VERSION_INVALID` | 400 | Not valid semver or not greater than existing |
-| `NAMESPACE_FORBIDDEN` | 403 | No permission to publish to namespace |
+| `FORBIDDEN` | 403 | No permission to publish to namespace (see note below) |
 | `RATE_LIMITED` | 429 | Too many publish requests (include `Retry-After`) |
+
+> **FORBIDDEN response details:** The 403 response uses a generic message (`"Cannot publish to namespace '<name>'"`) that does not expose user identity or org membership. The response body includes a `namespace` field for client-side error handling.
 
 ---
 
-## Token Refresh Flow
-
-```http
-POST /auth/token
-Content-Type: application/json
-
-{
-  "grant_type": "refresh_token",
-  "refresh_token": "dGhpcyBpcyBhIHJlZnJlc2g..."
-}
-```
+## Token Lifetimes
 
 **Token Lifetimes:**
-- Access token: 1 hour
-- Refresh token: 30 days
+- JWT token: 7 days (no refresh token; user must re-login after expiry)
 - API key: configurable (default: 1 year)
 
 ---

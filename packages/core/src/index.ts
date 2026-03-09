@@ -40,6 +40,15 @@ export {
   VALID_STATUSES,
   validateFrontmatter,
 } from './parser';
+export type {
+  ChecksumStatus,
+  ContentRiskResult,
+  SignatureStatus,
+  VerificationRiskLevel,
+  VerificationRiskResult,
+} from './risk-assessment';
+// Risk assessment exports
+export { assessContentRisk, assessVerificationRisk } from './risk-assessment';
 // Signature exports
 export { loadTrustedKeys, verifySignature, verifyWithEd25519, verifyWithKms } from './signature';
 // Signer/Verifier interfaces and implementations
@@ -63,5 +72,14 @@ export { sha256Hash, sha256Hex } from './utils/crypto';
 export { getErrorMessage, getErrorStack } from './utils/errors';
 // File system utilities
 export { readFileIfExists } from './utils/fs';
+// URL scanning utilities
+export {
+  collectDeclaredUrls,
+  findStaleReferences,
+  findUndeclaredUrls,
+  isPlaceholderUrl,
+  isUrlCoveredByDeclared,
+  scanBodyForUrls,
+} from './utils/url-scanner';
 // Verification utilities
 export { createDefaultVerificationResult } from './utils/verification';

@@ -291,7 +291,7 @@ my-company/
 git submodule add https://github.com/you/shared-dossiers .dossiers
 ```
 
-**Approach 2: Registry Pattern** (see [examples/sample-implementation/dossiers-registry.md](./examples/sample-implementation/dossiers-registry.md))
+**Approach 2: Registry Pattern**
 ```markdown
 # In your project's dossiers-registry.md
 ## Deployment

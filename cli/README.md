@@ -1,4 +1,8 @@
-# Dossier CLI - Security Verification Tool
+# @ai-dossier/cli
+
+[![npm version](https://img.shields.io/npm/v/@ai-dossier/cli)](https://www.npmjs.com/package/@ai-dossier/cli)
+[![npm downloads](https://img.shields.io/npm/dm/@ai-dossier/cli)](https://www.npmjs.com/package/@ai-dossier/cli)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/imboard-ai/ai-dossier/blob/main/LICENSE)
 
 **Enforce cryptographic verification before executing dossiers.**
 
@@ -148,6 +152,214 @@ safe-run-dossier https://example.com/dossier.ds.md cursor
 
 ---
 
+## Registry Commands
+
+### Search
+
+Search for dossiers across all configured registries:
+
+```bash
+# Basic search
+ai-dossier search "deployment"
+
+# Filter by category
+ai-dossier search "ci" --category devops
+
+# Search dossier body content (-c is short for --content)
+ai-dossier search "docker" -c
+
+# Limit total results
+ai-dossier search "setup" --limit 50
+
+# Paginate results
+ai-dossier search "setup" --page 2 --per-page 10
+
+# JSON output
+ai-dossier search "auth" --json
+```
+
+### List
+
+List dossiers from the registry, a local directory, or a GitHub repo:
+
+```bash
+# List all registry dossiers
+ai-dossier list --source registry
+
+# List with JSON output
+ai-dossier list --source registry --json
+
+# Paginate registry results
+ai-dossier list --source registry --page 2 --per-page 10
+
+# Filter by category (registry mode)
+ai-dossier list --source registry --category security
+
+# List local dossiers (-r is short for --recursive)
+ai-dossier list .
+ai-dossier list ./dossiers -r
+
+# List from a GitHub repo
+ai-dossier list github:owner/repo
+
+# Filter local/GitHub results by risk level or signed status
+ai-dossier list . --risk high
+ai-dossier list . --signed-only
+```
+
+### Pull
+
+Download dossiers from the registry to the local cache (`~/.dossier/cache/`):
+
+```bash
+# Pull a dossier (latest version)
+ai-dossier pull org/my-dossier
+
+# Pull a specific version
+ai-dossier pull org/my-dossier@1.2.0
+
+# Pull multiple dossiers
+ai-dossier pull org/dossier-a org/dossier-b
+
+# Force re-download
+ai-dossier pull org/my-dossier --force
+```
+
+Pulled dossiers are cached locally with checksum verification. Subsequent `pull` calls skip the download if the version is already cached (use `--force` to override).
+
+### Export
+
+Download a dossier and save it to a local file:
+
+```bash
+# Export to default filename (org-name.ds.md)
+ai-dossier export org/my-dossier
+
+# Export to a specific file
+ai-dossier export org/my-dossier -o ./local-copy.ds.md
+
+# Print to stdout (for piping)
+ai-dossier export org/my-dossier --stdout
+```
+
+---
+
+## Multi-Registry Resolution
+
+The CLI queries all configured registries in parallel when resolving dossiers (e.g., `dossier get`, `dossier run`, `dossier pull`). This uses `Promise.allSettled()` so a single registry failure does not block results from other registries.
+
+### Exit Codes
+
+Multi-registry commands use the following exit codes:
+
+| Command | `0` (Success) | `1` (Failure) | `2` (Config/Runtime Error) |
+|---------|---------------|---------------|---------------------------|
+| `get` | Dossier found | Not found in any registry, or all registries failed | — |
+| `list --source registry` | Results returned, including when all registries fail (empty list + warnings) | Unexpected runtime error | — |
+| `search` | Results returned, including when all registries fail (no matches + warnings) | Unexpected runtime error | — |
+| `pull` | At least one item pulled successfully (per-item errors are printed as warnings) | All requested items failed to pull | — |
+| `run` | Dossier executed successfully | Not found, fetch failed, or verification failed | No LLM detected, unknown LLM, or execution failed |
+
+**Partial failures**: When some registries fail but at least one succeeds, `list` returns exit `0` with a warning showing which registries failed:
+```
+⚠️  Registry 'internal': connection timeout
+⚠️  Showing partial results (1/2 registries responded)
+```
+
+When **all** registries fail, `list` and `search` still exit `0` but display per-registry error warnings and report no results found.
+
+### No Registries Configured
+
+If no registries are configured (no user config, no project `.dossierrc.json`, no `DOSSIER_REGISTRY_URL` env var), the CLI falls back to the hardcoded public registry (`https://dossier-registry.vercel.app`). Commands proceed normally — there is no error or special exit code for this scenario.
+
+### Error Handling
+
+All multi-registry operations return structured errors alongside results:
+
+```
+$ dossier get org/my-dossier
+# If registry A is down but registry B has it → returns result silently from B
+# If no registry has it → displays errors from each registry
+```
+
+When **all registries fail**, the CLI displays per-registry error details showing which registry failed and why. When at least one registry succeeds, the result is returned without surfacing errors from other registries.
+
+This means you can configure multiple registries for redundancy — the CLI will succeed as long as at least one registry can serve the requested dossier. Registries are queried in parallel; for `get` and `run`, the first successful result (by configuration order) is used.
+
+### Configuration
+
+See `dossier config` for managing registry URLs. Multiple registries are queried in parallel, not sequentially.
+
+---
+
+## Config Command
+
+Manage CLI settings and registry configuration.
+
+### General Settings
+
+```bash
+# List all configuration
+dossier config --list
+
+# Get a setting
+dossier config defaultLlm
+
+# Set a setting
+dossier config defaultLlm claude-code
+
+# Reset to defaults (preserves registry settings)
+dossier config --reset
+```
+
+### Registry Management
+
+All registry URLs **must use HTTPS** to protect credentials in transit.
+
+```bash
+# List configured registries
+dossier config --list-registries
+dossier config --list-registries --json
+
+# Add a registry
+dossier config --add-registry internal --url https://dossier.company.com
+
+# Add as default + read-only
+dossier config --add-registry mirror --url https://mirror.example.com --default --readonly
+
+# Remove a registry
+dossier config --remove-registry mirror
+
+# Change the default registry
+dossier config --set-default-registry internal
+```
+
+### Project-Level Config (`.dossierrc.json`)
+
+Place a `.dossierrc.json` in your project root for team-shared registry settings:
+
+```json
+{
+  "registries": {
+    "internal": { "url": "https://dossier.company.com" }
+  },
+  "defaultRegistry": "internal"
+}
+```
+
+Project registries are merged with user registries. User-configured registries take precedence on name conflicts to prevent credential exfiltration.
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DOSSIER_REGISTRY_URL` | Override/add a registry URL (creates virtual "env" registry) |
+| `DOSSIER_REGISTRY_TOKEN` | Auth token for the virtual "env" registry (ephemeral, never persisted to disk). Recommended for CI/CD and agent contexts. |
+| `DOSSIER_REGISTRY_USER` | Username for registry authentication |
+| `DOSSIER_REGISTRY_ORGS` | Comma-separated org scopes for registry queries |
+
+---
+
 ## What It Checks
 
 ### 1. Integrity (Checksum)
@@ -286,6 +498,111 @@ claude-run-dossier https://example.com/dossier.ds.md
 
 ---
 
+## Registry Configuration
+
+The CLI supports multiple registries for discovering, pulling, and publishing dossiers. Use `dossier config` to manage registries — see [Config Command](#config-command) for CLI usage.
+
+### Configuration File (`~/.dossier/config.json`)
+
+The CLI **auto-creates** `~/.dossier/config.json` the first time you modify settings (e.g., via `dossier config --add-registry`). You do not need to create this file manually. If the file does not exist, the CLI uses built-in defaults (the public registry at `https://dossier-registry.vercel.app`).
+
+```json
+{
+  "registries": {
+    "public": {
+      "url": "https://dossier-registry.vercel.app",
+      "default": true
+    },
+    "internal": {
+      "url": "https://dossier.internal.example.com"
+    },
+    "readonly-mirror": {
+      "url": "https://mirror.example.com",
+      "readonly": true
+    }
+  },
+  "defaultRegistry": "public"
+}
+```
+
+See [Read-Only Registries](#read-only-registries) for how the `"readonly"` flag affects operations.
+
+To create the config manually:
+
+```bash
+mkdir -p -m 700 ~/.dossier
+cat > ~/.dossier/config.json << 'EOF'
+{
+  "registries": {
+    "public": {
+      "url": "https://dossier-registry.vercel.app",
+      "default": true
+    }
+  }
+}
+EOF
+chmod 600 ~/.dossier/config.json
+```
+
+### Resolution Priority
+
+1. `--registry` flag on the command
+2. `DOSSIER_REGISTRY_URL` environment variable
+3. Project-level `.dossierrc.json`
+4. User-level `~/.dossier/config.json`
+5. Hardcoded default (public registry)
+
+To verify which registries are active and their resolution order, run:
+
+```bash
+dossier config --list-registries
+```
+
+### Read-Only Registries
+
+Registries marked `"readonly": true` can be used for read operations (`search`, `get`, `pull`) but **block write operations** (`publish`, `remove`). Attempting a write operation against a read-only registry produces:
+
+```
+❌ Registry 'readonly-mirror' is read-only
+```
+
+When resolving a write target (e.g., for `publish`), the CLI skips read-only registries and falls back to the first writable registry. If all configured registries are read-only, the CLI returns:
+
+```
+❌ No writable registry configured. All registries are read-only.
+```
+
+### Per-Command Registry Flag
+
+Write commands accept `--registry <name>` to target a specific registry:
+
+```bash
+ai-dossier publish --registry team my-dossier.ds.md
+ai-dossier login --registry internal
+```
+
+Read commands (`search`, `get`, `pull`) query all configured registries in parallel.
+
+---
+
+## Agent Discovery (`--agent`)
+
+The `--agent` flag outputs a machine-readable JSON manifest describing the CLI's capabilities. This is designed for AI agents that need to discover what the CLI can do programmatically:
+
+```bash
+ai-dossier --agent
+```
+
+Output includes:
+- CLI version and available commands
+- Supported flags (`--json`, `-y`/`--yes`)
+- Capabilities (multi-registry, non-TTY safe, machine-readable errors)
+- Discovery command for full command listing
+
+This enables agents to auto-configure their integration with the Dossier CLI without parsing help text.
+
+---
+
 ## Architecture
 
 ### How It Works
@@ -319,7 +636,7 @@ Exit 0 (safe) or 1 (unsafe)
 1. **Fail Secure**: Default to blocking on any verification failure
 2. **Exit Codes**: Machine-readable results for scripting
 3. **Clear Output**: Human-readable for manual use
-4. **No Dependencies**: Uses only Node.js built-ins
+4. **Minimal Dependencies**: Core verification + commander CLI framework
 5. **Fast**: Verification in milliseconds
 
 ---
@@ -374,11 +691,36 @@ Exit 0 (safe) or 1 (unsafe)
 - ✅ CLI parity with dossier-tools
 - ✅ `@ai-dossier` npm scope and CI/CD publishing
 
-### v0.4.0 (Current)
+### v0.4.0
 - ✅ Unified dossier parser across core/cli/mcp
 - ✅ JSON output mode (`--json` flag on commands)
 - ✅ Registry integration (publish, remove, install-skill)
 - ✅ Non-TTY stdin detection
+
+### v0.5.0
+- ✅ Multi-registry support with parallel resolution
+- ✅ `dossier create` command with meta-dossier templates
+- ✅ `dossier export` and `dossier pull` commands
+- ✅ Agent discovery (`--agent` flag)
+- ✅ Enhanced auth: browser OAuth and env-based tokens
+
+### v0.6.0
+- ✅ Unified dossier+skill creation template
+- ✅ Pool-aware setup-issue-workflow dossiers
+- ✅ `@ai-dossier/worktree-pool` package
+
+### v0.7.0
+- ✅ Security hardening (execFileSync, Zod validation)
+- ✅ Node 20+ requirement
+- ✅ Coverage thresholds enforcement
+- ✅ Documentation consistency fixes
+
+### v0.8.0 (Current)
+- ✅ Zod validation on MCP prompt handlers
+- ✅ Complete doc link audit and fix (30+ broken links)
+- ✅ Remove all "coming soon" stubs
+- ✅ Purge stale GitHub Packages / Node 18 references
+- ✅ Improved getting-started learning path
 
 ### v1.0.0 (Stable)
 - ⏳ Complete signature verification
@@ -412,6 +754,127 @@ ai-dossier verify ../examples/security/validate-project-config.ds.md
 4. Integration examples for more tools
 
 **See**: [CONTRIBUTING.md](../CONTRIBUTING.md)
+
+---
+
+## Troubleshooting
+
+### "insecure permissions" warning
+
+```
+⚠️  Warning: ~/.dossier/credentials.json has insecure permissions (644). Expected 0600. Credentials may have been compromised. Fixing permissions.
+```
+
+**What it means**: The credentials file is readable by other users on the system. The CLI expects `0600` (owner read/write only) to protect your authentication tokens.
+
+**How to fix**:
+
+```bash
+chmod 600 ~/.dossier/credentials.json
+```
+
+The CLI will also attempt to fix permissions automatically when it detects this issue.
+
+**Common causes**:
+- Manually creating or editing the file with a text editor
+- Copying the file from another system without preserving permissions
+- Running the CLI as a different user than the file owner
+
+### "Failed to save credentials"
+
+```
+Failed to save credentials to ~/.dossier/credentials.json: <reason>
+```
+
+**What it means**: The CLI could not write to the credentials file after `dossier login` or a token refresh.
+
+**How to fix**:
+
+1. **Check directory exists**: The config directory `~/.dossier/` must exist. The CLI creates it automatically, but if creation failed:
+   ```bash
+   mkdir -p ~/.dossier
+   chmod 700 ~/.dossier
+   ```
+
+2. **Check write permissions**: Ensure your user owns the directory and file:
+   ```bash
+   ls -la ~/.dossier/
+   # If ownership is wrong:
+   sudo chown -R $(whoami) ~/.dossier
+   ```
+
+3. **Check disk space**: Ensure the filesystem has available space.
+
+4. **Check for read-only filesystem**: In some container or CI environments, the home directory may be read-only. Use the `DOSSIER_REGISTRY_TOKEN` environment variable instead:
+   ```bash
+   export DOSSIER_REGISTRY_TOKEN=<your-token>
+   ```
+
+### "Registry not found"
+
+```
+Registry 'myregistry' not found. Available: public. Run 'dossier config --list-registries' to see configured registries.
+```
+
+**What it means**: The `--registry` flag references a registry name that isn't configured.
+
+**How to fix**:
+
+1. List configured registries to see what's available:
+   ```bash
+   dossier config --list-registries
+   ```
+
+2. Add the missing registry:
+   ```bash
+   dossier config --add-registry myregistry --url https://dossier.example.com
+   ```
+
+### "Unreachable registry URL"
+
+When a registry is unreachable, the error appears as part of per-registry error output:
+
+```
+❌ Not found in any registry: org/my-dossier
+   internal: fetch failed
+```
+
+**What it means**: The registry URL is not reachable — the server may be down, the URL may be wrong, or there may be a network/firewall issue. When using multiple registries, the CLI succeeds as long as at least one registry responds (see [Multi-Registry Resolution](#multi-registry-resolution)).
+
+**How to fix**:
+
+1. Verify the URL is correct:
+   ```bash
+   dossier config --list-registries
+   curl -s https://dossier.company.com/health
+   ```
+
+2. If the URL is wrong, remove and re-add:
+   ```bash
+   dossier config --remove-registry internal
+   dossier config --add-registry internal --url https://correct-url.company.com
+   ```
+
+### "Malformed config file"
+
+```
+⚠️  Warning: Could not read config file (Unexpected token ...), using defaults
+```
+
+**What it means**: The config file contains invalid JSON. The CLI **does not fail** — it logs a warning and falls back to built-in defaults.
+
+**How to fix**:
+
+1. Validate the JSON:
+   ```bash
+   python3 -m json.tool < ~/.dossier/config.json
+   ```
+
+2. Fix syntax errors, or delete and recreate:
+   ```bash
+   rm ~/.dossier/config.json
+   dossier config --add-registry public --url https://dossier-registry.vercel.app --default
+   ```
 
 ---
 

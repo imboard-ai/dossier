@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/*",
     "mcp-server",
-    "cli"
+    "cli",
+    "registry"
   ],
   "scripts": {
     "build": "make build",
@@ -27,6 +28,9 @@
     "*.{ts,js,json}": "biome check --write --no-errors-on-unmatched"
   },
   "author": "Yuval Dimnik <yuval.dimnik@gmail.com>",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",

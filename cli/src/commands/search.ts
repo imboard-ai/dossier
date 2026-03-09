@@ -1,10 +1,21 @@
 import type { Command } from 'commander';
-import { getClient } from '../registry-client';
+import { resolveRegistries } from '../config';
+import { loadCredentials } from '../credentials';
+import {
+  formatDossierFields,
+  logPaginationInfo,
+  parsePaginationParams,
+  printRegistryErrors,
+} from '../helpers';
+import type { LabeledDossierListItem } from '../multi-registry';
+import { multiRegistrySearch } from '../multi-registry';
+import { getClientForRegistry } from '../registry-client';
 
+/** Registers the `search` command — searches for dossiers across all configured registries. */
 export function registerSearchCommand(program: Command): void {
   program
     .command('search')
-    .description('Search the registry for dossiers')
+    .description('Search for dossiers across all configured registries')
     .argument('<query>', 'Search keywords')
     .option(
       '--category <category>',
@@ -27,54 +38,59 @@ export function registerSearchCommand(program: Command): void {
           content?: boolean;
         }
       ) => {
-        const page = parseInt(options.page, 10) || 1;
-        const perPage = parseInt(options.perPage, 10) || 20;
-        const limit = options.limit ? parseInt(options.limit, 10) : undefined;
+        const { page, perPage } = parsePaginationParams(options.page, options.perPage);
+        const limit = options.limit ? Math.max(1, parseInt(options.limit, 10) || 1) : undefined;
 
-        let allDossiers: any[];
+        let matched: LabeledDossierListItem[];
         try {
-          const client = getClient();
-          const result = (await client.listDossiers({
-            category: options.category,
+          const result = await multiRegistrySearch(query, {
             page: 1,
             perPage: 100,
-          })) as any;
-          allDossiers = result.dossiers || [];
+          });
+
+          if (result.errors.length > 0) {
+            printRegistryErrors(result.errors, 'warning');
+          }
+
+          matched = result.dossiers;
+
+          if (options.category) {
+            const cat = options.category.toLowerCase();
+            matched = matched.filter((d) => {
+              const cats = Array.isArray(d.category) ? d.category : [d.category || ''];
+              return cats.some((c) => String(c).toLowerCase().includes(cat));
+            });
+          }
         } catch (err: unknown) {
-          console.error(`\n❌ Search failed: ${(err as Error).message}\n`);
+          const registryNames = resolveRegistries()
+            .map((r) => r.name)
+            .join(', ');
+          console.error(
+            `\n❌ Search failed across registries [${registryNames}]: ${(err as Error).message}\n`
+          );
           process.exit(1);
           return;
         }
 
-        const queryLower = query.toLowerCase();
-        const terms = queryLower.split(/\s+/).filter(Boolean);
-
-        let matched = allDossiers.filter((d: any) => {
-          const fields = [
-            d.name || '',
-            d.title || '',
-            d.description || d.objective || '',
-            ...(Array.isArray(d.category) ? d.category : [d.category || '']),
-            ...(d.tags || []),
-          ]
-            .map((f: string) => String(f).toLowerCase())
-            .join(' ');
-
-          return terms.every((term) => fields.includes(term) || fields.indexOf(term) !== -1);
-        });
-
         // Content search: fetch body and filter by content match
+        let contentMatches: Map<string, string> | null = null;
         if (options.content) {
-          const client = getClient();
+          const registries = resolveRegistries();
           const CONCURRENCY = 5;
-          const contentMatches: Map<string, string> = new Map();
+          contentMatches = new Map();
+          const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+          let contentFetchFailures = 0;
+          const matchedCount = matched.length;
 
           // Process in batches for concurrency limiting
           for (let i = 0; i < matched.length; i += CONCURRENCY) {
             const batch = matched.slice(i, i + CONCURRENCY);
-            const results = await Promise.all(
-              batch.map(async (d: any) => {
+            await Promise.all(
+              batch.map(async (d) => {
                 try {
+                  const reg = registries.find((r) => r.name === d._registry) || registries[0];
+                  const token = loadCredentials(reg.name)?.token || null;
+                  const client = getClientForRegistry(reg.url, token);
                   const { content } = await client.getDossierContent(d.name, d.version || null);
                   const bodyLower = content.toLowerCase();
                   if (terms.some((term) => bodyLower.includes(term))) {
@@ -87,30 +103,26 @@ export function registerSearchCommand(program: Command): void {
                       (start > 0 ? '...' : '') +
                       content.slice(start, end).replace(/\n/g, ' ') +
                       (end < content.length ? '...' : '');
-                    contentMatches.set(d.name, snippet);
-                    return d;
+                    contentMatches?.set(d.name, snippet);
                   }
-                  return null;
-                } catch {
-                  return null;
+                } catch (fetchErr: unknown) {
+                  contentFetchFailures++;
+                  console.error(
+                    `⚠️  Failed to fetch content for '${d.name}' from '${d._registry}': ${(fetchErr as Error).message}`
+                  );
                 }
               })
             );
-            // We don't filter here yet; we collect results
-            for (const r of results) {
-              if (r === null) {
-                // Mark for removal
-              }
-            }
+          }
+
+          if (contentFetchFailures > 0) {
+            console.error(
+              `\n⚠️  Content search incomplete: ${contentFetchFailures}/${matchedCount} fetches failed. Results may be partial.\n`
+            );
           }
 
           // Keep only dossiers that matched in content
-          matched = matched.filter((d: any) => contentMatches.has(d.name));
-
-          // Attach snippets for display
-          for (const d of matched) {
-            (d as any)._contentSnippet = contentMatches.get(d.name);
-          }
+          matched = matched.filter((d) => contentMatches?.has(d.name));
         }
 
         if (limit && limit > 0) {
@@ -120,6 +132,7 @@ export function registerSearchCommand(program: Command): void {
         const total = matched.length;
         const start = (page - 1) * perPage;
         const dossiers = matched.slice(start, start + perPage);
+        const showRegistryLabel = resolveRegistries().length > 1;
 
         if (options.json) {
           console.log(JSON.stringify({ dossiers, total, page, perPage }, null, 2));
@@ -134,13 +147,10 @@ export function registerSearchCommand(program: Command): void {
         console.log(`\n🔍 Found ${total} dossier(s) matching "${query}":\n`);
 
         for (const d of dossiers) {
-          const name = d.name || '';
-          const version = d.version || '';
-          const title = d.title || '';
-          const category = Array.isArray(d.category) ? d.category.join(', ') : d.category || '';
-          const description = d.description || d.objective || '';
+          const { name, version, title, category, description } = formatDossierFields(d);
+          const label = showRegistryLabel ? ` [${d._registry}]` : '';
 
-          console.log(`  ${name} (v${version})${category ? `  [${category}]` : ''}`);
+          console.log(`  ${name} (v${version})${category ? `  [${category}]` : ''}${label}`);
           if (title) {
             console.log(`  ${title}`);
           }
@@ -149,20 +159,14 @@ export function registerSearchCommand(program: Command): void {
               description.length > 100 ? `${description.slice(0, 100)}...` : description;
             console.log(`  ${snippet}`);
           }
-          if ((d as any)._contentSnippet) {
-            console.log(`  Content match: ${(d as any)._contentSnippet}`);
+          const snippet = contentMatches?.get(d.name);
+          if (snippet) {
+            console.log(`  Content match: ${snippet}`);
           }
           console.log('');
         }
 
-        const totalPages = Math.ceil(total / perPage);
-        if (totalPages > 1) {
-          console.log(`Page ${page}/${totalPages} (${perPage} per page)`);
-          if (page < totalPages) {
-            console.log(`Use --page ${page + 1} to see more results`);
-          }
-          console.log('');
-        }
+        logPaginationInfo(total, page, perPage);
       }
     );
 }

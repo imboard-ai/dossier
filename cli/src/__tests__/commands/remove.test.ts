@@ -1,17 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerRemoveCommand } from '../../commands/remove';
+import * as config from '../../config';
 import * as credentials from '../../credentials';
 import * as registryClient from '../../registry-client';
-import { createTestProgram } from '../helpers/test-utils';
+import { createTestProgram, parseNameVersionImpl } from '../helpers/test-utils';
 
 vi.mock('node:readline');
 vi.mock('../../credentials');
 vi.mock('../../registry-client');
+vi.mock('../../config');
 
 describe('remove command', () => {
   const mockClient = { removeDossier: vi.fn() };
 
   beforeEach(() => {
+    vi.mocked(config.resolveWriteRegistry).mockReturnValue({
+      name: 'public',
+      url: 'https://test.registry.com',
+    });
     vi.mocked(credentials.loadCredentials).mockReturnValue({
       token: 'tok',
       username: 'user',
@@ -19,14 +25,8 @@ describe('remove command', () => {
       expiresAt: null,
     });
     vi.mocked(credentials.isExpired).mockReturnValue(false);
-    vi.mocked(registryClient.getClient).mockReturnValue(mockClient as any);
-    vi.mocked(registryClient.parseNameVersion).mockImplementation((name: string) => {
-      if (name.includes('@')) {
-        const idx = name.lastIndexOf('@');
-        return [name.slice(0, idx), name.slice(idx + 1)];
-      }
-      return [name, null];
-    });
+    vi.mocked(registryClient.getClientForRegistry).mockReturnValue(mockClient as any);
+    vi.mocked(registryClient.parseNameVersion).mockImplementation(parseNameVersionImpl);
   });
 
   it('should exit 1 when not logged in', async () => {

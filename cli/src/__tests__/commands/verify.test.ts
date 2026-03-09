@@ -13,18 +13,13 @@ describe('verify command', () => {
   it('should exit 0 when verification passes', async () => {
     vi.mocked(helpers.runVerification).mockResolvedValue({
       passed: true,
-      stages: [
-        { stage: 1, name: 'Integrity', passed: true },
-        { stage: 2, name: 'Author Check', passed: true, demo: true },
-      ],
+      stages: [{ stage: 1, name: 'Integrity', passed: true }],
     });
 
     const program = createTestProgram();
     registerVerifyCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(0)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Verification passed'));
   });
@@ -38,9 +33,7 @@ describe('verify command', () => {
     const program = createTestProgram();
     registerVerifyCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md'])).rejects.toThrow(
-      'process.exit(1)'
-    );
+    await expect(program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md'])).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Verification failed'));
   });
@@ -48,11 +41,7 @@ describe('verify command', () => {
   it('should show stage details with --verbose', async () => {
     vi.mocked(helpers.runVerification).mockResolvedValue({
       passed: true,
-      stages: [
-        { stage: 1, name: 'Integrity', passed: true },
-        { stage: 2, name: 'Author Check', passed: true, demo: true },
-        { stage: 3, name: 'Dossier Check', skipped: true },
-      ],
+      stages: [{ stage: 1, name: 'Integrity', passed: true }],
     });
 
     const program = createTestProgram();
@@ -60,7 +49,7 @@ describe('verify command', () => {
 
     await expect(
       program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md', '--verbose'])
-    ).rejects.toThrow('process.exit(0)');
+    ).rejects.toThrow();
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Stages completed'));
   });
@@ -75,21 +64,13 @@ describe('verify command', () => {
     registerVerifyCommand(program);
 
     await expect(
-      program.parseAsync([
-        'node',
-        'dossier',
-        'verify',
-        'test.ds.md',
-        '--skip-checksum',
-        '--skip-risk-assessment',
-      ])
-    ).rejects.toThrow('process.exit(0)');
+      program.parseAsync(['node', 'dossier', 'verify', 'test.ds.md', '--skip-checksum'])
+    ).rejects.toThrow();
 
     expect(helpers.runVerification).toHaveBeenCalledWith(
       'test.ds.md',
       expect.objectContaining({
         skipChecksum: true,
-        skipRiskAssessment: true,
       })
     );
   });

@@ -1,20 +1,23 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('node:child_process');
 vi.mock('node:fs');
 
 const mockedFs = vi.mocked(fs);
-const mockedExecSync = vi.mocked(execSync);
+const mockedExecFileSync = vi.mocked(execFileSync);
 
 import {
   buildLlmCommand,
   detectLlm,
   findDossierFilesLocal,
+  formatDossierFields,
   formatTable,
+  logPaginationInfo,
   parseDossierMetadataFromContent,
   parseListSource,
+  printRegistryErrors,
   RECOMMENDED_FIELDS,
   REQUIRED_FIELDS,
   VALID_RISK_LEVELS,
@@ -206,7 +209,7 @@ describe('detectLlm', () => {
   });
 
   it('should return null when auto-detect fails', () => {
-    mockedExecSync.mockImplementation(() => {
+    mockedExecFileSync.mockImplementation(() => {
       throw new Error('not found');
     });
 
@@ -214,7 +217,7 @@ describe('detectLlm', () => {
   });
 
   it('should detect claude when command exists', () => {
-    mockedExecSync.mockReturnValue(Buffer.from('/usr/bin/claude'));
+    mockedExecFileSync.mockReturnValue(Buffer.from('/usr/bin/claude'));
 
     expect(detectLlm('auto', true)).toBe('claude-code');
   });
@@ -279,5 +282,117 @@ describe('findDossierFilesLocal', () => {
     });
 
     expect(findDossierFilesLocal('/no/access')).toEqual([]);
+  });
+});
+
+describe('printRegistryErrors', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  it('should print errors in indent style by default', () => {
+    const errors = [
+      { registry: 'main', error: 'Not found' },
+      { registry: 'backup', error: 'Timeout' },
+    ];
+
+    printRegistryErrors(errors);
+
+    expect(errorSpy).toHaveBeenCalledTimes(2);
+    expect(errorSpy).toHaveBeenCalledWith('   main: Not found');
+    expect(errorSpy).toHaveBeenCalledWith('   backup: Timeout');
+  });
+
+  it('should print errors in warning style', () => {
+    const errors = [{ registry: 'cdn', error: 'Connection refused' }];
+
+    printRegistryErrors(errors, 'warning');
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith("⚠️  Registry 'cdn': Connection refused");
+  });
+
+  it('should handle empty errors array', () => {
+    printRegistryErrors([]);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('formatDossierFields', () => {
+  it('should extract and format all fields', () => {
+    const result = formatDossierFields({
+      name: 'my-dossier',
+      version: '1.0.0',
+      title: 'My Dossier',
+      category: ['dev', 'tools'],
+      description: 'A test dossier',
+    });
+
+    expect(result).toEqual({
+      name: 'my-dossier',
+      version: '1.0.0',
+      title: 'My Dossier',
+      category: 'dev, tools',
+      description: 'A test dossier',
+    });
+  });
+
+  it('should default missing fields to empty strings', () => {
+    const result = formatDossierFields({});
+
+    expect(result).toEqual({
+      name: '',
+      version: '',
+      title: '',
+      category: '',
+      description: '',
+    });
+  });
+
+  it('should handle string category', () => {
+    const result = formatDossierFields({ category: 'security' });
+    expect(result.category).toBe('security');
+  });
+
+  it('should fall back to objective when description is missing', () => {
+    const result = formatDossierFields({ objective: 'Do something useful' });
+    expect(result.description).toBe('Do something useful');
+  });
+});
+
+describe('logPaginationInfo', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
+  });
+
+  it('should not log when there is only one page', () => {
+    logPaginationInfo(10, 1, 20);
+    expect(logSpy).not.toHaveBeenCalled();
+  });
+
+  it('should log page info and next page hint when not on last page', () => {
+    logPaginationInfo(50, 1, 20);
+
+    expect(logSpy).toHaveBeenCalledWith('\nPage 1/3 (20 per page)');
+    expect(logSpy).toHaveBeenCalledWith('Use --page 2 to see more results');
+  });
+
+  it('should not show next page hint on last page', () => {
+    logPaginationInfo(50, 3, 20);
+
+    expect(logSpy).toHaveBeenCalledWith('\nPage 3/3 (20 per page)');
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('Use --page'));
   });
 });
