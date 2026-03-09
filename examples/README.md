@@ -9,6 +9,8 @@ For a full collection of example dossiers — covering DevOps, databases, data s
 | Path | Purpose |
 |------|---------|
 | `test/hello-world.ds.md` | Minimal dossier for Ed25519 signature verification tests |
+| `setup/scaffold-typescript-project.ds.md` | Scaffold a TypeScript project with CI, testing, linting |
+| `guides/context-engineering-best-practices.ds.md` | Reference guide for writing effective AI agent context files |
 | `validation/` | Standalone validation scripts (Node.js, Python) for checking dossiers against the JSON schema |
 
 ## Finding dossiers
