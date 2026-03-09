@@ -13,6 +13,7 @@ import { registerChecksumCommand } from './commands/checksum';
 import { registerCommandsCommand } from './commands/commands';
 import { registerConfigCommand } from './commands/config-cmd';
 import { registerCreateCommand } from './commands/create';
+import { registerDoctorCommand } from './commands/doctor';
 import { registerExportCommand } from './commands/export';
 import { registerFormatCommand } from './commands/format';
 import { registerFromFileCommand } from './commands/from-file';
@@ -103,6 +104,7 @@ registerWhoamiCommand(program);
 registerConfigCommand(program);
 registerCacheCommand(program);
 registerHistoryCommand(program);
+registerDoctorCommand(program);
 
 // Hidden
 registerPromptHookCommand(program);
