@@ -14,7 +14,7 @@ const CATEGORIES: Array<{ name: string; commands: string[] }> = [
   },
   { name: 'Skills', commands: ['install-skill', 'skill-export'] },
   { name: 'Security', commands: ['sign', 'checksum', 'keys'] },
-  { name: 'Auth & Config', commands: ['login', 'logout', 'whoami', 'config', 'cache'] },
+  { name: 'Auth & Config', commands: ['login', 'logout', 'whoami', 'config', 'cache', 'doctor'] },
 ];
 
 export function formatHelpGrouped(cmd: Command, helper: Help): string {
