@@ -8,6 +8,9 @@ Task-oriented guides for accomplishing specific goals with Dossier.
 - [Publishing npm packages](publishing-packages.md) - Guide for package maintainers
 - [Multi-registry setup](../getting-started/installation.md#registry-configuration) - Configuring multiple registries for teams
 
+### Authoring
+- [Authoring guidelines](authoring-guidelines.md) - How to write dossiers that help agents succeed (declarative what/why over procedural how)
+
 ### Integration
 - [Adopter playbooks](adopter-playbooks.md) - How organizations can adopt Dossier
 - [Dossier Guide](dossier-guide.md) - Deep dive into concepts, schema, security, and best practices

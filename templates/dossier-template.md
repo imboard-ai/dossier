@@ -335,39 +335,19 @@ git status      # Should show repo info
 
 ## Context to Gather
 
-[What information should the LLM analyze before proceeding?]
+<!--
+  AUTHORING TIP: Only list context the agent genuinely cannot discover on its own.
+  Agents will naturally scan project structure, detect languages, and read configs.
+  Focus on what's non-obvious: internal naming conventions, undocumented constraints,
+  or specific files the agent should prioritize.
+  See: docs/guides/authoring-guidelines.md
+-->
 
-### Project Structure
-- [ ] Scan current directory structure
-- [ ] Identify git repositories (nested or top-level)
-- [ ] Detect project type (single-repo, multi-repo, monorepo)
+[What non-obvious information should the agent understand before proceeding?]
 
-### Technology Stack
-- [ ] Check for `package.json`, `requirements.txt`, `go.mod`, etc.
-- [ ] Identify languages used (TypeScript, Python, Go, etc.)
-- [ ] Detect frameworks (React, Express, Django, etc.)
-- [ ] Find build tools (npm, cargo, make, etc.)
-
-### Existing Configuration
-- [ ] Check if `.ai-project.json` exists
-- [ ] Check if `AI_GUIDE.md` exists
-- [ ] Check if task structure exists
-- [ ] Look for existing documentation patterns
-
-### Relevant Files
-- [ ] List key configuration files to read
-- [ ] Note any existing patterns or conventions
-
-**Output**: [Describe what the gathered context should look like]
-
-Example:
-```
-Project Type: Multi-repo
-Repos Found:
-  - backend/ (TypeScript, Express, Jest)
-  - frontend/ (TypeScript, React+Vite, Playwright)
-Existing Config: None
-```
+- [Internal convention or constraint the agent cannot infer from the codebase]
+- [Specific files that contain critical context not discoverable by standard exploration]
+- [Domain knowledge that affects how the task should be approached]
 
 ---
 
@@ -390,236 +370,64 @@ Existing Config: None
 
 ---
 
-## Actions to Perform
+## Constraints
 
-[Step-by-step instructions for the LLM to execute]
+<!--
+  AUTHORING TIP: This is one of the most valuable sections. List hard requirements
+  the agent must follow -- things it cannot infer from the environment.
+  Avoid listing things the agent will naturally do (e.g., "use proper error handling").
+  See: docs/guides/authoring-guidelines.md
+-->
 
-### Step 1: [Action Name]
+[Non-negotiable requirements that the agent cannot infer from the codebase]
 
-**What to do**:
-[Explicit instructions]
-
-**Commands** (if applicable):
-```bash
-# Exact commands to run
-command --with --flags
-```
-
-**Expected outcome**:
-[What should exist or be true after this step]
-
-**Validation**:
-```bash
-# How to verify this step worked
-ls -la | grep expected-file
-```
-
-### Step 2: [Action Name]
-
-[Repeat pattern for each step]
-
-### Step 3: [Action Name]
-
-[Continue...]
+- [Architectural constraint or technical requirement]
+- [Required tool or version if it's non-obvious]
+- [Performance, security, or compatibility requirement]
 
 ---
 
-## File Operations
+## Known Pitfalls
 
-[If dossier involves creating/modifying files, specify them clearly]
+<!--
+  AUTHORING TIP: This section saves the most agent time. Include traps that
+  would cost the agent significant effort to debug. Skip common errors that
+  agents can diagnose from error messages.
+-->
 
-### Create: `.ai-project.json`
+[Gotchas that would waste significant time if the agent discovers them the hard way]
 
-**Location**: Project root
-
-**Content structure**:
-```json
-{
-  "name": "[detected from context]",
-  "structure": "[detected: single-repo|multi-repo|mono-repo]",
-  "repos": [
-    {
-      "name": "[detected repo name]",
-      "type": "[detected: backend|frontend|shared]",
-      "language": "[detected language]",
-      "framework": "[detected framework]"
-    }
-  ]
-}
-```
-
-**Customization**:
-- Replace `[detected from context]` with actual values
-- Add all detected repos
-- Include project-specific details
-
-### Modify: `AI_GUIDE.md`
-
-**Location**: Project root
-
-**Changes**:
-- Update project name
-- Fill in actual build commands
-- Add detected tech stack info
-- Customize code style section
+- [Non-obvious failure mode and why it happens]
+- [Environment-specific issue and workaround]
 
 ---
 
 ## Validation
 
-[How to verify the dossier executed successfully]
+<!--
+  AUTHORING TIP: This is the most important section of the dossier.
+  Invest time here. Clear, automated success criteria are the contract
+  between the dossier author and the executing agent.
+-->
 
-### Checks to Perform
+[Verifiable success criteria -- the agent uses these to confirm the objective was met]
 
-- [ ] **File existence**: Verify all expected files were created
-  ```bash
-  ls .ai-project.json AI_GUIDE.md tasks/
-  ```
-
-- [ ] **File validity**: Check files are properly formatted
-  ```bash
-  # Validate JSON
-  cat .ai-project.json | jq .
-  ```
-
-- [ ] **Git status**: Ensure clean state or appropriate changes
-  ```bash
-  git status
-  ```
-
-- [ ] **Functional test**: Try using the setup
-  ```bash
-  npm run task:list
-  ```
-
-### Success Criteria
-
-[List what must be true for this dossier to be considered successful]
-
-1. ✅ Criterion 1
-2. ✅ Criterion 2
-3. ✅ Criterion 3
-
-### If Validation Fails
-
-[Troubleshooting steps if something didn't work]
-
-**Problem**: [Common issue]
-**Solution**: [How to fix]
-
----
-
-## Example
-
-[Show a complete example of what this dossier produces]
-
-### Before:
-```
-my-project/
-├── backend/
-│   ├── src/
-│   └── package.json
-└── frontend/
-    ├── src/
-    └── package.json
-```
-
-### After:
-```
-my-project/
-├── .ai-project.json          # ← Created
-├── AI_GUIDE.md               # ← Created
-├── .aicontextignore          # ← Created
-├── .gitignore                # ← Created (if needed)
-├── package.json              # ← Created (with task scripts)
-├── tasks/                    # ← Created
-│   ├── planned/
-│   ├── active/
-│   ├── stashed/
-│   └── completed/
-├── scripts/
-│   └── task-manager.js       # ← Copied
-├── backend/                  # Existing
-└── frontend/                 # Existing
-```
-
-### Generated `.ai-project.json`:
-```json
-{
-  "name": "my-project",
-  "structure": "multi-repo",
-  "repos": [
-    {
-      "name": "backend",
-      "type": "backend",
-      "language": "typescript",
-      "framework": "express"
-    },
-    {
-      "name": "frontend",
-      "type": "frontend",
-      "language": "typescript",
-      "framework": "react-vite"
-    }
-  ],
-  "taskManagement": {
-    "enabled": true,
-    "autoCommit": true
-  },
-  "version": "1.0.0"
-}
-```
+- [ ] [Concrete, measurable criterion with a command or check to verify it]
+- [ ] [Another verifiable outcome]
+- [ ] [Final success condition]
 
 ---
 
 ## Troubleshooting
 
-### Issue 1: [Common Problem]
+<!--
+  AUTHORING TIP: Only document pitfalls the agent cannot diagnose from error messages.
+  Agents are good at reading errors and searching for solutions. Focus on traps
+  where the error message is misleading or the fix is counterintuitive.
+-->
 
-**Symptoms**:
-- [What the user sees]
+[Non-obvious failure modes where the error message is misleading or the fix is counterintuitive]
 
-**Causes**:
-- [Possible reasons]
-
-**Solutions**:
-1. [Try this first]
-2. [If that doesn't work, try this]
-3. [Last resort]
-
-### Issue 2: [Another Problem]
-
-[Repeat pattern]
-
----
-
-## Notes for LLM Execution
-
-[Special instructions for AI agents executing this dossier]
-
-- **File paths**: Use absolute paths or well-defined relative paths
-- **Relative paths**: Use `./` for project files
-- **Error handling**: If a step fails, explain what went wrong and suggest fixes
-- **User confirmation**: Ask before destructive operations (deleting files, etc.)
-- **Show progress**: Report what you're doing at each step
-- **Adaptation**: Adjust instructions based on actual project structure
-
----
-
-## Related Dossiers
-
-- [other-dossier.md](./other-dossier.md) - Related automation
-- [another-dossier.md](./another-dossier.md) - Complementary workflow
-
----
-
-## Version History
-
-- **v1.0** - Initial version
-- **v1.1** - Added troubleshooting section
-- [Update as dossier evolves]
-
----
-
-**🎯 Dossier Template**
-*Use this template to create new dossiers for LLM automation*
+**Problem**: [Issue where the error message doesn't point to the real cause]
+**Actual cause**: [The non-obvious root cause]
+**Fix**: [The counterintuitive solution]
