@@ -1,0 +1,143 @@
+# Scheduled Dossier Execution
+#
+# Reusable workflow template: runs a dossier on a cron schedule using
+# Claude Code in headless mode. Creates a GitHub issue if execution fails.
+#
+# Usage — copy this file to your repo's .github/workflows/ directory and
+# customize the configuration below.
+#
+# See: https://github.com/imboard-ai/ai-dossier/blob/main/docs/guides/ci-cd-integration.md
+
+name: Scheduled Dossier Run
+
+on:
+  schedule:
+    # Default: every Monday at 09:00 UTC — customize for your needs
+    # See https://crontab.guru for cron syntax
+    - cron: '0 9 * * 1'
+
+  # Allow manual triggering from the Actions tab
+  workflow_dispatch:
+    inputs:
+      dossier:
+        description: 'Dossier file path or registry name to run'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (verify only, do not execute)'
+        required: false
+        type: boolean
+        default: false
+
+# Prevent overlapping scheduled runs
+concurrency:
+  group: dossier-scheduled
+  cancel-in-progress: false
+
+# ─── Configuration ────────────────────────────────────────────────────
+# Customize these environment variables for your project.
+env:
+  # The dossier to run — file path relative to repo root, or a registry name.
+  # Override via workflow_dispatch input.
+  DOSSIER: 'dossiers/weekly-readme-check.ds.md'
+
+  # Node.js version to use
+  NODE_VERSION: '22'
+
+jobs:
+  run:
+    name: Execute dossier
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install @ai-dossier/cli
+        run: npm install -g @ai-dossier/cli
+
+      - name: Resolve dossier target
+        id: target
+        run: |
+          # Use workflow_dispatch input if provided, otherwise use env default
+          TARGET="${{ github.event.inputs.dossier || env.DOSSIER }}"
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          echo "dossier=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+          echo "Dossier target: $TARGET"
+          echo "Dry run: $DRY_RUN"
+
+      - name: Verify dossier
+        run: |
+          echo "Verifying: ${{ steps.target.outputs.dossier }}"
+          ai-dossier verify "${{ steps.target.outputs.dossier }}" --verbose
+
+      - name: Run dossier
+        if: steps.target.outputs.dry_run != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Running: ${{ steps.target.outputs.dossier }}"
+          ai-dossier run "${{ steps.target.outputs.dossier }}" \
+            --headless \
+            --no-prompt \
+            --llm claude-code
+
+      - name: Dry run
+        if: steps.target.outputs.dry_run == 'true'
+        run: |
+          echo "Dry run: ${{ steps.target.outputs.dossier }}"
+          ai-dossier run "${{ steps.target.outputs.dossier }}" --dry-run
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dossier = '${{ steps.target.outputs.dossier }}';
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const now = new Date().toISOString();
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Scheduled dossier run failed: ${dossier}`,
+              body: [
+                `## Scheduled Dossier Run Failed`,
+                ``,
+                `| Detail | Value |`,
+                `|--------|-------|`,
+                `| **Dossier** | \`${dossier}\` |`,
+                `| **Workflow Run** | [View logs](${runUrl}) |`,
+                `| **Timestamp** | ${now} |`,
+                `| **Trigger** | ${context.eventName} |`,
+                ``,
+                `### Next Steps`,
+                ``,
+                `1. Check the [workflow logs](${runUrl}) for error details`,
+                `2. Verify the dossier file exists and is valid: \`ai-dossier verify ${dossier}\``,
+                `3. Fix the issue and re-run the workflow manually from the Actions tab`,
+              ].join('\n'),
+              labels: ['dossier', 'automated'],
+            });
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Scheduled Dossier Run" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Detail | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dossier | \`${{ steps.target.outputs.dossier }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dry Run | ${{ steps.target.outputs.dry_run }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Trigger | ${{ github.event_name }} |" >> "$GITHUB_STEP_SUMMARY"
