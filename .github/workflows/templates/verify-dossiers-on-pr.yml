@@ -1,0 +1,132 @@
+# Dossier Verification on Pull Request
+#
+# Reusable workflow template: verifies all changed .ds.md dossier files
+# when a pull request is opened or updated. Blocks merge if verification fails.
+#
+# Usage — copy this file to your repo's .github/workflows/ directory and
+# customize the configuration below.
+#
+# See: https://github.com/imboard-ai/ai-dossier/blob/main/docs/guides/ci-cd-integration.md
+
+name: Verify Dossiers
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.ds.md'
+
+# Cancel redundant runs for the same PR
+concurrency:
+  group: dossier-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify changed dossiers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install @ai-dossier/cli
+        run: npm install -g @ai-dossier/cli
+
+      - name: Find changed dossier files
+        id: changed
+        run: |
+          # Compare against the PR base branch
+          FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD -- '*.ds.md')
+
+          if [ -z "$FILES" ]; then
+            echo "No .ds.md files changed."
+            echo "files=" >> "$GITHUB_OUTPUT"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changed dossier files:"
+            echo "$FILES"
+            # Store as a single line, space-separated
+            echo "files=$(echo $FILES | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+            echo "count=$(echo "$FILES" | wc -l)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify dossier files
+        if: steps.changed.outputs.count != '0'
+        run: |
+          FAILED=0
+          PASSED=0
+          TOTAL=0
+
+          for file in ${{ steps.changed.outputs.files }}; do
+            TOTAL=$((TOTAL + 1))
+            echo ""
+            echo "--- Verifying: $file ---"
+
+            if ai-dossier verify "$file" --verbose; then
+              PASSED=$((PASSED + 1))
+            else
+              FAILED=$((FAILED + 1))
+              echo "::error file=$file::Dossier verification failed for $file"
+            fi
+          done
+
+          echo ""
+          echo "============================="
+          echo "Results: $PASSED/$TOTAL passed"
+          if [ $FAILED -gt 0 ]; then
+            echo "$FAILED dossier(s) failed verification."
+            exit 1
+          fi
+          echo "All dossiers verified successfully."
+
+      - name: Lint dossier files
+        if: steps.changed.outputs.count != '0'
+        run: |
+          FAILED=0
+
+          for file in ${{ steps.changed.outputs.files }}; do
+            echo ""
+            echo "--- Linting: $file ---"
+
+            if ai-dossier lint "$file"; then
+              true  # lint passed
+            else
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 2 ]; then
+                # Exit code 2 = errors found
+                FAILED=$((FAILED + 1))
+                echo "::error file=$file::Dossier lint errors found in $file"
+              else
+                # Exit code 1 = warnings only — don't fail the build
+                echo "::warning file=$file::Dossier lint warnings found in $file"
+              fi
+            fi
+          done
+
+          if [ $FAILED -gt 0 ]; then
+            echo ""
+            echo "$FAILED dossier(s) have lint errors."
+            exit 1
+          fi
+
+      - name: Summary
+        if: always() && steps.changed.outputs.count != '0'
+        run: |
+          echo "## Dossier Verification" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Verified **${{ steps.changed.outputs.count }}** changed dossier file(s)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| File | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          for file in ${{ steps.changed.outputs.files }}; do
+            echo "| \`$file\` | Checked |" >> "$GITHUB_STEP_SUMMARY"
+          done
