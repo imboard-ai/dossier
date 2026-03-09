@@ -51,3 +51,5 @@ Academic and industry references supporting the dossier approach.
 [^24]: Schema Matching with Large Language Models: an Experimental Study. (2024). *arXiv:2407.11852*.
 
 [^25]: LLM4Schema.org: Generating Schema.org Markups. (2024). *HAL Science*.
+
+[^26]: Fourrier, C., Yang, N., Yang, J., Yang, A., Hui, B., & Wolf, T. (2026). Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? *arXiv:2602.11988*. Key findings: auto-generated context files reduced task success by 3% while increasing cost by 20%; mentioning a tool by name makes agents use it 2.5x more frequently even when suboptimal; over-detailed procedural instructions constrain agent exploration.

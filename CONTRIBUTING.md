@@ -105,6 +105,8 @@ Pull requests are checked by a dedicated `lint` job in CI. Merging is blocked un
 
 Example dossiers are one of the most valuable contributions!
 
+> **Important**: Read the [Authoring Guidelines](docs/guides/authoring-guidelines.md) before writing a dossier. The key principle: tell agents **what** to achieve and **why**, not **how** to do it step-by-step.
+
 ### Location
 Put your example under `examples/<topic>/`:
 - `examples/development/` - Development workflows
@@ -120,45 +122,23 @@ For atomic, focused examples:
 
 1. **Use the `.ds.md` extension** for consistency
 
-2. **Include JSON schema frontmatter**:
-   ```markdown
-   ---dossier
-   {
-     "dossier_schema_version": "1.0.0",
-     "title": "Your Dossier Title",
-     "version": "1.0.0",
-     "protocol_version": "1.0",
-     "status": "Stable",
-     "objective": "Clear, measurable goal",
-     "risk_level": "low",
-     "validation": {
-       "success_criteria": [
-         "Specific verifiable outcome",
-         "Another measurable result"
-       ]
-     }
-   }
-   ---
-   ```
+2. **Include JSON schema frontmatter** with a clear `objective` and `validation.success_criteria`
 
-3. **Add clear validation steps** that prove success with evidence:
+3. **Focus on what/why, not how**: State the objective and constraints clearly. Let agents figure out the implementation steps. Only include procedural guidance for genuinely non-inferable information (custom tooling, known pitfalls, environment-specific config). See [Authoring Guidelines](docs/guides/authoring-guidelines.md) for examples of good vs. over-specified dossiers.
+
+4. **Add clear validation criteria** -- this is the most important section:
    ```markdown
    ## Validation
-   - ✓ File created at `path/to/file.txt`
-   - ✓ Tests pass (run `npm test`)
-   - ✓ Version tag exists: `git tag | grep v1.0.0`
+   - [ ] Tests pass with zero failures
+   - [ ] Config file validates against the schema
+   - [ ] Service responds to health check endpoint
    ```
 
-4. **Create a README.md** in the example directory describing:
-   - Purpose and use case
-   - Expected time to run
-   - Prerequisites
-   - What the example demonstrates
+5. **Avoid tool name-dropping**: Don't mention specific tools unless they're required constraints. Mentioning a tool makes agents use it 2.5x more, even when it's suboptimal.
 
-5. **Test your dossier**:
+6. **Test your dossier**:
    - Run it with an LLM (Claude Code, ChatGPT, etc.)
-   - Verify all steps execute successfully
-   - Ensure validation criteria pass
+   - Verify all validation criteria pass
    - Check for edge cases
 
 ### Example Structure

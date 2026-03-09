@@ -239,18 +239,30 @@ See the [examples/](../../examples/) directory for dossier examples you can use 
 
 ## Best Practices
 
-**Do:**
-- Be specific: "Copy all .md files from tasks/active/" not "get the tasks"
-- Show examples: Include expected output samples
-- Handle errors: Include troubleshooting sections
-- Validate results: Always include validation steps
-- Be LLM-agnostic: Don't use tool-specific features
+> For comprehensive authoring guidance with examples, see [Authoring Guidelines](authoring-guidelines.md).
 
-**Don't:**
-- Assume context: Explicitly state what to check
-- Skip validation: Always verify the outcome
-- Be vague: "Set up the project" is too broad
-- Hardcode paths: Use relative paths or configurable variables
+**Focus on what and why, not how:**
+- State clear objectives and success criteria -- this is the most valuable part of any dossier
+- Include constraints and non-obvious requirements (architectural decisions, required tools, environment-specific config)
+- Document known pitfalls that would waste significant agent time
+- Let agents discover implementation details themselves -- they're good at it
+
+**Invest in validation:**
+- Every dossier must include verifiable success criteria
+- Prefer automated checks (commands that return pass/fail) over subjective assessments
+- Validation is the contract between the dossier author and the executing agent
+
+**Avoid over-specification:**
+- Don't provide step-by-step bash commands for standard operations -- agents can figure these out
+- Don't name-drop tools unless they're genuine constraints (mentioning a tool makes agents use it 2.5x more, even when it's suboptimal -- [arXiv 2602.11988](https://arxiv.org/abs/2602.11988))
+- Don't list information the agent can infer from the codebase (directory trees, file lists, project type)
+- Don't write exhaustive troubleshooting for common errors -- agents can read error messages
+
+**Do include non-inferable information:**
+- Internal tooling, custom workflows, undocumented APIs
+- Environment-specific constraints: credentials, endpoints, required tool versions
+- Domain context: business rationale, historical decisions, performance requirements
+- Decision criteria: when there are multiple valid approaches, explain how to choose
 
 ---
 
@@ -266,9 +278,9 @@ See [MCP Server README](../../mcp-server/README.md) for setup and details.
 
 ### "The AI didn't follow the dossier correctly"
 
-- Make instructions more explicit
-- Add examples of expected output
-- Update dossier with troubleshooting section
+- Clarify the **objective** and **success criteria** -- agents follow goals better than procedures
+- Check if the dossier over-specifies *how* instead of *what* -- rigid steps give agents less room to adapt
+- Add constraints for the specific behavior you need, rather than more procedural steps
 
 ### "Dossier works with Claude but not GPT-4"
 
