@@ -8,16 +8,27 @@
  *   outputs.configuration[].{ key, consumed_by, export_as }
  */
 
+import { logger } from '../utils/logger';
 import type { DossierNode, ExecutionPlan, FromDossierDeclaration } from './types';
 
 // ---------------------------------------------------------------------------
 // In-memory storage: journeyId → dossierName → outputKey → value
 // ---------------------------------------------------------------------------
 
+const MAX_JOURNEYS = 1000;
 const journeyOutputStore = new Map<string, Map<string, Map<string, unknown>>>();
 
 export function initJourneyOutputs(journeyId: string): void {
   if (!journeyOutputStore.has(journeyId)) {
+    // Evict oldest entry if at capacity
+    if (journeyOutputStore.size >= MAX_JOURNEYS) {
+      const oldest = journeyOutputStore.keys().next().value!;
+      journeyOutputStore.delete(oldest);
+      logger.warn('Journey output store at capacity, evicted oldest entry', {
+        evicted: oldest,
+        maxJourneys: MAX_JOURNEYS,
+      });
+    }
     journeyOutputStore.set(journeyId, new Map());
   }
 }
@@ -126,10 +137,24 @@ export function resolveStepInputs(
   availableOutputs: Map<string, Map<string, unknown>>
 ): Record<string, unknown> {
   const resolved: Record<string, unknown> = {};
+  // Track which source_dossier owns each output_name so we can detect collisions
+  const sourceOf = new Map<string, string>();
+
   for (const decl of fromDossiers) {
     const value = availableOutputs.get(decl.source_dossier)?.get(decl.output_name);
     if (value !== undefined) {
-      resolved[decl.output_name] = value;
+      const prevSource = sourceOf.get(decl.output_name);
+      if (prevSource !== undefined) {
+        // Collision — move the previous entry to a namespaced key if not already moved
+        if (resolved[decl.output_name] !== undefined) {
+          resolved[`${prevSource}.${decl.output_name}`] = resolved[decl.output_name];
+          delete resolved[decl.output_name];
+        }
+        resolved[`${decl.source_dossier}.${decl.output_name}`] = value;
+      } else {
+        resolved[decl.output_name] = value;
+        sourceOf.set(decl.output_name, decl.source_dossier);
+      }
     }
   }
   return resolved;

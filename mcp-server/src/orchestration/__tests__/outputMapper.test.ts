@@ -212,6 +212,24 @@ describe('resolveStepInputs', () => {
     ];
     expect(resolveStepInputs(fromDossiers, new Map())).toEqual({});
   });
+
+  it('should namespace keys when two sources provide the same output_name', () => {
+    const fromDossiers: FromDossierDeclaration[] = [
+      { source_dossier: 'step-a', output_name: 'region' },
+      { source_dossier: 'step-b', output_name: 'region' },
+    ];
+    const available = new Map([
+      ['step-a', new Map<string, unknown>([['region', 'us-east-1']])],
+      ['step-b', new Map<string, unknown>([['region', 'eu-west-1']])],
+    ]);
+
+    const result = resolveStepInputs(fromDossiers, available);
+    expect(result).toEqual({
+      'step-a.region': 'us-east-1',
+      'step-b.region': 'eu-west-1',
+    });
+    expect(result['region']).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
