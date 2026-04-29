@@ -52,8 +52,91 @@ jobs:
       - name: Test
         run: make test
 
-  publish:
+  smoke:
     needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: make build-all
+
+      - name: Pack all packages
+        run: |
+          mkdir -p /tmp/tarballs
+          for pkg in packages/core cli mcp-server packages/worktree-pool; do
+            (cd "$pkg" && npm pack --pack-destination /tmp/tarballs)
+          done
+          ls -1 /tmp/tarballs
+
+      - name: Install tarballs into a fixture project
+        run: |
+          mkdir -p /tmp/smoke && cd /tmp/smoke
+          # `ls ... | head -1` guards against npm pack ever producing multiple
+          # matching tarballs (e.g. versioned + tag-suffixed builds).
+          CORE_TGZ=$(ls /tmp/tarballs/ai-dossier-core-*.tgz | head -1)
+          CLI_TGZ=$(ls /tmp/tarballs/ai-dossier-cli-*.tgz | head -1)
+          # cli depends on @ai-dossier/core; install both via file: so npm
+          # resolves the peer locally without needing the registry version.
+          cat > package.json <<EOF
+          {
+            "name": "smoke-fixture",
+            "version": "0.0.0",
+            "private": true,
+            "dependencies": {
+              "@ai-dossier/core": "file:$CORE_TGZ",
+              "@ai-dossier/cli":  "file:$CLI_TGZ"
+            }
+          }
+          EOF
+          npm install --no-audit --no-fund
+
+      - name: Tier 1 — non-interactive smoke (each wrapped in timeout)
+        run: |
+          BIN=/tmp/smoke/node_modules/.bin/ai-dossier
+          test -x "$BIN" || (echo "ai-dossier binary not executable at $BIN"; exit 1)
+
+          echo "::group::ai-dossier --version"
+          timeout 10s "$BIN" --version
+          echo "::endgroup::"
+
+          echo "::group::ai-dossier doctor"
+          # `doctor` may exit non-zero for environment warnings (no MCP config,
+          # missing claude binary on a clean runner). We only care that the
+          # process exits within the timeout, not the diagnostic outcome.
+          timeout 10s "$BIN" doctor || true
+          echo "::endgroup::"
+
+          echo "::group::ai-dossier whoami (with fixture token)"
+          PAYLOAD=$(node -e "process.stdout.write(Buffer.from(JSON.stringify({sub:'smoke',orgs:[],exp:Math.floor(Date.now()/1000)+86400})).toString('base64url'))")
+          # Inline env: token is scoped to this single command invocation only,
+          # never visible to follow-on commands or hooks in this step.
+          DOSSIER_REGISTRY_TOKEN="header.${PAYLOAD}.sig" \
+            HOME="$(mktemp -d)" \
+            timeout 10s "$BIN" whoami
+          echo "::endgroup::"
+
+      - name: Tier 2 — interactive login smoke (regression guard for #386)
+        run: |
+          BIN=/tmp/smoke/node_modules/.bin/ai-dossier
+          test -x "$BIN" || (echo "ai-dossier binary not executable at $BIN"; exit 1)
+          # smoke.mjs sets DOSSIER_LOGIN_ALLOW_NONINTERACTIVE=1 internally to
+          # bypass login's TTY guard while exercising the full success path.
+          node cli/test/smoke/login.smoke.mjs "$BIN"
+
+  publish:
+    needs: [test, smoke]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -196,13 +279,12 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify packages are available
+      - name: Verify packages are available on npm
         run: |
           echo "Verifying published packages..."
           npm view @ai-dossier/core version
           npm view @ai-dossier/cli version
           npm view @ai-dossier/mcp-server version
           npm view @ai-dossier/worktree-pool version
-
-      - name: Smoke test CLI
-        run: npx @ai-dossier/cli --help
+          # Behavioral smoke testing happens in the pre-publish `smoke` job
+          # against the same tarball; this job only confirms registry publish.

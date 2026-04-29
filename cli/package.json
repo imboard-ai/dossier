@@ -15,7 +15,8 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:smoke": "node test/smoke/login.smoke.mjs ./bin/ai-dossier"
   },
   "keywords": [
     "dossier",

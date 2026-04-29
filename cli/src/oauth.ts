@@ -30,6 +30,13 @@ class OAuthError extends Error {
 }
 
 /**
+ * Exact prompt string the user sees when login is awaiting the OAuth code.
+ * Exported so smoke tests can wait for it on stderr without duplicating the
+ * literal — keeps the test from silently breaking if the copy is reworded.
+ */
+export const LOGIN_CODE_PROMPT = 'Enter the code from your browser: ';
+
+/**
  * Decode a base64url-encoded string, adding padding if needed.
  */
 function decodeBase64Url(data: string): string {
@@ -61,17 +68,23 @@ function openBrowser(url: string): void {
     args = [url];
   }
 
-  execFile(cmd, args, (_err) => {
+  const child = execFile(cmd, args, (_err) => {
     // Browser failed to open — URL is already printed for the user
   });
+  // Don't keep the parent alive while the browser process lingers.
+  child.unref();
 }
 
 /**
- * Prompt the user for input via stdin.
+ * Prompt the user for input via the given readable stream (default: process.stdin).
+ * Exported for tests; production callers omit `input` and get process.stdin.
  */
-function prompt(question: string): Promise<string> {
+export function prompt(
+  question: string,
+  input: NodeJS.ReadableStream = process.stdin
+): Promise<string> {
   const rl = readline.createInterface({
-    input: process.stdin,
+    input,
     output: process.stderr,
   });
   return new Promise((resolve) => {
@@ -79,7 +92,10 @@ function prompt(question: string): Promise<string> {
       rl.close();
       // Without this, readline's reference on stdin keeps the event loop alive
       // and the CLI hangs after a successful login instead of exiting.
-      process.stdin.unref();
+      // Only applies to process.stdin; other streams manage their own refs.
+      if (input === process.stdin) {
+        process.stdin.unref();
+      }
       resolve(answer);
     });
   });
@@ -98,9 +114,14 @@ async function runOAuthFlow(registryUrl: string): Promise<OAuthResult> {
 
   openBrowser(authUrl);
 
-  const code = (await prompt('Enter the code from your browser: ')).trim();
+  const code = (await prompt(LOGIN_CODE_PROMPT)).trim();
 
   if (!code) {
+    if (!process.stdin.isTTY) {
+      throw new OAuthError(
+        'No code provided. Non-interactive session detected — set DOSSIER_REGISTRY_TOKEN instead.'
+      );
+    }
     throw new OAuthError('No code provided');
   }
 

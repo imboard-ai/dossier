@@ -39,7 +39,11 @@ describe('login command', () => {
 
     const program = createTestProgram();
     registerLoginCommand(program);
-    await program.parseAsync(['node', 'dossier', 'login']);
+    // login calls process.exit(0) on success — global setup throws on exit
+    // so the action surfaces as a rejection with a predictable message.
+    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow(
+      'process.exit(0)'
+    );
 
     expect(credentials.saveCredentials).toHaveBeenCalledWith(
       {
@@ -63,7 +67,9 @@ describe('login command', () => {
 
     const program = createTestProgram();
     registerLoginCommand(program);
-    await program.parseAsync(['node', 'dossier', 'login']);
+    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow(
+      'process.exit(0)'
+    );
 
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('org1, org2'));
   });
@@ -74,7 +80,9 @@ describe('login command', () => {
     const program = createTestProgram();
     registerLoginCommand(program);
 
-    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow();
+    await expect(program.parseAsync(['node', 'dossier', 'login'])).rejects.toThrow(
+      'process.exit(1)'
+    );
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Login failed'));
   });
