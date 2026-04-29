@@ -19,7 +19,12 @@ For non-interactive environments (CI/CD), use environment variables instead:
 `
     )
     .action(async (options: { registry?: string }) => {
-      if (!process.stdin.isTTY) {
+      // Non-interactive sessions can't complete the OAuth copy/paste flow.
+      // Surface the env-var alternative early — before opening a browser or
+      // printing the auth URL — to keep CI logs clean. Smoke tests bypass
+      // this with DOSSIER_LOGIN_ALLOW_NONINTERACTIVE=1 to exercise the full
+      // login path with piped stdin.
+      if (!process.stdin.isTTY && !process.env.DOSSIER_LOGIN_ALLOW_NONINTERACTIVE) {
         console.error('\n❌ Non-interactive session detected. Cannot run OAuth flow.');
         console.error('   Set the DOSSIER_REGISTRY_TOKEN environment variable instead:\n');
         console.error('   export DOSSIER_REGISTRY_TOKEN=<your-token>\n');
@@ -64,5 +69,14 @@ For non-interactive environments (CI/CD), use environment variables instead:
         console.error(`\n❌ Login failed: ${(err as Error).message}\n`);
         process.exit(1);
       }
+      // Force exit on the success path. stdin is already unref'd by prompt()
+      // (PR #386), but when stdio is fully piped (CI smoke tests, scripted
+      // callers) stdout/stderr remain referenced and keep the event loop
+      // alive. Unref'ing them is unreliable because Node may re-ref on
+      // pending kernel writes; an explicit exit is the most robust signal
+      // that this command has completed all its synchronous work.
+      // Placed outside the try block so the catch can't intercept it —
+      // anything async added on the success path MUST be awaited inside try.
+      process.exit(0);
     });
 }
