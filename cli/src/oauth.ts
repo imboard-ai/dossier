@@ -77,6 +77,9 @@ function prompt(question: string): Promise<string> {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
+      // Without this, readline's reference on stdin keeps the event loop alive
+      // and the CLI hangs after a successful login instead of exiting.
+      process.stdin.unref();
       resolve(answer);
     });
   });
